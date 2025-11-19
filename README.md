@@ -147,6 +147,18 @@ Transitions:
 
 ---
 
+## Try the Example (CLI)
+
+Run a simulated scene log from `scenes/example.json`:
+
+```powershell
+npm run preview
+```
+
+This builds the library and prints a simple interpretation of the first scene.
+
+---
+
 ## Philosophy
 Aurora’s Engine is built on three values:
 
