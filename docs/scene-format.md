@@ -2,7 +2,7 @@
 
 Purpose: Define a simple, creator-friendly JSON format for building VNs without touching React.
 
-Status: Draft. Subject to change as engine APIs stabilize.
+Status: Stable core with recent additions (spriteSwap, extra transitions).
 
 ## Goals
 - Human-readable JSON
@@ -26,11 +26,19 @@ Status: Draft. Subject to change as engine APIs stabilize.
 ```
 
 ## Mapping to Internal Steps
-The engine currently uses type-based steps, e.g.:
+The engine uses type-based steps. Common examples:
 ```ts
 { type: 'dialogue', char: 'Snowflake', text: 'Welcome.' }
 { type: 'choice', options: [ { label: 'Hi', goto: 'friendly' } ] }
 { type: 'transition', kind: 'fade', duration: 600 }
+{ type: 'background', src: 'bg/lab.png' }
+{ type: 'music', track: 'audio/calm.mp3' }
+{ type: 'spriteShow', id: 'hero', src: 'img/hero_neutral.png' }
+{ type: 'spriteSwap', id: 'hero', src: 'img/hero_happy.png' }
+{ type: 'spriteHide', id: 'hero' }
+{ type: 'flag', flag: 'met_hero', value: true }
+{ type: 'sfx', track: 'audio/click.mp3' }
+{ type: 'goto', scene: 'next-scene' }
 ```
 A loader will transform the JSON scene into these internal steps.
 
@@ -46,19 +54,37 @@ A loader will transform the JSON scene into these internal steps.
 - `goto` should reference another scene `id`.
 - `end`: a special `goto` value may signal the VN end or return to menu.
 
-## Future Extensions
-- Per-line expressions/conditions (show-if flags)
-- Inline transitions (fade, slide)
-- Sprite expressions (e.g., emotion states)
-- Localization keys instead of raw text
+## Transitions
+- `type: 'transition'`
+- `kind`: `fade | slide | zoom | shake | flash`
+- `duration?`: milliseconds
 
-## Loader Contract (planned)
+The engine emits `vn:transition` when a transition step occurs and then pauses at the next dialogue. The minimal template visualizes these via CSS.
+
+## Sprites and Expressions
+- Show: `{ type:'spriteShow', id, src }`
+- Swap (expression change): `{ type:'spriteSwap', id, src }`
+- Hide: `{ type:'spriteHide', id }`
+
+Helper utilities can build these from a character-expression map:
 ```ts
-loadScenes(jsonScenes: SceneJSON[]): EngineScene[]
+const MAP = { hero: { neutral:'hero_neutral.png', happy:'hero_happy.png' } }
+stepShowExpression('hero','neutral', MAP)
+stepSwapExpression('hero','happy', MAP)
+stepHideExpression('hero')
 ```
-- Validates structure and references
-- Produces engine-ready steps
-- Reports clear errors with scene/line context
+
+## Automation
+- `autoAdvance` auto-steps through side-effects and pauses on dialogue after `goto/choice` and after `transition`.
+- `autoDecide` can choose for `choice` steps; strategies include `highestWeight`.
+
+## Loader Contract
+```ts
+loadScenesFromJson(json: string | object): { scenes: SceneDef[]; errors: string[] }
+loadScenesFromUrl(url: string): Promise<{ scenes: SceneDef[]; errors: string[] }>
+```
+- Validates structure and references with clear, indexed errors
+- Produces engine-ready steps and can build preload manifests
 
 ---
 For questions or proposals, open an issue with examples and desired behavior.

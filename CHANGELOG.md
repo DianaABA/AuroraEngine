@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 
 ## v0.0.1 — 2025-11-19
+## v0.0.2 — 2025-11-19
+
+- VN: `spriteSwap` step for expression changes; transitions extended with `zoom/shake/flash`
+- Template: Continue button with autosave detection; autosave each step; three save slots with timestamps
+- Template: visual transition effects driven by `vn:transition`
+- Utils: `expressions` helper to map character expressions to sprite sources
+- Docs: scene-format updated; expressions guide added
+- Tests: coverage for sprite swap, transition kinds, expressions helper
 
 - Engine: deterministic auto-advance semantics
   - Pause at first dialogue after `goto` or choice scene change
