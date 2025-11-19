@@ -8,6 +8,7 @@ Now includes:
 - Backlog panel (shows persisted dialogue history)
  - Settings panel (Skip Seen Text + Clear Seen)
  - Slot thumbnails (auto-generated from background + sprites)
+- Codex panel (unlocks entries via scene flags; persisted)
 - Saves panel listing slots with thumbnails and timestamps
 - Basic i18n (English/Spanish) for key UI labels
 - Auto / Auto-Choose toggles, and Skip FX toggle
@@ -41,6 +42,8 @@ Then open http://localhost:5173
 	 (`aurora:minimal:slot{n}:thumb`), rendered next to the slot buttons
  - Saves panel shows 3 slots with thumbnail, timestamp, and Save/Load actions
  - i18n: switch language in Settings (English/Spanish) affecting key controls
+- Sprite positioning: per-step `pos` (left/center/right) or custom `x` `%` and `scale`; optional `z` ordering
+- Scene defaults: per-scene `spriteDefaults` provide default `pos/x/scale/z` for sprite IDs
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
