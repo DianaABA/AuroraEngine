@@ -55,7 +55,7 @@ export function validateSceneDef(raw: any): { def?: SceneDef; error?: string } {
           if(typeof s.scene!=='string') errs.push(ctx(sp)+':goto.missing_scene')
           break
         case 'transition':
-          if(s.kind!=='fade' && s.kind!=='slide') errs.push(ctx(sp)+':transition.invalid_kind')
+          if(s.kind!=='fade' && s.kind!=='slide' && s.kind!=='zoom' && s.kind!=='shake' && s.kind!=='flash') errs.push(ctx(sp)+':transition.invalid_kind')
           if(s.duration!==undefined && typeof s.duration!=='number') errs.push(ctx(sp)+':transition.duration_not_number')
           break
         default:
@@ -92,6 +92,26 @@ export function indexScenes(scenes: SceneDef[]): Map<string, SceneDef> {
   const map = new Map<string, SceneDef>()
   for(const s of scenes){ map.set(s.id, s) }
   return map
+}
+
+// Cross-scene validation: ensure that all goto targets and choice option gotos exist
+export function validateSceneLinks(scenes: SceneDef[]): string[] {
+  const errors: string[] = []
+  const ids = new Set(scenes.map(s=>s.id))
+  for(const s of scenes){
+    s.steps.forEach((step, i)=>{
+      const ctx = `scene:${s.id}:step[${i}]`
+      if(step.type==='goto'){
+        if(!ids.has(step.scene)) errors.push(ctx+`:goto.unknown_scene:${step.scene}`)
+      }
+      if(step.type==='choice'){
+        step.options.forEach((o, oi)=>{
+          if(o.goto && !ids.has(o.goto)) errors.push(`${ctx}.options[${oi}]:choice.goto.unknown_scene:${o.goto}`)
+        })
+      }
+    })
+  }
+  return errors
 }
 
 // Simple interpreter helper for one-off scene testing

@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## v0.0.4 — 2025-11-19
+
+- Engine: scene cross-link validation on `loadScenes` (invalid `goto`/choice `goto` now fail fast with detailed errors)
+- Engine: emit `vn:auto-choice` with decision details (strategy, index, labels)
+- Engine: emit `vn:auto-loop-guard` when `maxAutoSteps` safety trips
+- Loader: broaden `transition.kind` validation to include `zoom|shake|flash`
+- State: bubble `GameStateManager.validate` exceptions via `gameState:corrupt` with error context
+- Docs: Risks addressed with validation/events to aid author debugging
+
 ## v0.0.3 — 2025-11-19
 
 - Utils: new `Gallery` module for CG unlocks with persistence and `gallery:unlock` events

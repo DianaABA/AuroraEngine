@@ -71,9 +71,9 @@ const sceneSpriteDefaults: Record<string, Record<string, SpriteCfg>> = {}
 const BACKLOG_KEY = 'aurora:minimal:backlog'
 // Removed old Prefs type; replaced below with extended Prefs
 const CODEX_KEY = 'aurora:minimal:codex'
-const CODEX_META: Record<string, { title: string; body: string }> = {
-  codex_hero: { title: 'Hero', body: 'A mysterious protagonist with many expressions.' },
-  codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.' }
+const CODEX_META: Record<string, { title: string; body: string; category: string }> = {
+  codex_hero: { title: 'Hero', body: 'A mysterious protagonist with many expressions.', category: 'Characters' },
+  codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.', category: 'Locations' }
 }
 type Locale = 'en' | 'es'
 type Prefs = { skipSeenText: boolean; skipTransitions: boolean; locale: Locale }
@@ -241,7 +241,7 @@ function renderAchievements(){
 }
 
 // Codex utility (template-side)
-type CodexEntry = { id: string; title: string; body: string; unlockedAt: string }
+type CodexEntry = { id: string; title: string; body: string; category: string; unlockedAt: string }
 function readCodex(): CodexEntry[]{ try { return JSON.parse(localStorage.getItem(CODEX_KEY) || '[]') } catch { return [] } }
 function writeCodex(list: CodexEntry[]){ try { localStorage.setItem(CODEX_KEY, JSON.stringify(list)) } catch {} }
 function codexHas(id: string){ return readCodex().some(e => e.id === id) }
@@ -250,19 +250,28 @@ function codexUnlock(id: string){
   if(!meta) return
   const list = readCodex()
   if(list.some(e => e.id === id)) return
-  list.push({ id, title: meta.title, body: meta.body, unlockedAt: new Date().toISOString() })
+  list.push({ id, title: meta.title, body: meta.body, category: meta.category, unlockedAt: new Date().toISOString() })
   writeCodex(list)
 }
 function renderCodex(){
   codexList.innerHTML = ''
-  const items = readCodex()
+  const q = (document.getElementById('codexSearch') as HTMLInputElement)?.value?.toLowerCase() || ''
+  const items = readCodex().filter(it => !q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q))
   if(items.length===0){
     const p = document.createElement('div')
     p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries yet.'
     codexList.appendChild(p)
     return
   }
-  for(const it of items){
+  // Group by category
+  const groups: Record<string, CodexEntry[]> = {}
+  for(const it of items){ (groups[it.category] ||= []).push(it) }
+  const cats = Object.keys(groups).sort()
+  for(const cat of cats){
+    const header = document.createElement('div')
+    header.style.color = '#a0e7ff'; header.style.fontWeight = '600'; header.style.margin = '6px 0 2px'; header.textContent = cat
+    codexList.appendChild(header)
+    for(const it of groups[cat]){
     const row = document.createElement('div')
     row.style.background = '#111827'; row.style.border = '1px solid #27304a'; row.style.borderRadius = '6px'; row.style.padding = '6px 8px'
     const title = document.createElement('div')
@@ -274,6 +283,7 @@ function renderCodex(){
     time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
     row.appendChild(title); row.appendChild(body); row.appendChild(time)
     codexList.appendChild(row)
+    }
   }
 }
 
@@ -289,7 +299,22 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   await preloadAssets(manifest, (p)=>{
     textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
   })
-  engine.loadScenes(scenes)
+  // Optional authoring helper: roles mapping per scene to sprite IDs
+  const remappedScenes = (scenes as any[]).map(s => {
+    const roles = (s as any).roles as Record<string,string> | undefined
+    if(!roles) return s
+    const copy = JSON.parse(JSON.stringify(s))
+    copy.steps = (copy.steps||[]).map((st:any)=>{
+      if(st && typeof st === 'object' && (st.type==='spriteShow' || st.type==='spriteSwap' || st.type==='spriteHide')){
+        const role = st.role as string | undefined
+        if(role && roles[role]){ st.id = roles[role] }
+        delete st.role
+      }
+      return st
+    })
+    return copy
+  })
+  engine.loadScenes(remappedScenes as any)
   // Extract per-scene sprite defaults (optional authoring ergonomics)
   try {
     sceneSpriteDefaults as any
@@ -355,23 +380,62 @@ on('vn:step', ({ step, state }) => {
   bgLabel.textContent = state.bg ? `Background: ${state.bg}` : ''
   // Render background image
   bgEl.style.backgroundImage = state.bg ? `url(/${state.bg})` : ''
-  // Render sprites as positioned images
-  spritesEl.innerHTML = ''
-  const entries = Object.entries(state.sprites || {})
-  for(const [id, src] of entries){
-    const img = document.createElement('img')
-    img.src = `/${src}`
-    img.alt = id
+  // Render sprites as positioned images with reconciliation and transitions
+  ;(window as any)._spriteEls = (window as any)._spriteEls || {}
+  const spriteEls: Record<string, HTMLImageElement> = (window as any)._spriteEls
+  const current = new Set(Object.keys(state.sprites || {}))
+  // Remove missing with fade-out
+  for(const id of Object.keys(spriteEls)){
+    if(!current.has(id)){
+      const img = spriteEls[id]
+      img.style.transition = 'opacity 200ms ease, transform 200ms ease'
+      img.style.opacity = '0'
+      setTimeout(()=>{ try{ img.remove() }catch{}; delete spriteEls[id] }, 220)
+    }
+  }
+  // Add/update
+  for(const [id, src] of Object.entries(state.sprites || {})){
     const sceneId = state.sceneId || ''
     const global = (sceneSpriteDefaults[sceneId] || {})[id] || {}
     const meta = { ...global, ...(spriteMeta[id] || {}) }
     const pos = meta.pos || 'center'
     const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
     const scale = typeof meta.scale === 'number' ? meta.scale : 1
+    let img = spriteEls[id]
+    const existed = !!img
+    if(!img){
+      img = document.createElement('img')
+      img.style.position = 'absolute'
+      img.style.bottom = '0'
+      img.style.maxHeight = '60vh'
+      img.style.objectFit = 'contain'
+      img.style.filter = 'drop-shadow(0 6px 10px rgba(0,0,0,.6))'
+      img.style.transform = 'translateX(-50%) scale(1)'
+      img.style.opacity = '0'
+      img.style.transition = 'opacity 200ms ease, transform 200ms ease'
+      img.alt = id
+      spriteEls[id] = img
+      spritesEl.appendChild(img)
+      requestAnimationFrame(()=>{ img!.style.opacity = '1' })
+    }
+    // Crossfade on src change
+    if(img.src !== `${location.origin}/${src}`){
+      img.style.opacity = '0'
+      setTimeout(()=>{ img!.src = `/${src}`; img!.style.opacity = '1' }, 120)
+    }
+    // Positioning and depth scaling
     img.style.left = leftPct + '%'
     img.style.transform = `translateX(-50%) scale(${scale})`
-    if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
-    spritesEl.appendChild(img)
+    const prevZ = Number(img.style.zIndex || '0')
+    const nextZ = typeof meta.z === 'number' ? meta.z : prevZ
+    if(nextZ !== prevZ){
+      // Animate scale briefly to suggest depth change, then swap z-index
+      img.style.transform = `translateX(-50%) scale(${scale * 1.03})`
+      setTimeout(()=>{ img!.style.zIndex = String(nextZ); img!.style.transform = `translateX(-50%) scale(${scale})` }, 180)
+    } else {
+      if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
+    }
+    if(!existed && !img.src){ img.src = `/${src}` }
   }
   // clear UI
   nameEl.textContent = ''
@@ -597,6 +661,7 @@ openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'blo
 closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
 openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block' }
 closeCodexBtn.onclick = () => { codexPanel.style.display = 'none' }
+;(document.getElementById('codexSearch') as HTMLInputElement).addEventListener('input', ()=> renderCodex())
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }
