@@ -61,6 +61,7 @@ const achievements = new Achievements('aurora:minimal:ach')
 let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
+const spriteMeta: Record<string, { pos?: 'left'|'center'|'right'; z?: number }> = {}
 const BACKLOG_KEY = 'aurora:minimal:backlog'
 // Removed old Prefs type; replaced below with extended Prefs
 type Locale = 'en' | 'es'
@@ -262,6 +263,24 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
 }
 
 on('vn:step', ({ step, state }) => {
+  // Update sprite metadata if step carries positioning hints
+  try {
+    if(step && (step.type === 'spriteShow' || step.type === 'spriteSwap')){
+      const id = (step as any).id as string
+      if(id){
+        const pos = (step as any).pos as ('left'|'center'|'right'|undefined)
+        const z = typeof (step as any).z === 'number' ? (step as any).z as number : undefined
+        const cur = spriteMeta[id] || {}
+        if(pos) cur.pos = pos
+        if(z !== undefined) cur.z = z
+        spriteMeta[id] = cur
+      }
+    }
+    if(step && step.type === 'spriteHide'){
+      const id = (step as any).id as string
+      if(id) delete spriteMeta[id]
+    }
+  } catch {}
   // Skip Seen Text: if enabled, fast-forward previously seen dialogue lines
   try {
     if (prefs.skipSeenText && step && step.type === 'dialogue' && state.sceneId != null) {
@@ -273,13 +292,18 @@ on('vn:step', ({ step, state }) => {
   bgLabel.textContent = state.bg ? `Background: ${state.bg}` : ''
   // Render background image
   bgEl.style.backgroundImage = state.bg ? `url(/${state.bg})` : ''
-  // Render sprites as images
+  // Render sprites as positioned images
   spritesEl.innerHTML = ''
   const entries = Object.entries(state.sprites || {})
   for(const [id, src] of entries){
     const img = document.createElement('img')
     img.src = `/${src}`
     img.alt = id
+    const meta = spriteMeta[id] || {}
+    const pos = meta.pos || 'center'
+    const leftPct = pos === 'left' ? 20 : pos === 'right' ? 80 : 50
+    img.style.left = leftPct + '%'
+    if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
     spritesEl.appendChild(img)
   }
   // clear UI
