@@ -24,6 +24,9 @@ function collectStep(step, bg, music, sprites) {
         case 'spriteShow':
             sprites.add(step.src);
             break;
+        case 'spriteSwap':
+            sprites.add(step.src);
+            break;
     }
 }
 export async function preloadAssets(manifest, emit) {

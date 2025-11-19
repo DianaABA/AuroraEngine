@@ -83,6 +83,9 @@ export class VNEngine {
             case 'spriteShow':
                 this.sprites[step.id] = step.src;
                 break;
+            case 'spriteSwap':
+                this.sprites[step.id] = step.src;
+                break;
             case 'spriteHide':
                 delete this.sprites[step.id];
                 break;
@@ -186,7 +189,7 @@ export class VNEngine {
                     this.next();
                     continue;
                 }
-                if (step.type === 'spriteShow' || step.type === 'spriteHide' || step.type === 'background' || step.type === 'music' || step.type === 'flag' || step.type === 'sfx' || step.type === 'transition') {
+                if (step.type === 'spriteShow' || step.type === 'spriteSwap' || step.type === 'spriteHide' || step.type === 'background' || step.type === 'music' || step.type === 'flag' || step.type === 'sfx' || step.type === 'transition') {
                     if (step.type === 'transition')
                         this.pauseAfterTransition = true;
                     this.next();

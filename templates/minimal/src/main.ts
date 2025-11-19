@@ -4,6 +4,9 @@ const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
 const choicesEl = document.getElementById('choices')!
 const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
+const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
+const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
+const saveStatus = document.getElementById('saveStatus')!
 const bgLabel = document.getElementById('bgLabel')!
 
 const engine = createEngine({ autoEmit: true })
@@ -57,5 +60,26 @@ on('vn:step', ({ step, state }) => {
 })
 
 nextBtn.onclick = () => engine.next()
+
+const SAVE_KEY = 'aurora:minimal:quicksave'
+saveBtn.onclick = () => {
+  const snap = engine.snapshot()
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snap))
+    saveStatus.textContent = 'Saved'
+  }catch{
+    saveStatus.textContent = 'Save failed (storage)'
+  }
+}
+loadBtn.onclick = () => {
+  try{
+    const raw = localStorage.getItem(SAVE_KEY)
+    if(!raw){ saveStatus.textContent = 'No save found'; return }
+    engine.restore(JSON.parse(raw))
+    saveStatus.textContent = 'Loaded'
+  }catch{
+    saveStatus.textContent = 'Load failed'
+  }
+}
 
 boot()

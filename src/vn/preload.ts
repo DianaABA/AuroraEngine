@@ -21,6 +21,7 @@ function collectStep(step: SceneStep, bg:Set<string>, music:Set<string>, sprites
     case 'background': bg.add(step.src); break
     case 'music': music.add(step.track); break
     case 'spriteShow': sprites.add(step.src); break
+    case 'spriteSwap': sprites.add(step.src); break
   }
 }
 

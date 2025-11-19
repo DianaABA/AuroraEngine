@@ -53,6 +53,7 @@ export class VNEngine {
   }
   private applySideEffects(step: SceneStep | null){ if(!step) return; switch(step.type){
     case 'spriteShow': this.sprites[step.id] = step.src; break;
+    case 'spriteSwap': this.sprites[step.id] = step.src; break;
     case 'spriteHide': delete this.sprites[step.id]; break;
     case 'background': this.bg = step.src; break;
     case 'music': this.music = step.track; emitMusicTrackChange({ id: step.track, title: step.track }); emitMusicPlay({ id: step.track, title: step.track }); break;
@@ -114,7 +115,7 @@ export class VNEngine {
         this.next(); continue
       }
         if(step.type==='goto'){ this.next(); continue }
-        if(step.type==='spriteShow'||step.type==='spriteHide'||step.type==='background'||step.type==='music'||step.type==='flag'||step.type==='sfx'||step.type==='transition'){
+        if(step.type==='spriteShow'||step.type==='spriteSwap'||step.type==='spriteHide'||step.type==='background'||step.type==='music'||step.type==='flag'||step.type==='sfx'||step.type==='transition'){
         if(step.type==='transition') this.pauseAfterTransition = true
         this.next(); continue
       }

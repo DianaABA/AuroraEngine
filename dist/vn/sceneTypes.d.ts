@@ -12,6 +12,11 @@ export type SpriteHideStep = {
     type: 'spriteHide';
     id: string;
 };
+export type SpriteSwapStep = {
+    type: 'spriteSwap';
+    id: string;
+    src: string;
+};
 export type BackgroundStep = {
     type: 'background';
     src: string;
@@ -48,10 +53,10 @@ export type GotoStep = {
 };
 export type TransitionStep = {
     type: 'transition';
-    kind: 'fade' | 'slide';
+    kind: 'fade' | 'slide' | 'zoom' | 'shake' | 'flash';
     duration?: number;
 };
-export type SceneStep = DialogueStep | SpriteShowStep | SpriteHideStep | BackgroundStep | ChoiceStep | FlagSetStep | MusicStep | SfxStep | GotoStep | TransitionStep;
+export type SceneStep = DialogueStep | SpriteShowStep | SpriteHideStep | SpriteSwapStep | BackgroundStep | ChoiceStep | FlagSetStep | MusicStep | SfxStep | GotoStep | TransitionStep;
 export interface SceneDef {
     id: string;
     bg?: string;
