@@ -11,6 +11,7 @@ export { default as GameProgressionModule } from './state/modules/GameProgressio
 export type { ProgressionPlugin } from './state/modules/GameProgression';
 export { default as GameMetricsModule } from './state/modules/GameMetrics';
 export { default as Achievements } from './state/modules/Achievements';
+export { default as Gallery } from './state/modules/Gallery';
 export { getStorageMonitor } from './state/modules/StorageMonitor';
 export * from './vn/expr';
 export { VN_CONFIG } from './vn/config';
