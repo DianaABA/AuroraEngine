@@ -58,6 +58,7 @@ const savesList = document.getElementById('savesList') as HTMLDivElement
 const musicPlayBtn = document.getElementById('musicPlay') as HTMLButtonElement
 const musicPauseBtn = document.getElementById('musicPause') as HTMLButtonElement
 const musicStatus = document.getElementById('musicStatus') as HTMLSpanElement
+const notifications = document.getElementById('notifications') as HTMLDivElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -534,6 +535,40 @@ on('vn:transition', (e:any)=>{
     setTimeout(()=>{ fxEl.className = ''; (fxEl as HTMLElement).style.animationDuration = '' }, duration)
   }
 })
+
+// Debug: surface new engine events as ephemeral toasts
+on('vn:auto-choice', (d:any)=>{
+  try{
+    const msg = `[auto-choice] ${d.strategy||'auto'} -> #${d.chosenIndex} "${d.chosenLabel}" (${d.validOptions}/${d.options})`
+    showToast(msg)
+  }catch{}
+})
+on('vn:auto-loop-guard', (d:any)=>{
+  try{
+    const msg = `[auto-loop-guard] steps=${d.steps} max=${d.max}`
+    showToast(msg)
+  }catch{}
+})
+
+function showToast(message: string){
+  try{
+    const host = notifications || document.body
+    const div = document.createElement('div')
+    div.textContent = message
+    div.style.position = notifications? 'relative' : 'fixed'
+    if(!notifications){ div.style.right = '12px'; div.style.bottom = '12px' }
+    div.style.background = '#0f172a'
+    div.style.border = '1px solid #1e293b'
+    div.style.color = '#a0e7ff'
+    div.style.padding = '6px 8px'
+    div.style.marginTop = '6px'
+    div.style.borderRadius = '6px'
+    div.style.fontSize = '12px'
+    div.style.boxShadow = '0 6px 14px rgba(0,0,0,.5)'
+    host.appendChild(div)
+    setTimeout(()=>{ try{ div.remove() }catch{} }, 3000)
+  }catch{}
+}
 
 nextBtn.onclick = () => engine.next()
 
