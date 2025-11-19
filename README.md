@@ -152,12 +152,6 @@ Use it to tell your story.
 Build something you’re proud of.  
 Bring your world to life.
 
----
-
-# Aurora Engine
-
-Lean visual novel engine extracted from ChakraHearts, prepared for student creators.
-
 ## Quick Start (5 Minutes)
 ```ts
 import { createEngine } from 'aurora-engine';
