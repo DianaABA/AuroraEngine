@@ -17,6 +17,7 @@
       #choices{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
       button{background:#3e59ff;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
       button.secondary{background:#2b2f43}
+      #notifications{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:60vw;}
 
       /* Transition effects */
       @keyframes fadeOverlay { 0%{background:rgba(0,0,0,0)} 50%{background:rgba(0,0,0,1)} 100%{background:rgba(0,0,0,0)} }
@@ -133,6 +134,7 @@
           </div>
         </div>
       </div>
+      <div id="notifications" aria-live="polite"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
