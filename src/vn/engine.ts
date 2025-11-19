@@ -17,6 +17,7 @@ export class VNEngine {
   private config: VNEngineConfig
   private inAutoLoop = false
   private pauseOnNextDialogue = false
+  private pauseAfterTransition = false
   constructor(cfg: VNEngineConfig = {}){ this.config = { maxAutoSteps: 1000, ...cfg } }
   loadScenes(defs: SceneDef[]){ for(const s of defs){ this.scenes.set(s.id, s) } }
   start(id: string){
@@ -96,7 +97,6 @@ export class VNEngine {
     if(this.inAutoLoop) return
     this.inAutoLoop = true
     let steps = 0
-    let prevWasTransition = false
     const max = this.config.maxAutoSteps || 1000
     try {
       while(this.config.autoAdvance){
@@ -105,17 +105,18 @@ export class VNEngine {
       if(!step) break
       // Pause on the first dialogue encountered after a goto/choice scene change
       if(this.pauseOnNextDialogue && step.type === 'dialogue'){ this.pauseOnNextDialogue = false; break }
+        // Pause at the first dialogue after any transition, even if side-effects occur before it
+        if(this.pauseAfterTransition && step.type === 'dialogue'){ this.pauseAfterTransition = false; break }
       if(step.type==='choice'){
-        if(this.maybeAutoDecide()){ prevWasTransition = false; continue } else { break }
+        if(this.maybeAutoDecide()){ continue } else { break }
       }
       if(step.type==='dialogue'){
-        if(prevWasTransition) break
-        this.next(); prevWasTransition = false; continue
+        this.next(); continue
       }
-      if(step.type==='goto'){ this.next(); prevWasTransition = false; continue }
-      if(step.type==='spriteShow'||step.type==='spriteHide'||step.type==='background'||step.type==='music'||step.type==='flag'||step.type==='sfx'||step.type==='transition'){
-        const isTrans = step.type==='transition'
-        this.next(); prevWasTransition = isTrans; continue
+        if(step.type==='goto'){ this.next(); continue }
+        if(step.type==='spriteShow'||step.type==='spriteHide'||step.type==='background'||step.type==='music'||step.type==='flag'||step.type==='sfx'||step.type==='transition'){
+        if(step.type==='transition') this.pauseAfterTransition = true
+        this.next(); continue
       }
       break
       }

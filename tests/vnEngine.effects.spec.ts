@@ -142,4 +142,38 @@ describe('VNEngine side effects', () => {
     expect(eng.getCurrentStep()?.type).toBe('dialogue')
     expect(eng.getPublicState().sprites['hero']).toBeUndefined()
   })
+
+  it('treats sfx as side-effect only and pauses at next scene dialogue', () => {
+    const scenes: SceneDef[] = [
+      { id:'sfxflow', steps:[
+        { type:'dialogue', text:'Start' },
+        { type:'sfx', track:'click' },
+        { type:'flag', flag:'heard' },
+        { type:'goto', scene:'end' }
+      ]},
+      { id:'end', steps:[ { type:'dialogue', text:'Done' } ]}
+    ]
+    const eng = createEngine({ autoEmit:false, autoAdvance:true })
+    eng.loadScenes(scenes)
+    eng.start('sfxflow')
+    expect(eng.hasFlag('heard')).toBe(true)
+    expect(eng.getPublicState().sceneId).toBe('end')
+    expect(eng.getCurrentStep()?.type).toBe('dialogue')
+    expect(eng.getPublicState().index).toBe(0)
+  })
+
+  it('pauses on first dialogue after a transition even with side-effects in between', () => {
+    const scenes: SceneDef[] = [
+      { id:'t2', steps:[
+        { type:'transition', kind:'fade', duration:200 },
+        { type:'background', src:'bg-space.png' },
+        { type:'dialogue', text:'After fade in space' }
+      ]}
+    ]
+    const eng = createEngine({ autoEmit:false, autoAdvance:true })
+    eng.loadScenes(scenes)
+    eng.start('t2')
+    expect(eng.getPublicState().bg).toBe('bg-space.png')
+    expect(eng.getCurrentStep()?.type).toBe('dialogue')
+  })
 })

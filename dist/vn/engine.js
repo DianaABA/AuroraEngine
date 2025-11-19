@@ -11,6 +11,7 @@ export class VNEngine {
         this.sprites = {};
         this.inAutoLoop = false;
         this.pauseOnNextDialogue = false;
+        this.pauseAfterTransition = false;
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
     loadScenes(defs) { for (const s of defs) {
@@ -151,7 +152,6 @@ export class VNEngine {
             return;
         this.inAutoLoop = true;
         let steps = 0;
-        let prevWasTransition = false;
         const max = this.config.maxAutoSteps || 1000;
         try {
             while (this.config.autoAdvance) {
@@ -165,9 +165,13 @@ export class VNEngine {
                     this.pauseOnNextDialogue = false;
                     break;
                 }
+                // Pause at the first dialogue after any transition, even if side-effects occur before it
+                if (this.pauseAfterTransition && step.type === 'dialogue') {
+                    this.pauseAfterTransition = false;
+                    break;
+                }
                 if (step.type === 'choice') {
                     if (this.maybeAutoDecide()) {
-                        prevWasTransition = false;
                         continue;
                     }
                     else {
@@ -175,21 +179,17 @@ export class VNEngine {
                     }
                 }
                 if (step.type === 'dialogue') {
-                    if (prevWasTransition)
-                        break;
                     this.next();
-                    prevWasTransition = false;
                     continue;
                 }
                 if (step.type === 'goto') {
                     this.next();
-                    prevWasTransition = false;
                     continue;
                 }
                 if (step.type === 'spriteShow' || step.type === 'spriteHide' || step.type === 'background' || step.type === 'music' || step.type === 'flag' || step.type === 'sfx' || step.type === 'transition') {
-                    const isTrans = step.type === 'transition';
+                    if (step.type === 'transition')
+                        this.pauseAfterTransition = true;
                     this.next();
-                    prevWasTransition = isTrans;
                     continue;
                 }
                 break;

@@ -17,6 +17,7 @@ export declare class VNEngine {
     private config;
     private inAutoLoop;
     private pauseOnNextDialogue;
+    private pauseAfterTransition;
     constructor(cfg?: VNEngineConfig);
     loadScenes(defs: SceneDef[]): void;
     start(id: string): void;
