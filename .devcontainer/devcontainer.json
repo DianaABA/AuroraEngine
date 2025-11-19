@@ -1,0 +1,15 @@
+{
+  "name": "AuroraEngine Codespace",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "postCreateCommand": "npm ci",
+  "remoteUser": "node"
+}

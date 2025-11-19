@@ -1,4 +1,4 @@
-import { createEngine, on, loadScenesFromUrl } from 'aurora-engine'
+import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets } from 'aurora-engine'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -14,6 +14,12 @@ async function boot(){
     textEl.textContent = 'Failed to load scenes: '+errors.join(', ')
     return
   }
+  // Preload assets with simple progress UI
+  const manifest = buildPreloadManifest(scenes)
+  textEl.textContent = 'Loading assets...'
+  await preloadAssets(manifest, (p)=>{
+    textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
+  })
   engine.loadScenes(scenes)
   engine.start('intro')
 }

@@ -106,6 +106,18 @@ Deploy to Netlify: create a new site from your fork and set publish dir to `temp
 
 ---
 
+## Codespaces
+Open this repository in GitHub Codespaces and it will auto-install dependencies (via `.devcontainer/devcontainer.json`).
+Then run:
+
+```bash
+npm run template:minimal:dev
+```
+
+This builds the engine and starts the minimal browser demo.
+
+---
+
 ## 5-Minute Tutorial
 
 Install and run a tiny scene in code:
