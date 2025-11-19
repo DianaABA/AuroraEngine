@@ -39,11 +39,18 @@ const openSettingsBtn = document.getElementById('openSettings') as HTMLButtonEle
 const closeSettingsBtn = document.getElementById('closeSettings') as HTMLButtonElement
 const settingsPanel = document.getElementById('settingsPanel') as HTMLDivElement
 const toggleSkipSeenBtn = document.getElementById('toggleSkipSeen') as HTMLButtonElement
+const toggleSkipTransitionsBtn = document.getElementById('toggleSkipTransitions') as HTMLButtonElement
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
+const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
+const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
 const openBacklogBtn = document.getElementById('openBacklog') as HTMLButtonElement
 const closeBacklogBtn = document.getElementById('closeBacklog') as HTMLButtonElement
 const backlogPanel = document.getElementById('backlogPanel') as HTMLDivElement
 const backlogList = document.getElementById('backlogList') as HTMLDivElement
+const openSavesBtn = document.getElementById('openSaves') as HTMLButtonElement
+const closeSavesBtn = document.getElementById('closeSaves') as HTMLButtonElement
+const savesPanel = document.getElementById('savesPanel') as HTMLDivElement
+const savesList = document.getElementById('savesList') as HTMLDivElement
 const musicPlayBtn = document.getElementById('musicPlay') as HTMLButtonElement
 const musicPauseBtn = document.getElementById('musicPause') as HTMLButtonElement
 const musicStatus = document.getElementById('musicStatus') as HTMLSpanElement
@@ -55,11 +62,56 @@ let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
 const BACKLOG_KEY = 'aurora:minimal:backlog'
-type Prefs = { skipSeenText: boolean }
-let prefs: Prefs = { skipSeenText: false }
+// Removed old Prefs type; replaced below with extended Prefs
+type Locale = 'en' | 'es'
+type Prefs = { skipSeenText: boolean; skipTransitions: boolean; locale: Locale }
+let prefs: Prefs = { skipSeenText: false, skipTransitions: false, locale: 'en' }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
+
+// i18n strings
+const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
+  en: {
+    settings: ()=> 'Settings',
+    close: ()=> 'Close',
+    backlog: ()=> 'Backlog',
+    gallery: ()=> 'Gallery',
+    achievements: ()=> 'Achievements',
+    auto: (c:{on:boolean})=> `Auto: ${c.on? 'On':'Off'}`,
+    autoChoose: (c:{on:boolean})=> `Auto-Choose: ${c.on? 'On':'Off'}`,
+    skipFx: (c:{on:boolean})=> `Skip FX: ${c.on? 'On':'Off'}`,
+    skipSeen: (c:{on:boolean})=> `Skip Seen Text: ${c.on? 'On':'Off'}`,
+    skipTransitions: (c:{on:boolean})=> `Skip Transitions: ${c.on? 'On':'Off'}`,
+    clearSeen: ()=> 'Clear Seen',
+    language: ()=> 'Language',
+    english: ()=> 'English',
+    spanish: ()=> 'Spanish',
+    slots: ()=> 'Slots:',
+    saveN: (c:{n:number})=> `Save ${c.n}`,
+    loadN: (c:{n:number})=> `Load ${c.n}`,
+  },
+  es: {
+    settings: ()=> 'Ajustes',
+    close: ()=> 'Cerrar',
+    backlog: ()=> 'Historial',
+    gallery: ()=> 'Galería',
+    achievements: ()=> 'Logros',
+    auto: (c:{on:boolean})=> `Auto: ${c.on? 'Sí':'No'}`,
+    autoChoose: (c:{on:boolean})=> `Auto-Elegir: ${c.on? 'Sí':'No'}`,
+    skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'Sí':'No'}`,
+    skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'Sí':'No'}`,
+    skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'Sí':'No'}`,
+    clearSeen: ()=> 'Limpiar vistos',
+    language: ()=> 'Idioma',
+    english: ()=> 'Inglés',
+    spanish: ()=> 'Español',
+    slots: ()=> 'Ranuras:',
+    saveN: (c:{n:number})=> `Guardar ${c.n}`,
+    loadN: (c:{n:number})=> `Cargar ${c.n}`,
+  }
+}
+function t(key: string, ctx?: any){ const fn = STRINGS[prefs.locale][key]; return fn ? fn(ctx) : key }
 
 function loadBacklog(){
   try { const raw = localStorage.getItem(BACKLOG_KEY); backlog = raw ? JSON.parse(raw) : [] } catch { backlog = [] }
@@ -68,7 +120,13 @@ function saveBacklog(){
   try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
 }
 function loadPrefs(){
-  try { const raw = localStorage.getItem(PREFS_KEY); prefs = raw ? JSON.parse(raw) : { skipSeenText: false } } catch { prefs = { skipSeenText: false } }
+  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, locale: 'en' }
+  try {
+    const raw = localStorage.getItem(PREFS_KEY)
+    if(!raw){ prefs = defaults; return }
+    const parsed = JSON.parse(raw)
+    prefs = { ...defaults, ...parsed }
+  } catch { prefs = defaults }
 }
 function savePrefs(){
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch {}
@@ -186,6 +244,8 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   loadBacklog()
   loadPrefs()
   loadSeen()
+  // Apply preferences that affect runtime
+  skipFx = !!prefs.skipTransitions
   // Show Continue if autosave exists
   const ts = localStorage.getItem('aurora:minimal:autosave:ts')
   if(ts){
@@ -440,21 +500,73 @@ openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = '
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }
 closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none' }
-function refreshSettingsUI(){ toggleSkipSeenBtn.textContent = `Skip Seen Text: ${prefs.skipSeenText ? 'On' : 'Off'}` }
+function refreshSettingsUI(){
+  toggleSkipSeenBtn.textContent = t('skipSeen', { on: prefs.skipSeenText })
+  toggleSkipTransitionsBtn.textContent = t('skipTransitions', { on: prefs.skipTransitions })
+  ;(document.getElementById('settingsTitle') as HTMLElement).textContent = t('settings')
+  ;(document.getElementById('closeSettings') as HTMLButtonElement).textContent = t('close')
+  ;(document.getElementById('langLabel') as HTMLElement).textContent = t('language')
+  langEnBtn.textContent = t('english')
+  langEsBtn.textContent = t('spanish')
+}
 toggleSkipSeenBtn.onclick = () => { prefs.skipSeenText = !prefs.skipSeenText; savePrefs(); refreshSettingsUI() }
+toggleSkipTransitionsBtn.onclick = () => { prefs.skipTransitions = !prefs.skipTransitions; skipFx = prefs.skipTransitions; savePrefs(); refreshSettingsUI(); refreshSkipFx() }
 clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
+langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
+langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
+
+openSavesBtn.onclick = () => { renderSaves(); savesPanel.style.display = 'block' }
+closeSavesBtn.onclick = () => { savesPanel.style.display = 'none' }
+function renderSaves(){
+  savesList.innerHTML = ''
+  for(let n=1;n<=3;n++){
+    const row = document.createElement('div')
+    row.style.display = 'flex'
+    row.style.alignItems = 'center'
+    row.style.gap = '8px'
+    row.style.background = '#111827'
+    row.style.border = '1px solid #27304a'
+    row.style.borderRadius = '6px'
+    row.style.padding = '6px 8px'
+    const img = document.createElement('img')
+    img.style.width = '96px'; img.style.height = '54px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.border = '1px solid #27304a'
+    const key = `aurora:minimal:slot${n}`
+    try { img.src = localStorage.getItem(`${key}:thumb`) || '' } catch { img.src = '' }
+    const meta = document.createElement('div')
+    meta.style.flex = '1'
+    meta.style.color = '#a8b0ff'
+    meta.style.fontSize = '12px'
+    const ts = localStorage.getItem(`${key}:ts`)
+    meta.textContent = ts ? new Date(parseInt(ts)).toLocaleString() : '—'
+    const actions = document.createElement('div')
+    const saveB = document.createElement('button')
+    saveB.className = 'secondary'
+    saveB.textContent = t('saveN', { n })
+    saveB.onclick = ()=>{ saveToSlot(n); setTimeout(()=> renderSaves(), 50) }
+    const loadB = document.createElement('button')
+    loadB.className = 'secondary'
+    loadB.textContent = t('loadN', { n })
+    loadB.onclick = ()=> loadFromSlot(n)
+    actions.appendChild(saveB)
+    actions.appendChild(loadB)
+    row.appendChild(img)
+    row.appendChild(meta)
+    row.appendChild(actions)
+    savesList.appendChild(row)
+  }
+}
 
 function refreshAutoButtons(){
-  autoBtn.textContent = `Auto: ${engine.isAutoAdvance()? 'On':'Off'}`
-  autoChooseBtn.textContent = `Auto-Choose: ${engine.isAutoDecide()? 'On':'Off'}`
+  autoBtn.textContent = t('auto', { on: engine.isAutoAdvance() })
+  autoChooseBtn.textContent = t('autoChoose', { on: engine.isAutoDecide() })
 }
 
 autoBtn.onclick = () => { engine.setAutoAdvance(!engine.isAutoAdvance()); refreshAutoButtons() }
 autoChooseBtn.onclick = () => { engine.setAutoDecide(!engine.isAutoDecide()); refreshAutoButtons() }
 refreshAutoButtons()
 
-function refreshSkipFx(){ skipFxBtn.textContent = `Skip FX: ${skipFx? 'On':'Off'}` }
-skipFxBtn.onclick = () => { skipFx = !skipFx; refreshSkipFx() }
+function refreshSkipFx(){ skipFxBtn.textContent = t('skipFx', { on: skipFx }) }
+skipFxBtn.onclick = () => { skipFx = !skipFx; prefs.skipTransitions = skipFx; savePrefs(); refreshSkipFx(); refreshSettingsUI() }
 refreshSkipFx()
 
 function updateMusicStatus(){

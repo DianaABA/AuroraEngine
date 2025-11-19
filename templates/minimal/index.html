@@ -60,13 +60,19 @@
           </div>
           <div id="settingsPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#a0e7ff">Settings</strong>
+              <strong style="color:#a0e7ff" id="settingsTitle">Settings</strong>
               <button id="closeSettings" class="secondary">Close</button>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
               <button id="toggleSkipSeen" class="secondary">Skip Seen Text: Off</button>
+              <button id="toggleSkipTransitions" class="secondary">Skip Transitions: Off</button>
               <button id="clearSeen" class="secondary">Clear Seen</button>
               <span style="font-size:12px; color:#a8b0ff">Skips dialogue lines you have already seen.</span>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <strong style="color:#a0e7ff; font-size:12px" id="langLabel">Language</strong>
+              <button id="langEn" class="secondary">English</button>
+              <button id="langEs" class="secondary">Spanish</button>
             </div>
           </div>
           <div id="line"><span id="name"></span><span id="text"></span></div>
@@ -82,6 +88,7 @@
             <button id="openAch" class="secondary">Achievements</button>
             <button id="openSettings" class="secondary">Settings</button>
             <button id="openBacklog" class="secondary">Backlog</button>
+            <button id="openSaves" class="secondary">Saves</button>
             <button id="nextBtn" class="secondary">Next</button>
             <button id="saveBtn">Quick Save</button>
             <button id="loadBtn" class="secondary">Quick Load</button>
@@ -105,6 +112,13 @@
             <button class="secondary" id="slot3load">Load 3</button>
             <img id="slot3thumb" alt="" style="width:96px; height:54px; object-fit:cover; border-radius:4px; border:1px solid #27304a" />
             <span id="slotStatus" style="font-size:12px; color:#a8b0ff"></span>
+          </div>
+          <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#a0e7ff">Saves</strong>
+              <button id="closeSaves" class="secondary">Close</button>
+            </div>
+            <div id="savesList" style="display:flex; flex-direction:column; gap:8px;"></div>
           </div>
         </div>
       </div>
