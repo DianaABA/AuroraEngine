@@ -413,7 +413,7 @@ on('vn:step', ({ step, state }) => {
   for(const id of Object.keys(spriteEls)){
     if(!current.has(id)){
       const img = spriteEls[id]
-      img.style.transition = 'opacity 200ms ease, transform 200ms ease'
+      img.style.transition = 'opacity 200ms ease, transform 200ms ease, left 250ms ease-in-out'
       img.style.opacity = '0'
       setTimeout(()=>{ try{ img.remove() }catch{}; delete spriteEls[id] }, 220)
     }
@@ -449,6 +449,16 @@ on('vn:step', ({ step, state }) => {
       setTimeout(()=>{ img!.src = `/${src}`; img!.style.opacity = '1' }, 120)
     }
     // Positioning and depth scaling
+    // Allow per-step motion hints for the currently processed sprite
+    let moveMs = 250
+    let moveEase = 'ease-in-out'
+    try{
+      if(step && (step.type==='spriteShow' || step.type==='spriteSwap') && (step as any).id === id){
+        if(typeof (step as any).moveMs === 'number') moveMs = Math.max(0, (step as any).moveMs as number)
+        if(typeof (step as any).moveEase === 'string') moveEase = String((step as any).moveEase)
+      }
+    }catch{}
+    img.style.transition = `opacity 200ms ease, transform 200ms ease, left ${moveMs}ms ${moveEase}`
     img.style.left = leftPct + '%'
     img.style.transform = `translateX(-50%) scale(${scale})`
     const prevZ = Number(img.style.zIndex || '0')

@@ -23,7 +23,7 @@
   {
     "id": "pick_happy",
     "steps": [
-      { "type": "spriteSwap", "id": "hero", "src": "hero_happy.svg", "x": 30, "scale": 1.05 },
+      { "type": "spriteSwap", "id": "hero", "src": "hero_happy.svg", "x": 30, "scale": 1.05, "moveMs": 450, "moveEase": "ease-out" },
       { "type": "dialogue", "char": "Hero", "text": "Feeling great now!" },
       {
         "type": "choice",
@@ -37,7 +37,7 @@
   {
     "id": "pick_angry",
     "steps": [
-      { "type": "spriteSwap", "id": "hero", "src": "hero_angry.svg", "pos": "right", "scale": 0.95 },
+      { "type": "spriteSwap", "id": "hero", "src": "hero_angry.svg", "pos": "right", "scale": 0.95, "moveMs": 400, "moveEase": "ease-in" },
       { "type": "dialogue", "char": "Hero", "text": "Grrr... not happy about this." },
       {
         "type": "choice",
