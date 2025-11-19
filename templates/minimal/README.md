@@ -5,6 +5,7 @@ Now includes:
 - Start Example / Start Expressions buttons
 - Gallery panel (unlocks on a scene flag)
 - Achievements panel (unlocks "First CG" from Expressions)
+- Backlog panel (shows persisted dialogue history)
 - Auto / Auto-Choose toggles, and Skip FX toggle
 - Music controls (Play/Pause) with status
 
@@ -27,6 +28,8 @@ Then open http://localhost:5173
 - Unlocks a demo CG when the expressions scene sets `flag: "cg_intro"` (see `public/scenes/expressions.json`)
 - Gallery panel shows unlocked CGs (`public/cgs/*`)
 - Achievements panel lists unlocked achievements
+- Backlog panel collects each dialogue line after render and persists it in
+	`localStorage` (`aurora:minimal:backlog`) with a cap of ~200 entries
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
