@@ -35,6 +35,11 @@ const openCodexBtn = document.getElementById('openCodex') as HTMLButtonElement
 const closeCodexBtn = document.getElementById('closeCodex') as HTMLButtonElement
 const codexPanel = document.getElementById('codexPanel') as HTMLDivElement
 const codexList = document.getElementById('codexList') as HTMLDivElement
+const codexCategory = document.getElementById('codexCategory') as HTMLSelectElement
+const codexDetail = document.getElementById('codexDetail') as HTMLDivElement
+const codexDetailTitle = document.getElementById('codexDetailTitle') as HTMLDivElement
+const codexDetailBody = document.getElementById('codexDetailBody') as HTMLDivElement
+const codexDetailClose = document.getElementById('codexDetailClose') as HTMLButtonElement
 const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
@@ -260,7 +265,17 @@ function codexUnlock(id: string){
 function renderCodex(){
   codexList.innerHTML = ''
   const q = (document.getElementById('codexSearch') as HTMLInputElement)?.value?.toLowerCase() || ''
-  const items = readCodex().filter(it => !q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q))
+  const selectedCat = (codexCategory?.value||'').trim().toLowerCase()
+  const allItems = readCodex()
+  // Populate categories based on unlocked items
+  if(codexCategory && codexCategory.options.length <= 1){
+    const cats = Array.from(new Set(allItems.map(it=> it.category))).sort()
+    for(const c of cats){ const opt = document.createElement('option'); opt.value = c; opt.textContent = c; codexCategory.appendChild(opt) }
+  }
+  const items = allItems.filter(it =>
+    (!q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)) &&
+    (!selectedCat || it.category.toLowerCase() === selectedCat)
+  )
   if(items.length===0){
     const p = document.createElement('div')
     p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries yet.'
@@ -276,17 +291,23 @@ function renderCodex(){
     header.style.color = '#a0e7ff'; header.style.fontWeight = '600'; header.style.margin = '6px 0 2px'; header.textContent = cat
     codexList.appendChild(header)
     for(const it of groups[cat]){
-    const row = document.createElement('div')
-    row.style.background = '#111827'; row.style.border = '1px solid #27304a'; row.style.borderRadius = '6px'; row.style.padding = '6px 8px'
-    const title = document.createElement('div')
-    title.style.color = '#a0e7ff'; title.style.fontSize = '13px'; title.style.fontWeight = '600'
-    title.textContent = it.title
-    const body = document.createElement('div')
-    body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body
-    const time = document.createElement('div')
-    time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
-    row.appendChild(title); row.appendChild(body); row.appendChild(time)
-    codexList.appendChild(row)
+      const row = document.createElement('div')
+      row.style.background = '#111827'; row.style.border = '1px solid #27304a'; row.style.borderRadius = '6px'; row.style.padding = '6px 8px'
+      row.style.cursor = 'pointer'
+      const title = document.createElement('div')
+      title.style.color = '#a0e7ff'; title.style.fontSize = '13px'; title.style.fontWeight = '600'
+      title.textContent = it.title
+      const body = document.createElement('div')
+      body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body.length>120 ? (it.body.slice(0,120)+'…') : it.body
+      const time = document.createElement('div')
+      time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
+      row.appendChild(title); row.appendChild(body); row.appendChild(time)
+      row.onclick = ()=>{
+        codexDetailTitle.textContent = it.title
+        codexDetailBody.textContent = it.body
+        codexDetail.style.display = 'block'
+      }
+      codexList.appendChild(row)
     }
   }
 }
@@ -701,6 +722,8 @@ closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
 openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block' }
 closeCodexBtn.onclick = () => { codexPanel.style.display = 'none' }
 ;(document.getElementById('codexSearch') as HTMLInputElement).addEventListener('input', ()=> renderCodex())
+codexCategory.addEventListener('change', ()=> renderCodex())
+codexDetailClose.onclick = ()=> { codexDetail.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }
