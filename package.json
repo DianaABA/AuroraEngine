@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "private": false,
   "license": "MIT",
+  "author": "Bug queen flow studio",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
