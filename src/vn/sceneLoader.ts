@@ -58,3 +58,31 @@ export function simulateScene(s: SceneDef): string[] {
   }
   return log
 }
+
+// Convenience: parse scenes from a JSON string (array or object form)
+export function loadScenesFromJson(json: string): SceneLoadResult {
+  const errors: string[] = []
+  try {
+    const data = JSON.parse(json)
+    if (Array.isArray(data)) return loadSceneDefsFromArray(data)
+    if (data && typeof data === 'object') return loadSceneDefsFromObject(data as Record<string, any>)
+    return { scenes: [], errors: ['json_root_must_be_array_or_object'] }
+  } catch (e:any) {
+    errors.push('json_parse_error:'+ (e?.message||'unknown'))
+    return { scenes: [], errors }
+  }
+}
+
+// Convenience: fetch scenes JSON from a URL (browser/Node18+)
+export async function loadScenesFromUrl(url: string): Promise<SceneLoadResult> {
+  const errors: string[] = []
+  try {
+    const res = await fetch(url)
+    if(!res.ok) return { scenes: [], errors: ['http_'+res.status] }
+    const text = await res.text()
+    return loadScenesFromJson(text)
+  } catch (e:any) {
+    errors.push('fetch_error:'+ (e?.message||'unknown'))
+    return { scenes: [], errors }
+  }
+}

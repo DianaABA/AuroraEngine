@@ -83,6 +83,13 @@ Full documentation is in `/docs`.
 
 ---
 
+## Docs
+- Scene format: `docs/scene-format.md`
+- Achievements (draft): `docs/achievements.md`
+- Audio Jukebox (draft): `docs/jukebox.md`
+
+---
+
 ## 5-Minute Tutorial
 
 Install and run a tiny scene in code:
