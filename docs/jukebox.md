@@ -1,39 +1,24 @@
-# Audio Jukebox (Draft)
+# Jukebox
 
-Purpose: Provide a simple in-engine UI to browse and play unlocked BGM tracks.
+Control music playback decoupled from scene steps.
 
-Status: Draft. Depends on audio subsystem and asset manifests.
+Usage:
 
-## Concepts
-- Track: id, title, artist (optional), src
-- Unlock conditions: default unlocked or via gameplay
-- Persistence: unlocked list saved with snapshot
-
-## Data Shape (proposed)
 ```ts
-interface TrackDef {
-  id: string
-  title: string
-  artist?: string
-  src: string // path or key
-  unlockedByDefault?: boolean
-}
+import { Jukebox, onMusicTrackChange, onMusicPlay, onMusicPause } from 'aurora-engine'
+
+onMusicTrackChange((e)=> console.log('Track:', e.id))
+onMusicPlay((e)=> console.log('Play:', e.id))
+onMusicPause((e)=> console.log('Pause:', e.id))
+
+Jukebox.play('theme-1', 'Theme Song')
+Jukebox.pause()
 ```
 
-## Minimal API (proposed)
-```ts
-jukebox.load(tracks: TrackDef[])
-jukebox.list(): TrackDef[]
-jukebox.play(id: string)
-jukebox.stop()
-```
+API:
+- `Jukebox.play(id, title?)` — sets current track and emits `music:track-change` then `music:play`
+- `Jukebox.pause()` — emits `music:pause` for current track
+- `Jukebox.get()` — returns `{ id?, title?, isPlaying }`
 
-## UI Behavior
-- Show only unlocked tracks
-- Indicate currently playing track
-- Allow loop/stop
-
-## Future
-- Crossfade between tracks
-- Per-track preview points
-- Favorite/star system
+Notes:
+- Engine `music` steps also emit the same events; build UIs by listening once.

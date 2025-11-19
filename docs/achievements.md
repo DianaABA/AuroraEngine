@@ -5,9 +5,6 @@ Purpose: Provide a lightweight badge/unlock system to reward player actions.
 Status: Draft. Will evolve with save schema and UI integration.
 
 ## Concepts
-- Achievement: id, title, description, unlocked (bool), dateUnlocked
-- Triggers: engine events or evaluated expressions
-- Persistence: stored in save snapshot, with versioned schema
 
 ## Data Shape (proposed)
 ```ts
@@ -26,16 +23,36 @@ interface AchievementState {
 ```
 
 ## Usage (high-level)
-- Define `AchievementDef[]` in content layer.
-- Subscribe to engine events (`on('vn:step', ...)`) and call `unlock('achv_id')`.
-- Persist via existing save helpers.
 
 ## UI Ideas
-- Minimal overlay toast on unlock
-- Gallery/list page with filtering (all/locked/unlocked)
-- Secret achievements reveal on unlock
 
 ## Future
-- Hooks for analytics
-- Export/import achievement progress
-- Localization of titles/descriptions
+# Achievements
+
+Simple, persistent achievements with unlock events.
+
+Usage:
+
+```ts
+import Achievements from 'aurora-engine/dist/state/modules/Achievements'
+import { on } from 'aurora-engine'
+
+const achievements = new Achievements()
+on('achievements:unlock', (e)=>{
+  console.log('Unlocked:', e.id, e.title)
+})
+
+achievements.unlock('first-steps', { title: 'First Steps', meta:{ points:10 } })
+```
+
+API:
+- `new Achievements(storageKey?)` — optional custom storage key
+- `unlock(id, { title?, meta? })` — idempotent; emits `achievements:unlock`
+- `has(id)` — check unlocked
+- `list()` — ordered by `unlockedAt`
+- `reset()` — clears local data
+
+Events:
+- `achievements:unlock` with `{ id, title?, meta?, unlockedAt }`
+
+Persistence uses `localStorage` when available, otherwise keeps data in-memory for the session.
