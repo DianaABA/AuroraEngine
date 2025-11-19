@@ -241,7 +241,7 @@ See `ROADMAP.md` for planned features like:
 ---
 
 ## License
-MIT License.  
+MIT License — see `LICENSE`.  
 You are free to build, modify, and commercialize projects made with this engine.
 
 ---
