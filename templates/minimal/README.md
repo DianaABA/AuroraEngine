@@ -8,6 +8,8 @@ Now includes:
 - Backlog panel (shows persisted dialogue history)
  - Settings panel (Skip Seen Text + Clear Seen)
  - Slot thumbnails (auto-generated from background + sprites)
+- Saves panel listing slots with thumbnails and timestamps
+- Basic i18n (English/Spanish) for key UI labels
 - Auto / Auto-Choose toggles, and Skip FX toggle
 - Music controls (Play/Pause) with status
 
@@ -37,6 +39,8 @@ Then open http://localhost:5173
 	 `localStorage` as `aurora:minimal:seen`)
  - Save slots include thumbnails stored as data URLs in `localStorage`
 	 (`aurora:minimal:slot{n}:thumb`), rendered next to the slot buttons
+ - Saves panel shows 3 slots with thumbnail, timestamp, and Save/Load actions
+ - i18n: switch language in Settings (English/Spanish) affecting key controls
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
