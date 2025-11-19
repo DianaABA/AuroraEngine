@@ -4,6 +4,9 @@ A tiny Vite app that runs AuroraEngine in the browser and renders dialogue/choic
 Now includes:
 - Start Example / Start Expressions buttons
 - Gallery panel (unlocks on a scene flag)
+- Achievements panel (unlocks "First CG" from Expressions)
+- Auto / Auto-Choose toggles, and Skip FX toggle
+- Music controls (Play/Pause) with status
 
 ## Local Run
 ```powershell
@@ -23,6 +26,9 @@ Then open http://localhost:5173
 - Listens for `vn:step` events and updates the DOM
 - Unlocks a demo CG when the expressions scene sets `flag: "cg_intro"` (see `public/scenes/expressions.json`)
 - Gallery panel shows unlocked CGs (`public/cgs/*`)
+- Achievements panel lists unlocked achievements
+- Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
+- Music strip uses `Jukebox` and engine `music:*` events for status
 
 ## Deploy (Netlify)
 Deploy with one click:

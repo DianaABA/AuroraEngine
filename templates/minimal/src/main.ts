@@ -1,4 +1,4 @@
-import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery, Achievements } from 'aurora-engine'
+import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -8,6 +8,7 @@ const startExampleBtn = document.getElementById('startExample') as HTMLButtonEle
 const startExpressionsBtn = document.getElementById('startExpressions') as HTMLButtonElement
 const autoBtn = document.getElementById('autoBtn') as HTMLButtonElement
 const autoChooseBtn = document.getElementById('autoChooseBtn') as HTMLButtonElement
+const skipFxBtn = document.getElementById('skipFx') as HTMLButtonElement
 const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
 const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
@@ -29,10 +30,15 @@ const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
 const achList = document.getElementById('achList') as HTMLDivElement
+const musicPlayBtn = document.getElementById('musicPlay') as HTMLButtonElement
+const musicPauseBtn = document.getElementById('musicPause') as HTMLButtonElement
+const musicStatus = document.getElementById('musicStatus') as HTMLSpanElement
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
 const achievements = new Achievements('aurora:minimal:ach')
+let isPlaying = false
+let skipFx = false
 
 function renderGallery(){
   const items = gallery.list()
@@ -177,6 +183,7 @@ on('vn:step', ({ step, state }) => {
 
 // Visualize transitions with simple CSS effects
 on('vn:transition', (e:any)=>{
+  if(skipFx) return
   const kind = e.kind as string
   const duration = Number(e.duration || 300)
   // Clear any existing animations
@@ -283,3 +290,21 @@ function refreshAutoButtons(){
 autoBtn.onclick = () => { engine.setAutoAdvance(!engine.isAutoAdvance()); refreshAutoButtons() }
 autoChooseBtn.onclick = () => { engine.setAutoDecide(!engine.isAutoDecide()); refreshAutoButtons() }
 refreshAutoButtons()
+
+function refreshSkipFx(){ skipFxBtn.textContent = `Skip FX: ${skipFx? 'On':'Off'}` }
+skipFxBtn.onclick = () => { skipFx = !skipFx; refreshSkipFx() }
+refreshSkipFx()
+
+function updateMusicStatus(){
+  const track = engine.getPublicState().music
+  musicStatus.textContent = track ? `${track} — ${isPlaying? 'Playing':'Paused'}` : 'No track'
+}
+on('music:track-change', ()=> { /* engine updates track */ updateMusicStatus() })
+on('music:play', ()=> { isPlaying = true; updateMusicStatus() })
+on('music:pause', ()=> { isPlaying = false; updateMusicStatus() })
+
+musicPlayBtn.onclick = () => {
+  const track = engine.getPublicState().music || 'demo-track'
+  Jukebox.play(track, track)
+}
+musicPauseBtn.onclick = () => { Jukebox.pause() }
