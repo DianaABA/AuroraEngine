@@ -1,0 +1,9 @@
+import type { GameState } from './GameStateCore'
+export class GameHistory { private static instance: GameHistory; private stack: GameState[] = []; private max=50; static getInstance(){ if(!this.instance) this.instance = new GameHistory(); return this.instance }
+  configure(maxSteps:number){ this.max = Math.max(1, Math.min(500,maxSteps)) }
+  push(s:GameState){ this.stack.push(JSON.parse(JSON.stringify(s))); if(this.stack.length>this.max) this.stack.shift() }
+  canRollback(){ return this.stack.length>0 }
+  pop(){ return this.stack.pop()||null }
+  clear(){ this.stack=[] }
+}
+export default GameHistory

@@ -1,61 +1,120 @@
-# AuroraEngine
+# Aurora Engine
 
-Welcome to AuroraEngine – a modular Visual Novel (VN) engine monorepo!
+Lean visual novel engine extracted from ChakraHearts, prepared for student creators.
 
-## What is this?
-AuroraEngine is a clean, open-source foundation for building your own visual novels. It is designed for learning, rapid prototyping, and real projects. This repo is structured for use in Udemy courses and for anyone who wants to create their own VN episodes.
+## Quick Start (5 Minutes)
+```ts
+import { createEngine } from 'aurora-engine';
 
-## Structure
-- `/packages/engine` – The core VN engine (add your engine code here)
-- `/packages/episode-01` to `/packages/episode-06` – Empty episode packages (add your own scripts, assets, and logic)
+// Define minimal scenes
+const scenes = [
+  { id:'intro', bg:'lab.png', music:'calm.mp3', steps:[
+    { type:'dialogue', char:'Snowflake', text:'Welcome.' },
+    { type:'choice', options:[
+      { label:'Hi', goto:'friendly' },
+      { label:'Who are you?', goto:'suspicious' }
+    ]}
+  ]},
+  { id:'friendly', steps:[ { type:'dialogue', text:'Nice to meet you!' } ]},
+  { id:'suspicious', steps:[ { type:'dialogue', text:'I am... classified.' } ]}
+];
 
-## How to use
-1. Clone this repo or download it.
-2. Add your VN scripts and assets to one of the episode folders.
-3. Implement your engine logic in `/packages/engine`.
-4. Use a monorepo tool (like Yarn or npm workspaces) to manage dependencies.
+const engine = createEngine({ autoEmit:true });
+engine.loadScenes(scenes);
+engine.start('intro');
 
-## Getting Started
-- This repo is intentionally empty. You can:
-  - Add your own engine code to `/packages/engine`
-  - Add new episodes/scripts to `/packages/episode-01` through `/packages/episode-06`
-- See the `TODO.md` for a suggested contributor roadmap.
+// Listen for steps
+import { on } from 'aurora-engine/dist/utils/eventBus';
+on('vn:step', ({ step, state }) => {
+  // Render background state.bg, sprites state.sprites
+  if(step?.type==='dialogue') {
+    console.log(step.char? step.char+': '+step.text: step.text);
+  } else if(step?.type==='choice') {
+    step.options.forEach((o,i)=> console.log(i+') '+o.label));
+  }
+});
 
-## Build & Exports
-- Install dependencies at the repo root:
+// Choosing an option:
+// engine.choose(0);
+```
 
-  ```powershell
-  npm install
-  ```
+Save / Load:
+```ts
+import { saveSnapshotLS, loadSnapshotLS } from 'aurora-engine/dist/vn/save';
+// Save
+saveSnapshotLS('vn_save_slot_1', engine.snapshot());
+// Restore
+const snap = loadSnapshotLS('vn_save_slot_1');
+if(snap) engine.restore(snap);
+```
 
-- Build all workspaces (engine + episodes):
+Animations (fade / slide): push a transition step:
+```ts
+{ type:'transition', kind:'fade', duration:600 }
+```
 
-  ```powershell
-  npm run build
-  ```
+## Included
+A lightweight visual novel / story progression core. Excludes proprietary story scripts, audio assets, localization strings, and episode-specific data.
 
-- Build a single workspace (example: episode-01):
+## Included
+- Core state container (`GameStateManager`, `GameStateCore`, `GameHistory`).
+- Modular state facets: flags, metrics, progression (stub), storage monitoring.
+- Persistence helpers (localStorage wrappers + async Result-based API).
+- Event bus utilities for decoupled in-app events.
+- Expression evaluator (`expr`) for simple conditional logic.
+- Step runner for applying VN steps.
+- Basic VN config constants.
 
-  ```powershell
-  npm run build --workspace @auroraengine/episode-01
-  ```
+## Excluded
+- Narrative scripts, scenes, dialogue tables.
+- Audio and music assets.
+- Episode manifests and routing.
+- Localization / translation utilities.
 
-### Package outputs
-Each package builds to `dist/` and ships dual CJS/ESM + types:
+## Install (local path example)
+```bash
+npm install ../aurora/engine
+```
 
-- `exports` → `require: ./dist/index.cjs`, `import: ./dist/index.mjs`, `types: ./dist/index.d.ts`
-- `main` points to CJS, `module` points to ESM, `types` points to DTS
+## Usage
+```ts
+import { GameStateManager, exprEval, runSteps } from 'aurora-engine'
 
-If the engine package contains unfinished code, its build may fail. You can still build episodes individually as shown above.
+const manager = new GameStateManager()
+manager.init()
 
-## For Udemy Students
-- Follow along with the course to implement your own VN features.
-- Use the episode folders to organize your story content.
-- Ask questions and share your progress!
+// Evaluate a simple flag expression
+const canShowScene = exprEval('flag:hasKey && metric:affinity > 2', manager.getState())
 
-## Contributing
-- Fork the repo and submit pull requests.
-- See `CONTRIBUTING.md` for guidelines (to be added).
+if (canShowScene) {
+  runSteps(manager, [ { kind: 'flag', key: 'enteredRoom', value: true } ])
+}
+```
 
----
-Happy creating!
+## Providing Content
+You are responsible for:
+- Creating scene data / step arrays consumed by `runSteps`.
+- Defining progression rules (extend `GameProgressionModule`).
+- Supplying UI components (in a separate `aurora/ui` package) that bind to this engine.
+
+## Extending Progression
+`GameProgressionModule` is a stub. Replace with your own logic (e.g. chapter gating, branching graphs). Keep a consistent API surface (`tick(state)`, `advance(data)` etc).
+
+## Events
+Use the event bus (`on(event, handler)` and `emit(event, detail?)`) to wire UI overlays, persistence triggers, analytics, etc.
+
+## Persistence
+`persistence.v2.ts` exposes an async API with a Result style (`ok(value)` / `err(message)`). Wrap remote storage, encryption, or cloud sync behind this adapter.
+
+## Versioned Save Schema
+`saveSchema` helps track save data version. Increment when structural changes to saves occur and implement migration where needed.
+
+## Roadmap (Suggested)
+- Scene JSON authoring docs (`docs/scene-format.md`).
+- Drag-and-drop asset folder template.
+- Netlify deploy button.
+- Codespaces / StackBlitz starter.
+- AI prompt examples for writing and fixing scenes.
+
+## License
+Inherit the root project license (see repository). Do not include copyrighted episode content here.

@@ -1,26 +1,34 @@
 {
-  "name": "auroraengine-monorepo",
-  "private": true,
-  "workspaces": [
-    "packages/engine",
-    "packages/episode-01",
-    "packages/episode-02",
-    "packages/episode-03",
-    "packages/episode-04",
-    "packages/episode-05",
-    "packages/episode-06"
+  "name": "aurora-engine",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "src"
   ],
-  "description": "Monorepo for AuroraEngine VN engine and episodes. Add your engine code and episodes in /packages.",
-  "version": "0.1.0",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "npm run build -ws",
-    "clean": "npm run clean -ws",
-    "lint": "echo 'add linter later'",
-    "typecheck": "tsc -v > NUL"
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "dev": "npm run build -- --watch",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "rimraf": "^6.0.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.3"
+    "@types/node": "^20.11.30",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.9.3",
+    "vitest": "^1.5.0"
   }
 }
