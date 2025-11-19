@@ -28,12 +28,17 @@ class GameStateManager {
         this.instance = new GameStateManager(); return this.instance; }
     getCurrentState() { return safeDeepClone(this.state); }
     updateState(partial) { const now = Date.now(); const prev = this.state.lastPlayTime || now; const session = Math.max(0, now - prev); this.state = { ...this.state, ...partial, playTime: this.state.playTime + session, lastPlayTime: now }; this.emit('stateUpdate', safeDeepClone(this.state)); this.validate(); }
-    validate() { try {
-        const issues = GameStateCore.getInstance().validate();
-        if (issues.length)
-            emitGameStateCorrupt({ reason: issues.join(',') });
+    validate() {
+        try {
+            const issues = GameStateCore.getInstance().validate();
+            if (issues.length)
+                emitGameStateCorrupt({ reason: issues.join(',') });
+        }
+        catch (e) {
+            const msg = (e && (e.message || e.toString && e.toString())) || 'unknown';
+            emitGameStateCorrupt({ reason: 'exception:' + String(msg) });
+        }
     }
-    catch { } }
     on(ev, fn) { const set = this.listeners.get(ev) || new Set(); set.add(fn); this.listeners.set(ev, set); return () => { set.delete(fn); }; }
     emit(ev, p) { const set = this.listeners.get(ev); if (!set)
         return; for (const fn of set) {

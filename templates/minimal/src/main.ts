@@ -339,7 +339,13 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     })
     return copy
   })
-  engine.loadScenes(remappedScenes as any)
+  try{
+    engine.loadScenes(remappedScenes as any)
+  }catch(e:any){
+    console.error('Scene load failed', e)
+    textEl.textContent = 'Scene validation failed: '+ (e?.message||e)
+    return
+  }
   // Extract per-scene sprite defaults (optional authoring ergonomics)
   try {
     sceneSpriteDefaults as any
@@ -364,7 +370,13 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   } else {
     continueBtn.style.display = 'none'
   }
-  engine.start(startSceneId)
+  try{
+    engine.start(startSceneId)
+  }catch(e:any){
+    console.error('Engine start failed', e)
+    textEl.textContent = 'Engine start failed: '+ (e?.message||e)
+    return
+  }
   // Load slot thumbnails if present
   refreshSlotThumb(1)
   refreshSlotThumb(2)

@@ -1,6 +1,7 @@
 import { emit } from '../utils/eventBus';
 import { emitMusicTrackChange, emitMusicPlay } from '../utils/eventBus';
 import { evaluateCondition } from './expression';
+import { validateSceneLinks } from './sceneLoader';
 export class VNEngine {
     constructor(cfg = {}) {
         this.scenes = new Map();
@@ -14,9 +15,15 @@ export class VNEngine {
         this.pauseAfterTransition = false;
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
-    loadScenes(defs) { for (const s of defs) {
-        this.scenes.set(s.id, s);
-    } }
+    loadScenes(defs) {
+        for (const s of defs) {
+            this.scenes.set(s.id, s);
+        }
+        const linkErrors = validateSceneLinks([...this.scenes.values()]);
+        if (linkErrors.length) {
+            throw new Error('scene_validation_failed:' + linkErrors.join(';'));
+        }
+    }
     start(id) {
         if (!this.scenes.has(id))
             throw new Error('scene_not_found:' + id);
@@ -127,24 +134,40 @@ export class VNEngine {
         if (!shouldAuto)
             return false;
         let chosen = null;
+        let strategy = undefined;
         if (choiceStep.autoSingle && valid.length === 1) {
             chosen = valid[0];
+            strategy = 'autoSingle';
         }
         else if (choiceStep.autoStrategy === 'firstValid') {
             chosen = valid[0];
+            strategy = 'firstValid';
         }
         else if (choiceStep.autoStrategy === 'random') {
             chosen = valid[Math.floor(Math.random() * valid.length)];
+            strategy = 'random';
         }
         else if (choiceStep.autoStrategy === 'highestWeight') {
             chosen = valid.slice().sort((a, b) => (b.weight || 0) - (a.weight || 0))[0];
+            strategy = 'highestWeight';
         }
         else if (cfg.autoDecide && valid.length === 1) {
             chosen = valid[0];
+            strategy = 'autoDecideSingle';
         }
         if (!chosen)
             return false;
         const idx = choiceStep.options.indexOf(chosen);
+        emit('vn:auto-choice', {
+            sceneId: this.currentSceneId,
+            index: this.index,
+            chosenIndex: idx,
+            chosenLabel: chosen.label,
+            strategy,
+            options: choiceStep.options.length,
+            validOptions: valid.length,
+            state: this.getPublicState()
+        });
         this.choose(idx);
         return true;
     }
@@ -158,8 +181,10 @@ export class VNEngine {
         const max = this.config.maxAutoSteps || 1000;
         try {
             while (this.config.autoAdvance) {
-                if (steps++ > max)
+                if (steps++ > max) {
+                    emit('vn:auto-loop-guard', { steps, max, state: this.getPublicState() });
                     break;
+                }
                 const step = this.getCurrentStep();
                 if (!step)
                     break;
