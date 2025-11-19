@@ -1,0 +1,15 @@
+{
+  "name": "auroraengine-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/engine",
+    "packages/episode-01",
+    "packages/episode-02",
+    "packages/episode-03",
+    "packages/episode-04",
+    "packages/episode-05",
+    "packages/episode-06"
+  ],
+  "description": "Monorepo for AuroraEngine VN engine and episodes. Add your engine code and episodes in /packages.",
+  "version": "0.1.0"
+}

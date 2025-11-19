@@ -1,0 +1,7 @@
+{
+  "name": "@auroraengine/engine",
+  "version": "0.1.0",
+  "main": "index.js",
+  "description": "Core VN engine logic. Add your engine code here.",
+  "license": "MIT"
+}
