@@ -58,6 +58,17 @@
             </div>
             <div id="backlogList" style="display:flex; flex-direction:column; gap:6px;"></div>
           </div>
+          <div id="settingsPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#a0e7ff">Settings</strong>
+              <button id="closeSettings" class="secondary">Close</button>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <button id="toggleSkipSeen" class="secondary">Skip Seen Text: Off</button>
+              <button id="clearSeen" class="secondary">Clear Seen</button>
+              <span style="font-size:12px; color:#a8b0ff">Skips dialogue lines you have already seen.</span>
+            </div>
+          </div>
           <div id="line"><span id="name"></span><span id="text"></span></div>
           <div id="choices"></div>
           <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
@@ -69,6 +80,7 @@
             <button id="skipFx" class="secondary">Skip FX: Off</button>
             <button id="openGallery" class="secondary">Gallery</button>
             <button id="openAch" class="secondary">Achievements</button>
+            <button id="openSettings" class="secondary">Settings</button>
             <button id="openBacklog" class="secondary">Backlog</button>
             <button id="nextBtn" class="secondary">Next</button>
             <button id="saveBtn">Quick Save</button>

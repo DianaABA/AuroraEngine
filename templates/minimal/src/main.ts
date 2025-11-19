@@ -32,6 +32,11 @@ const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
 const achList = document.getElementById('achList') as HTMLDivElement
+const openSettingsBtn = document.getElementById('openSettings') as HTMLButtonElement
+const closeSettingsBtn = document.getElementById('closeSettings') as HTMLButtonElement
+const settingsPanel = document.getElementById('settingsPanel') as HTMLDivElement
+const toggleSkipSeenBtn = document.getElementById('toggleSkipSeen') as HTMLButtonElement
+const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const openBacklogBtn = document.getElementById('openBacklog') as HTMLButtonElement
 const closeBacklogBtn = document.getElementById('closeBacklog') as HTMLButtonElement
 const backlogPanel = document.getElementById('backlogPanel') as HTMLDivElement
@@ -47,12 +52,29 @@ let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
 const BACKLOG_KEY = 'aurora:minimal:backlog'
+type Prefs = { skipSeenText: boolean }
+let prefs: Prefs = { skipSeenText: false }
+const PREFS_KEY = 'aurora:minimal:prefs'
+let seenLines = new Set<string>()
+const SEEN_KEY = 'aurora:minimal:seen'
 
 function loadBacklog(){
   try { const raw = localStorage.getItem(BACKLOG_KEY); backlog = raw ? JSON.parse(raw) : [] } catch { backlog = [] }
 }
 function saveBacklog(){
   try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
+}
+function loadPrefs(){
+  try { const raw = localStorage.getItem(PREFS_KEY); prefs = raw ? JSON.parse(raw) : { skipSeenText: false } } catch { prefs = { skipSeenText: false } }
+}
+function savePrefs(){
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch {}
+}
+function loadSeen(){
+  try { const raw = localStorage.getItem(SEEN_KEY); const arr: string[] = raw ? JSON.parse(raw) : []; seenLines = new Set(arr) } catch { seenLines = new Set() }
+}
+function saveSeen(){
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(seenLines))) } catch {}
 }
 function renderBacklog(){
   backlogList.innerHTML = ''
@@ -159,6 +181,8 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   })
   engine.loadScenes(scenes)
   loadBacklog()
+  loadPrefs()
+  loadSeen()
   // Show Continue if autosave exists
   const ts = localStorage.getItem('aurora:minimal:autosave:ts')
   if(ts){
@@ -171,6 +195,13 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
 }
 
 on('vn:step', ({ step, state }) => {
+  // Skip Seen Text: if enabled, fast-forward previously seen dialogue lines
+  try {
+    if (prefs.skipSeenText && step && step.type === 'dialogue' && state.sceneId != null) {
+      const k = `${state.sceneId}:${state.index}`
+      if (seenLines.has(k)) { engine.next(); return }
+    }
+  } catch {}
   // background label (we don't actually load images in this minimal demo)
   bgLabel.textContent = state.bg ? `Background: ${state.bg}` : ''
   // Render background image
@@ -199,6 +230,13 @@ on('vn:step', ({ step, state }) => {
   if(step.type === 'dialogue'){
     if(step.char){ nameEl.textContent = step.char+': ' }
     textEl.textContent = step.text
+    // Mark as seen after showing
+    try {
+      if (state.sceneId != null) {
+        const k2 = `${state.sceneId}:${state.index}`
+        if (!seenLines.has(k2)) { seenLines.add(k2); saveSeen() }
+      }
+    } catch {}
     // Append to backlog (cap to 200 entries)
     backlog.push({ char: step.char, text: step.text })
     if(backlog.length > 200) backlog.shift()
@@ -337,6 +375,11 @@ openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'blo
 closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
+openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }
+closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none' }
+function refreshSettingsUI(){ toggleSkipSeenBtn.textContent = `Skip Seen Text: ${prefs.skipSeenText ? 'On' : 'Off'}` }
+toggleSkipSeenBtn.onclick = () => { prefs.skipSeenText = !prefs.skipSeenText; savePrefs(); refreshSettingsUI() }
+clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
 
 function refreshAutoButtons(){
   autoBtn.textContent = `Auto: ${engine.isAutoAdvance()? 'On':'Off'}`
