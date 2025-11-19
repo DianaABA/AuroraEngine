@@ -21,3 +21,4 @@ export * from './utils/logger';
 export * from './utils/metrics';
 export * from './utils/corruptionRecovery';
 export { Jukebox } from './utils/jukebox';
+export * from './utils/expressions';

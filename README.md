@@ -92,6 +92,7 @@ Full documentation is in `/docs`.
 - Error fix guide: `docs/prompt-fix-errors.md`
 
 - Changelog: `CHANGELOG.md`
+ - Expressions: `docs/expressions.md`
 
 ---
 
