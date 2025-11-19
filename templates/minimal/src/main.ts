@@ -32,6 +32,10 @@ const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
 const achList = document.getElementById('achList') as HTMLDivElement
+const openBacklogBtn = document.getElementById('openBacklog') as HTMLButtonElement
+const closeBacklogBtn = document.getElementById('closeBacklog') as HTMLButtonElement
+const backlogPanel = document.getElementById('backlogPanel') as HTMLDivElement
+const backlogList = document.getElementById('backlogList') as HTMLDivElement
 const musicPlayBtn = document.getElementById('musicPlay') as HTMLButtonElement
 const musicPauseBtn = document.getElementById('musicPause') as HTMLButtonElement
 const musicStatus = document.getElementById('musicStatus') as HTMLSpanElement
@@ -41,6 +45,38 @@ const gallery = new Gallery('aurora:minimal:gallery')
 const achievements = new Achievements('aurora:minimal:ach')
 let isPlaying = false
 let skipFx = false
+let backlog: { char?: string; text: string }[] = []
+const BACKLOG_KEY = 'aurora:minimal:backlog'
+
+function loadBacklog(){
+  try { const raw = localStorage.getItem(BACKLOG_KEY); backlog = raw ? JSON.parse(raw) : [] } catch { backlog = [] }
+}
+function saveBacklog(){
+  try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
+}
+function renderBacklog(){
+  backlogList.innerHTML = ''
+  if(backlog.length===0){
+    const p = document.createElement('div')
+    p.style.color = '#a8b0ff'
+    p.style.fontSize = '12px'
+    p.textContent = 'No dialogue yet.'
+    backlogList.appendChild(p)
+    return
+  }
+  for(const entry of backlog){
+    const row = document.createElement('div')
+    row.style.background = '#111827'
+    row.style.border = '1px solid #27304a'
+    row.style.borderRadius = '6px'
+    row.style.padding = '6px 8px'
+    const who = entry.char ? `${entry.char}: ` : ''
+    row.textContent = who + entry.text
+    row.style.color = '#a8b0ff'
+    row.style.fontSize = '12px'
+    backlogList.appendChild(row)
+  }
+}
 
 function renderGallery(){
   const items = gallery.list()
@@ -122,6 +158,7 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
   })
   engine.loadScenes(scenes)
+  loadBacklog()
   // Show Continue if autosave exists
   const ts = localStorage.getItem('aurora:minimal:autosave:ts')
   if(ts){
@@ -162,6 +199,10 @@ on('vn:step', ({ step, state }) => {
   if(step.type === 'dialogue'){
     if(step.char){ nameEl.textContent = step.char+': ' }
     textEl.textContent = step.text
+    // Append to backlog (cap to 200 entries)
+    backlog.push({ char: step.char, text: step.text })
+    if(backlog.length > 200) backlog.shift()
+    saveBacklog()
   } else if(step.type === 'choice'){
     nextBtn.style.display = 'none'
     step.options.forEach((opt, idx) => {
@@ -294,6 +335,8 @@ openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = '
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }
 openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block' }
 closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
+openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
+closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
 
 function refreshAutoButtons(){
   autoBtn.textContent = `Auto: ${engine.isAutoAdvance()? 'On':'Off'}`

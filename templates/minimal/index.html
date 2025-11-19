@@ -51,6 +51,13 @@
             </div>
             <div id="galleryGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:8px;"></div>
           </div>
+          <div id="backlogPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px; max-height:240px; overflow:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#a0e7ff">Backlog</strong>
+              <button id="closeBacklog" class="secondary">Close</button>
+            </div>
+            <div id="backlogList" style="display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
           <div id="line"><span id="name"></span><span id="text"></span></div>
           <div id="choices"></div>
           <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
@@ -62,6 +69,7 @@
             <button id="skipFx" class="secondary">Skip FX: Off</button>
             <button id="openGallery" class="secondary">Gallery</button>
             <button id="openAch" class="secondary">Achievements</button>
+            <button id="openBacklog" class="secondary">Backlog</button>
             <button id="nextBtn" class="secondary">Next</button>
             <button id="saveBtn">Quick Save</button>
             <button id="loadBtn" class="secondary">Quick Load</button>
