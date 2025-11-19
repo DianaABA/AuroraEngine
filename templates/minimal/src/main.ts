@@ -7,6 +7,13 @@ const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
 const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
 const saveStatus = document.getElementById('saveStatus')!
+const slot1save = document.getElementById('slot1save') as HTMLButtonElement
+const slot1load = document.getElementById('slot1load') as HTMLButtonElement
+const slot2save = document.getElementById('slot2save') as HTMLButtonElement
+const slot2load = document.getElementById('slot2load') as HTMLButtonElement
+const slot3save = document.getElementById('slot3save') as HTMLButtonElement
+const slot3load = document.getElementById('slot3load') as HTMLButtonElement
+const slotStatus = document.getElementById('slotStatus')!
 const bgLabel = document.getElementById('bgLabel')!
 
 const engine = createEngine({ autoEmit: true })
@@ -57,6 +64,11 @@ on('vn:step', ({ step, state }) => {
     // auto-advance steps are handled by engine.next() calls triggered via user Next
     textEl.textContent = `${step.type}`
   }
+  // Autosave after every step render
+  try{
+    const snap = engine.snapshot()
+    localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
+  }catch{}
 })
 
 nextBtn.onclick = () => engine.next()
@@ -81,5 +93,28 @@ loadBtn.onclick = () => {
     saveStatus.textContent = 'Load failed'
   }
 }
+
+function saveToSlot(n: number){
+  const key = `aurora:minimal:slot${n}`
+  try{
+    localStorage.setItem(key, JSON.stringify(engine.snapshot()))
+    slotStatus.textContent = `Saved to ${n}`
+  }catch{ slotStatus.textContent = `Save ${n} failed` }
+}
+function loadFromSlot(n: number){
+  const key = `aurora:minimal:slot${n}`
+  try{
+    const raw = localStorage.getItem(key)
+    if(!raw){ slotStatus.textContent = `No save ${n}`; return }
+    engine.restore(JSON.parse(raw))
+    slotStatus.textContent = `Loaded ${n}`
+  }catch{ slotStatus.textContent = `Load ${n} failed` }
+}
+slot1save.onclick = ()=> saveToSlot(1)
+slot1load.onclick = ()=> loadFromSlot(1)
+slot2save.onclick = ()=> saveToSlot(2)
+slot2load.onclick = ()=> loadFromSlot(2)
+slot3save.onclick = ()=> saveToSlot(3)
+slot3load.onclick = ()=> loadFromSlot(3)
 
 boot()
