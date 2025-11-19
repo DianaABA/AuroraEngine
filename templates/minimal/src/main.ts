@@ -1,4 +1,4 @@
-import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets } from 'aurora-engine'
+import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery } from 'aurora-engine'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -19,8 +19,46 @@ const slot3load = document.getElementById('slot3load') as HTMLButtonElement
 const slotStatus = document.getElementById('slotStatus')!
 const bgLabel = document.getElementById('bgLabel')!
 const fxEl = document.getElementById('fx')!
+const openGalleryBtn = document.getElementById('openGallery') as HTMLButtonElement
+const closeGalleryBtn = document.getElementById('closeGallery') as HTMLButtonElement
+const galleryPanel = document.getElementById('galleryPanel') as HTMLDivElement
+const galleryGrid = document.getElementById('galleryGrid') as HTMLDivElement
 
 const engine = createEngine({ autoEmit: true })
+const gallery = new Gallery('aurora:minimal:gallery')
+
+function renderGallery(){
+  const items = gallery.list()
+  galleryGrid.innerHTML = ''
+  if(items.length === 0){
+    const p = document.createElement('div')
+    p.style.color = '#a8b0ff'
+    p.style.fontSize = '12px'
+    p.textContent = 'No CGs unlocked yet.'
+    galleryGrid.appendChild(p)
+    return
+  }
+  for(const it of items){
+    const card = document.createElement('div')
+    card.style.background = '#111827'
+    card.style.border = '1px solid #27304a'
+    card.style.borderRadius = '6px'
+    card.style.overflow = 'hidden'
+    const img = document.createElement('img')
+    img.src = `/${it.src}`
+    img.alt = it.title || it.id
+    img.style.width = '100%'
+    img.style.display = 'block'
+    const cap = document.createElement('div')
+    cap.style.padding = '6px 8px'
+    cap.style.color = '#a8b0ff'
+    cap.style.fontSize = '12px'
+    cap.textContent = it.title || it.id
+    card.appendChild(img)
+    card.appendChild(cap)
+    galleryGrid.appendChild(card)
+  }
+}
 
 async function boot(scenePath: string, startSceneId: string = 'intro'){
   const { scenes, errors } = await loadScenesFromUrl(scenePath)
@@ -81,6 +119,14 @@ on('vn:step', ({ step, state }) => {
     const snap = engine.snapshot()
     localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
     localStorage.setItem('aurora:minimal:autosave:ts', String(Date.now()))
+  }catch{}
+
+  // Demo: unlock a CG when the scene sets a specific flag
+  try{
+    if(engine.hasFlag('cg_intro') && !gallery.has('cg_intro')){
+      gallery.unlock('cg_intro', 'cgs/cg1.svg', { title: 'Intro CG' })
+      if(galleryPanel.style.display !== 'none') renderGallery()
+    }
   }catch{}
 })
 
@@ -178,3 +224,6 @@ boot('/scenes/example.json', 'intro')
 // Allow switching demos on demand
 startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
+
+openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block' }
+closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }

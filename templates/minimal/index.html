@@ -32,12 +32,20 @@
         <div id="fx"></div>
         <div id="bgLabel"></div>
         <div id="content">
+          <div id="galleryPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#a0e7ff">Gallery</strong>
+              <button id="closeGallery" class="secondary">Close</button>
+            </div>
+            <div id="galleryGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:8px;"></div>
+          </div>
           <div id="line"><span id="name"></span><span id="text"></span></div>
           <div id="choices"></div>
           <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
             <button id="continueBtn">Continue</button>
             <button id="startExample">Start Example</button>
             <button id="startExpressions">Start Expressions</button>
+            <button id="openGallery" class="secondary">Gallery</button>
             <button id="nextBtn" class="secondary">Next</button>
             <button id="saveBtn">Quick Save</button>
             <button id="loadBtn" class="secondary">Quick Load</button>

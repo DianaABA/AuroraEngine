@@ -8,6 +8,7 @@
       { "type": "dialogue", "char": "Guide", "text": "We will switch the hero between neutral, happy, and angry." },
       { "type": "spriteShow", "id": "hero", "src": "hero_neutral.png", "pos": "center" },
       { "type": "dialogue", "char": "Hero", "text": "Hi there. I'm feeling pretty neutral." },
+      { "type": "flag", "flag": "cg_intro" },
       {
         "type": "choice",
         "options": [
