@@ -16,6 +16,7 @@ const slot3save = document.getElementById('slot3save') as HTMLButtonElement
 const slot3load = document.getElementById('slot3load') as HTMLButtonElement
 const slotStatus = document.getElementById('slotStatus')!
 const bgLabel = document.getElementById('bgLabel')!
+const fxEl = document.getElementById('fx')!
 
 const engine = createEngine({ autoEmit: true })
 
@@ -79,6 +80,37 @@ on('vn:step', ({ step, state }) => {
     localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
     localStorage.setItem('aurora:minimal:autosave:ts', String(Date.now()))
   }catch{}
+})
+
+// Visualize transitions with simple CSS effects
+on('vn:transition', (e:any)=>{
+  const kind = e.kind as string
+  const duration = Number(e.duration || 300)
+  // Clear any existing animations
+  fxEl.className = ''
+  ;(document.getElementById('stage') as HTMLElement).classList.remove('fx-shake','fx-zoom')
+  // Apply effect
+  if(kind === 'fade'){
+    fxEl.classList.add('fx-fade')
+    ;(fxEl as HTMLElement).style.animationDuration = `${duration}ms`
+  } else if(kind === 'flash'){
+    fxEl.classList.add('fx-flash')
+    ;(fxEl as HTMLElement).style.animationDuration = `${duration}ms`
+  } else if(kind === 'shake'){
+    const stage = document.getElementById('stage') as HTMLElement
+    stage.classList.add('fx-shake')
+    stage.style.animationDuration = `${duration}ms`
+    setTimeout(()=> stage.classList.remove('fx-shake'), duration)
+  } else if(kind === 'zoom'){
+    const stage = document.getElementById('stage') as HTMLElement
+    stage.classList.add('fx-zoom')
+    stage.style.animationDuration = `${duration}ms`
+    setTimeout(()=> stage.classList.remove('fx-zoom'), duration)
+  }
+  // Cleanup overlay after effect
+  if(kind==='fade' || kind==='flash'){
+    setTimeout(()=>{ fxEl.className = ''; (fxEl as HTMLElement).style.animationDuration = '' }, duration)
+  }
 })
 
 nextBtn.onclick = () => engine.next()
