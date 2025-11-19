@@ -66,4 +66,80 @@ describe('VNEngine side effects', () => {
     expect(eng.getPublicState().sceneId).toBe('scene')
     expect(eng.getCurrentStep()?.type).toBe('dialogue')
   })
+
+  it('sets initial scene-level bg/music without emitting music events', () => {
+    const scenes: SceneDef[] = [
+      { id:'intro', bg:'bg-city.png', music:'intro-track', steps:[ { type:'dialogue', text:'Welcome' } ]}
+    ]
+    const eng = createEngine({ autoEmit:false, autoAdvance:false })
+    const trackEvents: any[] = []
+    const playEvents: any[] = []
+    const off1 = onMusicTrackChange((e)=> trackEvents.push(e))
+    const off2 = onMusicPlay((e)=> playEvents.push(e))
+    try {
+      eng.loadScenes(scenes)
+      eng.start('intro')
+      expect(eng.getPublicState().bg).toBe('bg-city.png')
+      expect(eng.getPublicState().music).toBe('intro-track')
+      // start() sets scene music but does not emit music events
+      expect(trackEvents.length).toBe(0)
+      expect(playEvents.length).toBe(0)
+      expect(eng.getCurrentStep()?.type).toBe('dialogue')
+    } finally { off1(); off2(); }
+  })
+
+  it('emits multiple music events on sequential music steps and lands on dialogue', () => {
+    const scenes: SceneDef[] = [
+      { id:'mix', steps:[
+        { type:'music', track:'A' },
+        { type:'music', track:'B' },
+        { type:'goto', scene:'end' }
+      ]},
+      { id:'end', steps:[ { type:'dialogue', text:'After B' } ]}
+    ]
+    const eng = createEngine({ autoEmit:false, autoAdvance:true })
+    const trackEvents: any[] = []
+    const playEvents: any[] = []
+    const off1 = onMusicTrackChange((e)=> trackEvents.push(e))
+    const off2 = onMusicPlay((e)=> playEvents.push(e))
+    try {
+      eng.loadScenes(scenes)
+      eng.start('mix')
+      expect(trackEvents.map(e=>e.id)).toEqual(['A','B'])
+      expect(playEvents.map(e=>e.id)).toEqual(['A','B'])
+      expect(eng.getPublicState().music).toBe('B')
+      expect(eng.getPublicState().sceneId).toBe('end')
+      expect(eng.getCurrentStep()?.type).toBe('dialogue')
+    } finally { off1(); off2(); }
+  })
+
+  it('sprite persists across goto until explicitly hidden later', () => {
+    const scenes: SceneDef[] = [
+      { id:'start', steps:[
+        { type:'spriteShow', id:'hero', src:'hero.png' },
+        { type:'goto', scene:'talk' }
+      ]},
+      { id:'talk', steps:[
+        { type:'dialogue', text:'Hi there' },
+        { type:'goto', scene:'hide' }
+      ]},
+      { id:'hide', steps:[
+        { type:'spriteHide', id:'hero' },
+        { type:'dialogue', text:'Hidden' }
+      ]}
+    ]
+    const eng = createEngine({ autoEmit:false, autoAdvance:true })
+    eng.loadScenes(scenes)
+    eng.start('start')
+    // Paused at talk dialogue after goto; sprite should still be visible
+    expect(eng.getPublicState().sceneId).toBe('talk')
+    expect(eng.getCurrentStep()?.type).toBe('dialogue')
+    expect(eng.getPublicState().sprites['hero']).toBe('hero.png')
+    // Advance dialogue then process goto to hide scene
+    eng.next() // consume talk dialogue
+    eng.next() // process goto -> hide; auto loop applies hide then pauses at dialogue
+    expect(eng.getPublicState().sceneId).toBe('hide')
+    expect(eng.getCurrentStep()?.type).toBe('dialogue')
+    expect(eng.getPublicState().sprites['hero']).toBeUndefined()
+  })
 })

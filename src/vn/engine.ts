@@ -16,7 +16,7 @@ export class VNEngine {
   private music?: string
   private config: VNEngineConfig
   private inAutoLoop = false
-  private justEnteredSceneFromGoto = false
+  private pauseOnNextDialogue = false
   constructor(cfg: VNEngineConfig = {}){ this.config = { maxAutoSteps: 1000, ...cfg } }
   loadScenes(defs: SceneDef[]){ for(const s of defs){ this.scenes.set(s.id, s) } }
   start(id: string){
@@ -35,7 +35,7 @@ export class VNEngine {
     const scene = this.getCurrentScene(); if(!scene) return
     const step = this.getCurrentStep(); if(!step) return
     if(step.type === 'choice'){ if(this.maybeAutoDecide()) return; return }
-    if(step.type === 'goto'){ this.justEnteredSceneFromGoto = true; this.start(step.scene); return }
+    if(step.type === 'goto'){ this.pauseOnNextDialogue = true; this.start(step.scene); return }
     this.applySideEffects(step)
     this.index++
     if(this.maybeAutoDecide()) return
@@ -45,7 +45,7 @@ export class VNEngine {
     const step = this.getCurrentStep(); if(!step || step.type!=='choice') return
     const choice = (step as ChoiceStep).options[optionIndex]; if(!choice) return
     if(choice.setFlag) this.flags.add(choice.setFlag)
-    if(choice.goto) { this.justEnteredSceneFromGoto = true; this.start(choice.goto); return }
+    if(choice.goto) { this.pauseOnNextDialogue = true; this.start(choice.goto); return }
     this.index++
     if(this.maybeAutoDecide()) return
     this.emitStep()
@@ -103,11 +103,8 @@ export class VNEngine {
         if(steps++ > max) break
       const step = this.getCurrentStep()
       if(!step) break
-      if(this.justEnteredSceneFromGoto){
-        // Pause on first dialogue after scene change via goto/choice
-        if(step.type === 'dialogue'){ this.justEnteredSceneFromGoto = false; break }
-        this.justEnteredSceneFromGoto = false
-      }
+      // Pause on the first dialogue encountered after a goto/choice scene change
+      if(this.pauseOnNextDialogue && step.type === 'dialogue'){ this.pauseOnNextDialogue = false; break }
       if(step.type==='choice'){
         if(this.maybeAutoDecide()){ prevWasTransition = false; continue } else { break }
       }

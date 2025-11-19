@@ -10,7 +10,7 @@ export class VNEngine {
         this.vars = {};
         this.sprites = {};
         this.inAutoLoop = false;
-        this.justEnteredSceneFromGoto = false;
+        this.pauseOnNextDialogue = false;
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
     loadScenes(defs) { for (const s of defs) {
@@ -46,7 +46,7 @@ export class VNEngine {
             return;
         }
         if (step.type === 'goto') {
-            this.justEnteredSceneFromGoto = true;
+            this.pauseOnNextDialogue = true;
             this.start(step.scene);
             return;
         }
@@ -66,7 +66,7 @@ export class VNEngine {
         if (choice.setFlag)
             this.flags.add(choice.setFlag);
         if (choice.goto) {
-            this.justEnteredSceneFromGoto = true;
+            this.pauseOnNextDialogue = true;
             this.start(choice.goto);
             return;
         }
@@ -160,13 +160,10 @@ export class VNEngine {
                 const step = this.getCurrentStep();
                 if (!step)
                     break;
-                if (this.justEnteredSceneFromGoto) {
-                    // Pause on first dialogue after scene change via goto/choice
-                    if (step.type === 'dialogue') {
-                        this.justEnteredSceneFromGoto = false;
-                        break;
-                    }
-                    this.justEnteredSceneFromGoto = false;
+                // Pause on the first dialogue encountered after a goto/choice scene change
+                if (this.pauseOnNextDialogue && step.type === 'dialogue') {
+                    this.pauseOnNextDialogue = false;
+                    break;
                 }
                 if (step.type === 'choice') {
                     if (this.maybeAutoDecide()) {
