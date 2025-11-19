@@ -4,6 +4,11 @@ A tiny Vite app that runs AuroraEngine in the browser and renders dialogue/choic
 
 ## Local Run
 ```powershell
+# From the repo root, build the engine first (generates dist/)
+npm run build
+
+# Then inside the template
+cd templates/minimal
 npm install
 npm run dev
 ```

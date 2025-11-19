@@ -24,6 +24,7 @@
     "dev": "npm run build -- --watch",
     "test": "vitest run",
     "preview": "npm run build; node dist/examples/preview.js",
+    "template:minimal:dev": "npm run build && cd templates/minimal && npm install && npm run dev",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
