@@ -1,4 +1,5 @@
 import { emit } from '../utils/eventBus'
+import { emitMusicTrackChange, emitMusicPlay } from '../utils/eventBus'
 import type { SceneDef, SceneStep, ChoiceStep, SnapshotData, ChoiceOption } from './sceneTypes'
 import { evaluateCondition } from './expression'
 
@@ -25,7 +26,7 @@ export class VNEngine {
     case 'spriteShow': this.sprites[step.id] = step.src; break;
     case 'spriteHide': delete this.sprites[step.id]; break;
     case 'background': this.bg = step.src; break;
-    case 'music': this.music = step.track; break;
+    case 'music': this.music = step.track; emitMusicTrackChange({ id: step.track, title: step.track }); emitMusicPlay({ id: step.track, title: step.track }); break;
     case 'flag': step.value===false? this.flags.delete(step.flag): this.flags.add(step.flag); break;
     case 'transition': emit('vn:transition', { kind: step.kind, duration: step.duration||0, state: this.getPublicState() }); break;
   }}

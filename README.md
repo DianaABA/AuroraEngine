@@ -83,6 +83,63 @@ Full documentation is in `/docs`.
 
 ---
 
+## 5-Minute Tutorial
+
+Install and run a tiny scene in code:
+
+```ts
+import { createEngine } from 'aurora-engine'
+
+// Define minimal scenes
+const scenes = [
+  { id:'intro', bg:'lab.png', music:'calm.mp3', steps:[
+    { type:'dialogue', char:'Guide', text:'Welcome to Aurora\'s Engine.' },
+    { type:'choice', options:[
+      { label:'I\'m ready.', goto:'lesson_start' },
+      { label:'Explain again.', goto:'intro_repeat' }
+    ]}
+  ]},
+  { id:'lesson_start', steps:[ { type:'dialogue', text:'Great! Let\'s begin.' } ]},
+  { id:'intro_repeat', steps:[ { type:'dialogue', text:'Scenes are JSON. Choices branch with goto.' } ]}
+]
+
+const engine = createEngine({ autoEmit:true })
+engine.loadScenes(scenes)
+engine.start('intro')
+
+// Listen for engine steps
+import { on } from 'aurora-engine/dist/utils/eventBus'
+on('vn:step', ({ step, state }) => {
+  if(step?.type==='dialogue') {
+    console.log((step.char? step.char+': ' : '') + step.text)
+  } else if(step?.type==='choice') {
+    step.options.forEach((o,i)=> console.log(i+') '+o.label))
+  }
+})
+
+// Choose programmatically:
+// engine.choose(0)
+```
+
+Save / Load:
+
+```ts
+import { saveSnapshotLS, loadSnapshotLS } from 'aurora-engine/dist/vn/save'
+// Save
+saveSnapshotLS('vn_save_slot_1', engine.snapshot())
+// Restore
+const snap = loadSnapshotLS('vn_save_slot_1')
+if(snap) engine.restore(snap)
+```
+
+Transitions:
+
+```ts
+{ type:'transition', kind:'fade', duration:600 }
+```
+
+---
+
 ## Philosophy
 Aurora’s Engine is built on three values:
 
