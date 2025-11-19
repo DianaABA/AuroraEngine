@@ -1,4 +1,4 @@
-import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery } from 'aurora-engine'
+import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery, Achievements } from 'aurora-engine'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -25,9 +25,14 @@ const openGalleryBtn = document.getElementById('openGallery') as HTMLButtonEleme
 const closeGalleryBtn = document.getElementById('closeGallery') as HTMLButtonElement
 const galleryPanel = document.getElementById('galleryPanel') as HTMLDivElement
 const galleryGrid = document.getElementById('galleryGrid') as HTMLDivElement
+const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
+const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
+const achPanel = document.getElementById('achPanel') as HTMLDivElement
+const achList = document.getElementById('achList') as HTMLDivElement
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
+const achievements = new Achievements('aurora:minimal:ach')
 
 function renderGallery(){
   const items = gallery.list()
@@ -59,6 +64,40 @@ function renderGallery(){
     card.appendChild(img)
     card.appendChild(cap)
     galleryGrid.appendChild(card)
+  }
+}
+
+function renderAchievements(){
+  const items = achievements.list()
+  achList.innerHTML = ''
+  if(items.length===0){
+    const p = document.createElement('div')
+    p.style.color = '#a8b0ff'
+    p.style.fontSize = '12px'
+    p.textContent = 'No achievements yet.'
+    achList.appendChild(p)
+    return
+  }
+  for(const it of items){
+    const row = document.createElement('div')
+    row.style.display = 'flex'
+    row.style.justifyContent = 'space-between'
+    row.style.alignItems = 'center'
+    row.style.background = '#111827'
+    row.style.border = '1px solid #27304a'
+    row.style.borderRadius = '6px'
+    row.style.padding = '6px 8px'
+    const left = document.createElement('div')
+    left.style.color = '#a8b0ff'
+    left.style.fontSize = '12px'
+    left.textContent = it.title || it.id
+    const right = document.createElement('div')
+    right.style.color = '#7082c1'
+    right.style.fontSize = '11px'
+    right.textContent = new Date(it.unlockedAt).toLocaleString()
+    row.appendChild(left)
+    row.appendChild(right)
+    achList.appendChild(row)
   }
 }
 
@@ -128,6 +167,10 @@ on('vn:step', ({ step, state }) => {
     if(engine.hasFlag('cg_intro') && !gallery.has('cg_intro')){
       gallery.unlock('cg_intro', 'cgs/cg1.svg', { title: 'Intro CG' })
       if(galleryPanel.style.display !== 'none') renderGallery()
+    }
+    if(engine.hasFlag('cg_intro') && !achievements.has('ach_first_cg')){
+      achievements.unlock('ach_first_cg', { title: 'First CG Unlocked' })
+      if(achPanel.style.display !== 'none') renderAchievements()
     }
   }catch{}
 })
@@ -229,6 +272,8 @@ startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block' }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }
+openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block' }
+closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
 
 function refreshAutoButtons(){
   autoBtn.textContent = `Auto: ${engine.isAutoAdvance()? 'On':'Off'}`
