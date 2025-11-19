@@ -109,12 +109,8 @@ Use the event bus (`on(event, handler)` and `emit(event, detail?)`) to wire UI o
 ## Versioned Save Schema
 `saveSchema` helps track save data version. Increment when structural changes to saves occur and implement migration where needed.
 
-## Roadmap (Suggested)
-- Scene JSON authoring docs (`docs/scene-format.md`).
-- Drag-and-drop asset folder template.
-- Netlify deploy button.
-- Codespaces / StackBlitz starter.
-- AI prompt examples for writing and fixing scenes.
+## Roadmap
+See the full phased plan in `ROADMAP.md`.
 
 ## License
 Inherit the root project license (see repository). Do not include copyrighted episode content here.
