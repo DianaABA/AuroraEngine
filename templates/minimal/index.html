@@ -6,8 +6,11 @@
     <title>Aurora Minimal</title>
     <style>
       html,body,#app{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
-      #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#151a2d,#28314a)}
+      #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#151a2d,#28314a);overflow:hidden}
+      #bg{position:absolute;inset:0;background-size:cover;background-position:center center;filter:brightness(.95)}
       #fx{position:absolute;inset:0;pointer-events:none}
+      #sprites{position:absolute;left:0;right:0;bottom:20%;display:flex;justify-content:center;align-items:flex-end;gap:24px;pointer-events:none}
+      #sprites img{max-height:60vh;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
       #bgLabel{position:absolute;top:8px;left:8px;color:#a8b0ff;font-size:12px;opacity:.8}
       #content{margin-top:auto;background:rgba(0,0,0,.5);color:#fff;padding:16px}
       #name{font-weight:600;color:#a0e7ff}
@@ -29,7 +32,9 @@
   <body>
     <div id="app">
       <div id="stage">
+        <div id="bg"></div>
         <div id="fx"></div>
+        <div id="sprites"></div>
         <div id="bgLabel"></div>
         <div id="content">
           <div id="achPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px;">

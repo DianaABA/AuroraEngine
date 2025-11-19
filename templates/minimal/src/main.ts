@@ -21,6 +21,8 @@ const slot3save = document.getElementById('slot3save') as HTMLButtonElement
 const slot3load = document.getElementById('slot3load') as HTMLButtonElement
 const slotStatus = document.getElementById('slotStatus')!
 const bgLabel = document.getElementById('bgLabel')!
+const bgEl = document.getElementById('bg') as HTMLDivElement
+const spritesEl = document.getElementById('sprites') as HTMLDivElement
 const fxEl = document.getElementById('fx')!
 const openGalleryBtn = document.getElementById('openGallery') as HTMLButtonElement
 const closeGalleryBtn = document.getElementById('closeGallery') as HTMLButtonElement
@@ -134,6 +136,17 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
 on('vn:step', ({ step, state }) => {
   // background label (we don't actually load images in this minimal demo)
   bgLabel.textContent = state.bg ? `Background: ${state.bg}` : ''
+  // Render background image
+  bgEl.style.backgroundImage = state.bg ? `url(/${state.bg})` : ''
+  // Render sprites as images
+  spritesEl.innerHTML = ''
+  const entries = Object.entries(state.sprites || {})
+  for(const [id, src] of entries){
+    const img = document.createElement('img')
+    img.src = `/${src}`
+    img.alt = id
+    spritesEl.appendChild(img)
+  }
   // clear UI
   nameEl.textContent = ''
   textEl.textContent = ''
