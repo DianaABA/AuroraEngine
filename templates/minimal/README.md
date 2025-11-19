@@ -7,6 +7,7 @@ Now includes:
 - Achievements panel (unlocks "First CG" from Expressions)
 - Backlog panel (shows persisted dialogue history)
  - Settings panel (Skip Seen Text + Clear Seen)
+ - Slot thumbnails (auto-generated from background + sprites)
 - Auto / Auto-Choose toggles, and Skip FX toggle
 - Music controls (Play/Pause) with status
 
@@ -34,6 +35,8 @@ Then open http://localhost:5173
  - Settings: stores prefs in `localStorage` (`aurora:minimal:prefs`)
  - Skip Seen Text: fast-forwards dialogue lines previously seen (tracked in
 	 `localStorage` as `aurora:minimal:seen`)
+ - Save slots include thumbnails stored as data URLs in `localStorage`
+	 (`aurora:minimal:slot{n}:thumb`), rendered next to the slot buttons
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
