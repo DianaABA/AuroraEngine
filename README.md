@@ -90,6 +90,22 @@ Full documentation is in `/docs`.
 
 ---
 
+## Template (Browser Demo)
+
+Minimal Vite starter lives in `templates/minimal`.
+
+Local run:
+
+```powershell
+cd templates/minimal
+npm install
+npm run dev
+```
+
+Deploy to Netlify: create a new site from your fork and set publish dir to `templates/minimal/dist`.
+
+---
+
 ## 5-Minute Tutorial
 
 Install and run a tiny scene in code:

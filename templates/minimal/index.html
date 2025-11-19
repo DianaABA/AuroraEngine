@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aurora Minimal</title>
+    <style>
+      html,body,#app{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
+      #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#151a2d,#28314a)}
+      #bgLabel{position:absolute;top:8px;left:8px;color:#a8b0ff;font-size:12px;opacity:.8}
+      #content{margin-top:auto;background:rgba(0,0,0,.5);color:#fff;padding:16px}
+      #name{font-weight:600;color:#a0e7ff}
+      #choices{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+      button{background:#3e59ff;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+      button.secondary{background:#2b2f43}
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="stage">
+        <div id="bgLabel"></div>
+        <div id="content">
+          <div id="line"><span id="name"></span><span id="text"></span></div>
+          <div id="choices"></div>
+          <div style="margin-top:8px">
+            <button id="nextBtn" class="secondary">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

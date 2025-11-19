@@ -1,0 +1,20 @@
+[
+  {
+    "id": "intro",
+    "bg": "lab.png",
+    "music": "calm.mp3",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "Welcome to Aurora’s Engine." },
+      { "type": "dialogue", "char": "Guide", "text": "Let me show you how scenes work." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "I’m ready.", "goto": "lesson_start" },
+          { "label": "Explain again.", "goto": "intro_repeat" }
+        ]
+      }
+    ]
+  },
+  { "id": "lesson_start", "steps": [ { "type": "dialogue", "text": "Great! Let’s begin." } ] },
+  { "id": "intro_repeat", "steps": [ { "type": "dialogue", "text": "Scenes are JSON. Choices branch with goto." } ] }
+]
