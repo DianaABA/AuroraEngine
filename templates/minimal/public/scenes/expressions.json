@@ -2,12 +2,14 @@
   {
     "id": "intro",
     "bg": "room.svg",
+    "spriteDefaults": { "hero": { "pos": "center", "scale": 1 } },
     "steps": [
       { "type": "transition", "kind": "fade", "duration": 350 },
       { "type": "dialogue", "char": "Guide", "text": "This demo shows sprite expressions using spriteShow and spriteSwap." },
       { "type": "dialogue", "char": "Guide", "text": "We will switch the hero between neutral, happy, and angry." },
-      { "type": "spriteShow", "id": "hero", "src": "hero_neutral.svg", "pos": "center" },
+      { "type": "spriteShow", "id": "hero", "src": "hero_neutral.svg", "pos": "center", "scale": 1 },
       { "type": "dialogue", "char": "Hero", "text": "Hi there. I'm feeling pretty neutral." },
+      { "type": "flag", "flag": "codex_hero" },
       { "type": "flag", "flag": "cg_intro" },
       {
         "type": "choice",
@@ -21,7 +23,7 @@
   {
     "id": "pick_happy",
     "steps": [
-      { "type": "spriteSwap", "id": "hero", "src": "hero_happy.svg" },
+      { "type": "spriteSwap", "id": "hero", "src": "hero_happy.svg", "x": 30, "scale": 1.05 },
       { "type": "dialogue", "char": "Hero", "text": "Feeling great now!" },
       {
         "type": "choice",
@@ -35,7 +37,7 @@
   {
     "id": "pick_angry",
     "steps": [
-      { "type": "spriteSwap", "id": "hero", "src": "hero_angry.svg" },
+      { "type": "spriteSwap", "id": "hero", "src": "hero_angry.svg", "pos": "right", "scale": 0.95 },
       { "type": "dialogue", "char": "Hero", "text": "Grrr... not happy about this." },
       {
         "type": "choice",

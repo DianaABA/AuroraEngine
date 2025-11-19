@@ -31,6 +31,10 @@ const openGalleryBtn = document.getElementById('openGallery') as HTMLButtonEleme
 const closeGalleryBtn = document.getElementById('closeGallery') as HTMLButtonElement
 const galleryPanel = document.getElementById('galleryPanel') as HTMLDivElement
 const galleryGrid = document.getElementById('galleryGrid') as HTMLDivElement
+const openCodexBtn = document.getElementById('openCodex') as HTMLButtonElement
+const closeCodexBtn = document.getElementById('closeCodex') as HTMLButtonElement
+const codexPanel = document.getElementById('codexPanel') as HTMLDivElement
+const codexList = document.getElementById('codexList') as HTMLDivElement
 const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
@@ -61,9 +65,16 @@ const achievements = new Achievements('aurora:minimal:ach')
 let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
-const spriteMeta: Record<string, { pos?: 'left'|'center'|'right'; z?: number }> = {}
+type SpriteCfg = { pos?: 'left'|'center'|'right'; x?: number; z?: number; scale?: number }
+const spriteMeta: Record<string, SpriteCfg> = {}
+const sceneSpriteDefaults: Record<string, Record<string, SpriteCfg>> = {}
 const BACKLOG_KEY = 'aurora:minimal:backlog'
 // Removed old Prefs type; replaced below with extended Prefs
+const CODEX_KEY = 'aurora:minimal:codex'
+const CODEX_META: Record<string, { title: string; body: string }> = {
+  codex_hero: { title: 'Hero', body: 'A mysterious protagonist with many expressions.' },
+  codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.' }
+}
 type Locale = 'en' | 'es'
 type Prefs = { skipSeenText: boolean; skipTransitions: boolean; locale: Locale }
 let prefs: Prefs = { skipSeenText: false, skipTransitions: false, locale: 'en' }
@@ -229,6 +240,43 @@ function renderAchievements(){
   }
 }
 
+// Codex utility (template-side)
+type CodexEntry = { id: string; title: string; body: string; unlockedAt: string }
+function readCodex(): CodexEntry[]{ try { return JSON.parse(localStorage.getItem(CODEX_KEY) || '[]') } catch { return [] } }
+function writeCodex(list: CodexEntry[]){ try { localStorage.setItem(CODEX_KEY, JSON.stringify(list)) } catch {} }
+function codexHas(id: string){ return readCodex().some(e => e.id === id) }
+function codexUnlock(id: string){
+  const meta = CODEX_META[id]
+  if(!meta) return
+  const list = readCodex()
+  if(list.some(e => e.id === id)) return
+  list.push({ id, title: meta.title, body: meta.body, unlockedAt: new Date().toISOString() })
+  writeCodex(list)
+}
+function renderCodex(){
+  codexList.innerHTML = ''
+  const items = readCodex()
+  if(items.length===0){
+    const p = document.createElement('div')
+    p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries yet.'
+    codexList.appendChild(p)
+    return
+  }
+  for(const it of items){
+    const row = document.createElement('div')
+    row.style.background = '#111827'; row.style.border = '1px solid #27304a'; row.style.borderRadius = '6px'; row.style.padding = '6px 8px'
+    const title = document.createElement('div')
+    title.style.color = '#a0e7ff'; title.style.fontSize = '13px'; title.style.fontWeight = '600'
+    title.textContent = it.title
+    const body = document.createElement('div')
+    body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body
+    const time = document.createElement('div')
+    time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
+    row.appendChild(title); row.appendChild(body); row.appendChild(time)
+    codexList.appendChild(row)
+  }
+}
+
 async function boot(scenePath: string, startSceneId: string = 'intro'){
   const { scenes, errors } = await loadScenesFromUrl(scenePath)
   if(errors.length){
@@ -242,6 +290,17 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
   })
   engine.loadScenes(scenes)
+  // Extract per-scene sprite defaults (optional authoring ergonomics)
+  try {
+    sceneSpriteDefaults as any
+    for(const s of scenes as any[]){
+      const sid = s.id as string
+      const defs = (s as any).spriteDefaults as Record<string, SpriteCfg> | undefined
+      if(sid && defs && typeof defs === 'object'){
+        sceneSpriteDefaults[sid] = { ...defs }
+      }
+    }
+  } catch {}
   loadBacklog()
   loadPrefs()
   loadSeen()
@@ -270,9 +329,13 @@ on('vn:step', ({ step, state }) => {
       if(id){
         const pos = (step as any).pos as ('left'|'center'|'right'|undefined)
         const z = typeof (step as any).z === 'number' ? (step as any).z as number : undefined
+        const x = typeof (step as any).x === 'number' ? (step as any).x as number : undefined
+        const scale = typeof (step as any).scale === 'number' ? (step as any).scale as number : undefined
         const cur = spriteMeta[id] || {}
         if(pos) cur.pos = pos
         if(z !== undefined) cur.z = z
+        if(x !== undefined) cur.x = x
+        if(scale !== undefined) cur.scale = scale
         spriteMeta[id] = cur
       }
     }
@@ -299,10 +362,14 @@ on('vn:step', ({ step, state }) => {
     const img = document.createElement('img')
     img.src = `/${src}`
     img.alt = id
-    const meta = spriteMeta[id] || {}
+    const sceneId = state.sceneId || ''
+    const global = (sceneSpriteDefaults[sceneId] || {})[id] || {}
+    const meta = { ...global, ...(spriteMeta[id] || {}) }
     const pos = meta.pos || 'center'
-    const leftPct = pos === 'left' ? 20 : pos === 'right' ? 80 : 50
+    const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
+    const scale = typeof meta.scale === 'number' ? meta.scale : 1
     img.style.left = leftPct + '%'
+    img.style.transform = `translateX(-50%) scale(${scale})`
     if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
     spritesEl.appendChild(img)
   }
@@ -360,6 +427,14 @@ on('vn:step', ({ step, state }) => {
     if(engine.hasFlag('cg_intro') && !achievements.has('ach_first_cg')){
       achievements.unlock('ach_first_cg', { title: 'First CG Unlocked' })
       if(achPanel.style.display !== 'none') renderAchievements()
+    }
+    if(engine.hasFlag('codex_hero') && !codexHas('codex_hero')){
+      codexUnlock('codex_hero')
+      if(codexPanel.style.display !== 'none') renderCodex()
+    }
+    if(engine.hasFlag('codex_lab') && !codexHas('codex_lab')){
+      codexUnlock('codex_lab')
+      if(codexPanel.style.display !== 'none') renderCodex()
     }
   }catch{}
 })
@@ -520,6 +595,8 @@ openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = '
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }
 openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block' }
 closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
+openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block' }
+closeCodexBtn.onclick = () => { codexPanel.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }

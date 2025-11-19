@@ -5,6 +5,7 @@
     "music": "calm.mp3",
     "steps": [
       { "type": "dialogue", "char": "Guide", "text": "Welcome to Aurora’s Engine." },
+      { "type": "flag", "flag": "codex_lab" },
       { "type": "dialogue", "char": "Guide", "text": "Let me show you how scenes work." },
       {
         "type": "choice",
