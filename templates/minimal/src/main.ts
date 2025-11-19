@@ -20,6 +20,9 @@ const slot2load = document.getElementById('slot2load') as HTMLButtonElement
 const slot3save = document.getElementById('slot3save') as HTMLButtonElement
 const slot3load = document.getElementById('slot3load') as HTMLButtonElement
 const slotStatus = document.getElementById('slotStatus')!
+const slot1thumb = document.getElementById('slot1thumb') as HTMLImageElement
+const slot2thumb = document.getElementById('slot2thumb') as HTMLImageElement
+const slot3thumb = document.getElementById('slot3thumb') as HTMLImageElement
 const bgLabel = document.getElementById('bgLabel')!
 const bgEl = document.getElementById('bg') as HTMLDivElement
 const spritesEl = document.getElementById('sprites') as HTMLDivElement
@@ -192,6 +195,10 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     continueBtn.style.display = 'none'
   }
   engine.start(startSceneId)
+  // Load slot thumbnails if present
+  refreshSlotThumb(1)
+  refreshSlotThumb(2)
+  refreshSlotThumb(3)
 }
 
 on('vn:step', ({ step, state }) => {
@@ -340,8 +347,11 @@ continueBtn.onclick = () => {
 function saveToSlot(n: number){
   const key = `aurora:minimal:slot${n}`
   try{
-    localStorage.setItem(key, JSON.stringify(engine.snapshot()))
+    const snap = engine.snapshot()
+    localStorage.setItem(key, JSON.stringify(snap))
     localStorage.setItem(`${key}:ts`, String(Date.now()))
+    // Generate and store a thumbnail
+    captureThumbnail(engine.getPublicState()).then(url=>{ try { if(url) localStorage.setItem(`${key}:thumb`, url); refreshSlotThumb(n) } catch {} })
     slotStatus.textContent = `Saved to ${n}`
   }catch{ slotStatus.textContent = `Save ${n} failed` }
 }
@@ -361,6 +371,59 @@ slot2save.onclick = ()=> saveToSlot(2)
 slot2load.onclick = ()=> loadFromSlot(2)
 slot3save.onclick = ()=> saveToSlot(3)
 slot3load.onclick = ()=> loadFromSlot(3)
+
+async function captureThumbnail(state: ReturnType<typeof engine.getPublicState>): Promise<string|null>{
+  try{
+    const W = 320, H = 180
+    const canvas = document.createElement('canvas')
+    canvas.width = W; canvas.height = H
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#0b1020'; ctx.fillRect(0,0,W,H)
+    // Draw background
+    if(state.bg){
+      const bg = await loadImage(`/${state.bg}`)
+      const scale = Math.max(W/bg.width, H/bg.height)
+      const dw = Math.floor(bg.width*scale), dh = Math.floor(bg.height*scale)
+      const dx = Math.floor((W-dw)/2), dy = Math.floor((H-dh)/2)
+      ctx.drawImage(bg, dx, dy, dw, dh)
+    }
+    // Draw sprites
+    const entries = Object.entries(state.sprites||{})
+    const count = entries.length
+    if(count){
+      const pad = 8
+      const slotW = Math.floor((W - pad*(count+1)) / Math.max(1,count))
+      let i=0
+      for(const [, src] of entries){
+        const img = await loadImage(`/${src}`)
+        const targetW = Math.min(slotW, Math.floor(W/3))
+        const scale = targetW / img.width
+        const dw = Math.floor(img.width*scale)
+        const dh = Math.floor(img.height*scale)
+        const x = pad + i*(slotW+pad) + Math.floor((slotW - dw)/2)
+        const y = H - dh - 8
+        ctx.drawImage(img, x, y, dw, dh)
+        i++
+      }
+    }
+    return canvas.toDataURL('image/png')
+  }catch{ return null }
+}
+
+function loadImage(src: string): Promise<HTMLImageElement>{
+  return new Promise((resolve, reject)=>{
+    const img = new Image()
+    img.onload = ()=> resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
+
+function refreshSlotThumb(n: number){
+  const key = `aurora:minimal:slot${n}:thumb`
+  const img = n===1 ? slot1thumb : n===2 ? slot2thumb : slot3thumb
+  try{ const url = localStorage.getItem(key); img.src = url || '' }catch{ img.src = '' }
+}
 
 // Initial boot with example scenes
 boot('/scenes/example.json', 'intro')
