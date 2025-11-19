@@ -1,0 +1,62 @@
+[
+  {
+    "id": "intro",
+    "bg": "room.png",
+    "steps": [
+      { "type": "transition", "kind": "fade", "duration": 350 },
+      { "type": "dialogue", "char": "Guide", "text": "This demo shows sprite expressions using spriteShow and spriteSwap." },
+      { "type": "dialogue", "char": "Guide", "text": "We will switch the hero between neutral, happy, and angry." },
+      { "type": "spriteShow", "id": "hero", "src": "hero_neutral.png", "pos": "center" },
+      { "type": "dialogue", "char": "Hero", "text": "Hi there. I'm feeling pretty neutral." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Make Hero Happy", "goto": "pick_happy" },
+          { "label": "Make Hero Angry", "goto": "pick_angry" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pick_happy",
+    "steps": [
+      { "type": "spriteSwap", "id": "hero", "src": "hero_happy.png" },
+      { "type": "dialogue", "char": "Hero", "text": "Feeling great now!" },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Go Angry", "goto": "pick_angry" },
+          { "label": "Back to Neutral", "goto": "pick_neutral" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pick_angry",
+    "steps": [
+      { "type": "spriteSwap", "id": "hero", "src": "hero_angry.png" },
+      { "type": "dialogue", "char": "Hero", "text": "Grrr... not happy about this." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Go Happy", "goto": "pick_happy" },
+          { "label": "Back to Neutral", "goto": "pick_neutral" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pick_neutral",
+    "steps": [
+      { "type": "spriteSwap", "id": "hero", "src": "hero_neutral.png" },
+      { "type": "dialogue", "char": "Hero", "text": "Back to baseline." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Happy", "goto": "pick_happy" },
+          { "label": "Angry", "goto": "pick_angry" }
+        ]
+      }
+    ]
+  }
+]

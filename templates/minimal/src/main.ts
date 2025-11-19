@@ -4,6 +4,8 @@ const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
 const choicesEl = document.getElementById('choices')!
 const continueBtn = document.getElementById('continueBtn') as HTMLButtonElement
+const startExampleBtn = document.getElementById('startExample') as HTMLButtonElement
+const startExpressionsBtn = document.getElementById('startExpressions') as HTMLButtonElement
 const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
 const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
@@ -20,8 +22,8 @@ const fxEl = document.getElementById('fx')!
 
 const engine = createEngine({ autoEmit: true })
 
-async function boot(){
-  const { scenes, errors } = await loadScenesFromUrl('/scenes/example.json')
+async function boot(scenePath: string, startSceneId: string = 'intro'){
+  const { scenes, errors } = await loadScenesFromUrl(scenePath)
   if(errors.length){
     textEl.textContent = 'Failed to load scenes: '+errors.join(', ')
     return
@@ -41,7 +43,7 @@ async function boot(){
   } else {
     continueBtn.style.display = 'none'
   }
-  engine.start('intro')
+  engine.start(startSceneId)
 }
 
 on('vn:step', ({ step, state }) => {
@@ -170,4 +172,9 @@ slot2load.onclick = ()=> loadFromSlot(2)
 slot3save.onclick = ()=> saveToSlot(3)
 slot3load.onclick = ()=> loadFromSlot(3)
 
-boot()
+// Initial boot with example scenes
+boot('/scenes/example.json', 'intro')
+
+// Allow switching demos on demand
+startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
+startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
