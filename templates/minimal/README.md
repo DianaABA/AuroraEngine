@@ -1,6 +1,9 @@
 # Aurora Minimal Template
 
 A tiny Vite app that runs AuroraEngine in the browser and renders dialogue/choices.
+Now includes:
+- Start Example / Start Expressions buttons
+- Gallery panel (unlocks on a scene flag)
 
 ## Local Run
 ```powershell
@@ -15,9 +18,11 @@ npm run dev
 Then open http://localhost:5173
 
 ## How it works
-- Loads `/scenes/example.json`
+- Loads `/scenes/example.json` by default (button switches to `/scenes/expressions.json`)
 - Starts the engine at `intro`
 - Listens for `vn:step` events and updates the DOM
+- Unlocks a demo CG when the expressions scene sets `flag: "cg_intro"` (see `public/scenes/expressions.json`)
+- Gallery panel shows unlocked CGs (`public/cgs/*`)
 
 ## Deploy (Netlify)
 Deploy with one click:

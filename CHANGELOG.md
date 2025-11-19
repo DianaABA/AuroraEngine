@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Utils: new `Gallery` module for CG unlocks with persistence and `gallery:unlock` events
+- Template: Gallery panel UI with grid and placeholder asset; Expressions demo unlocks a CG via `flag: cg_intro`
+- Docs: `docs/gallery.md`; template README updated with Start buttons and Gallery
+
 ## v0.0.1 — 2025-11-19
 ## v0.0.2 — 2025-11-19
 

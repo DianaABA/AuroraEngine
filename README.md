@@ -88,6 +88,7 @@ Full documentation is in `/docs`.
 - Scene format: `docs/scene-format.md`
 - Achievements (draft): `docs/achievements.md`
 - Audio Jukebox (draft): `docs/jukebox.md`
+- CG Gallery (draft): `docs/gallery.md`
 - AI prompt examples: `docs/ai-prompts.md`
 - Error fix guide: `docs/prompt-fix-errors.md`
 
