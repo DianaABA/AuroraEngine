@@ -28,3 +28,11 @@ import { on } from 'aurora-engine'
 on('vn:auto-choice', d => console.log('Auto chose', d))
 on('vn:auto-loop-guard', d => console.warn('Auto loop guard tripped', d))
 ```
+
+## Template Debugging
+- Minimal template exposes a Settings toggle: `Debug Toasts`.
+- When enabled, it surfaces small toasts for `vn:auto-choice` and `vn:auto-loop-guard` in the bottom-right `#notifications` area.
+- Files:
+  - Template wiring: `templates/minimal/src/main.ts` (listeners + toast rendering)
+  - UI container: `templates/minimal/index.html` (`#notifications`)
+  - Preference key: `aurora:minimal:prefs` → `showDebugToasts`
