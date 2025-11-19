@@ -6,6 +6,7 @@ Now includes:
 - Gallery panel (unlocks on a scene flag)
 - Achievements panel (unlocks "First CG" from Expressions)
 - Backlog panel (shows persisted dialogue history)
+ - Settings panel (Skip Seen Text + Clear Seen)
 - Auto / Auto-Choose toggles, and Skip FX toggle
 - Music controls (Play/Pause) with status
 
@@ -30,6 +31,9 @@ Then open http://localhost:5173
 - Achievements panel lists unlocked achievements
 - Backlog panel collects each dialogue line after render and persists it in
 	`localStorage` (`aurora:minimal:backlog`) with a cap of ~200 entries
+ - Settings: stores prefs in `localStorage` (`aurora:minimal:prefs`)
+ - Skip Seen Text: fast-forwards dialogue lines previously seen (tracked in
+	 `localStorage` as `aurora:minimal:seen`)
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
