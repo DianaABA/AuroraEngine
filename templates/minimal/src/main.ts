@@ -3,6 +3,7 @@ import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAsset
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
 const choicesEl = document.getElementById('choices')!
+const continueBtn = document.getElementById('continueBtn') as HTMLButtonElement
 const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
 const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
@@ -31,6 +32,14 @@ async function boot(){
     textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
   })
   engine.loadScenes(scenes)
+  // Show Continue if autosave exists
+  const ts = localStorage.getItem('aurora:minimal:autosave:ts')
+  if(ts){
+    continueBtn.style.display = 'inline-block'
+    continueBtn.textContent = `Continue (saved ${new Date(parseInt(ts)).toLocaleString()})`
+  } else {
+    continueBtn.style.display = 'none'
+  }
   engine.start('intro')
 }
 
@@ -68,6 +77,7 @@ on('vn:step', ({ step, state }) => {
   try{
     const snap = engine.snapshot()
     localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
+    localStorage.setItem('aurora:minimal:autosave:ts', String(Date.now()))
   }catch{}
 })
 
@@ -94,10 +104,20 @@ loadBtn.onclick = () => {
   }
 }
 
+continueBtn.onclick = () => {
+  try{
+    const raw = localStorage.getItem('aurora:minimal:autosave')
+    if(!raw){ saveStatus.textContent = 'No autosave'; return }
+    engine.restore(JSON.parse(raw))
+    saveStatus.textContent = 'Continued'
+  }catch{ saveStatus.textContent = 'Continue failed' }
+}
+
 function saveToSlot(n: number){
   const key = `aurora:minimal:slot${n}`
   try{
     localStorage.setItem(key, JSON.stringify(engine.snapshot()))
+    localStorage.setItem(`${key}:ts`, String(Date.now()))
     slotStatus.textContent = `Saved to ${n}`
   }catch{ slotStatus.textContent = `Save ${n} failed` }
 }
@@ -107,7 +127,8 @@ function loadFromSlot(n: number){
     const raw = localStorage.getItem(key)
     if(!raw){ slotStatus.textContent = `No save ${n}`; return }
     engine.restore(JSON.parse(raw))
-    slotStatus.textContent = `Loaded ${n}`
+    const ts = localStorage.getItem(`${key}:ts`)
+    slotStatus.textContent = ts ? `Loaded ${n} (${new Date(parseInt(ts)).toLocaleString()})` : `Loaded ${n}`
   }catch{ slotStatus.textContent = `Load ${n} failed` }
 }
 slot1save.onclick = ()=> saveToSlot(1)
