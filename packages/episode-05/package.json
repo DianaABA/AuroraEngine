@@ -1,7 +1,24 @@
 {
   "name": "@auroraengine/episode-05",
   "version": "0.1.0",
-  "main": "index.js",
   "description": "Episode 05 – add your VN script and assets here.",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --clean --dts --format cjs,esm --out-dir dist",
+    "clean": "rimraf dist"
+  }
 }

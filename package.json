@@ -11,5 +11,16 @@
     "packages/episode-06"
   ],
   "description": "Monorepo for AuroraEngine VN engine and episodes. Add your engine code and episodes in /packages.",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "scripts": {
+    "build": "npm run build -ws",
+    "clean": "npm run clean -ws",
+    "lint": "echo 'add linter later'",
+    "typecheck": "tsc -v > NUL"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.3"
+  }
 }
