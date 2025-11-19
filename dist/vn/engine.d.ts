@@ -48,5 +48,9 @@ export declare class VNEngine {
             [x: string]: any;
         };
     };
+    setAutoAdvance(on: boolean): void;
+    setAutoDecide(on: boolean): void;
+    isAutoAdvance(): boolean;
+    isAutoDecide(): boolean;
 }
 export declare function createEngine(cfg?: VNEngineConfig): VNEngine;

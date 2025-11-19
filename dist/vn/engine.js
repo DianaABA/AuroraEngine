@@ -203,5 +203,18 @@ export class VNEngine {
         }
     }
     getPublicState() { return { sceneId: this.currentSceneId, index: this.index, bg: this.bg, music: this.music, sprites: { ...this.sprites }, flags: [...this.flags], vars: { ...this.vars } }; }
+    // Runtime controls for UI
+    setAutoAdvance(on) {
+        this.config.autoAdvance = on;
+        if (on && !this.inAutoLoop)
+            this.runAutoLoop();
+    }
+    setAutoDecide(on) {
+        this.config.autoDecide = on;
+        if (on && this.config.autoAdvance && !this.inAutoLoop)
+            this.runAutoLoop();
+    }
+    isAutoAdvance() { return !!this.config.autoAdvance; }
+    isAutoDecide() { return !!this.config.autoDecide; }
 }
 export function createEngine(cfg = {}) { return new VNEngine(cfg); }

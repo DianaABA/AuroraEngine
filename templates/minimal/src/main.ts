@@ -6,6 +6,8 @@ const choicesEl = document.getElementById('choices')!
 const continueBtn = document.getElementById('continueBtn') as HTMLButtonElement
 const startExampleBtn = document.getElementById('startExample') as HTMLButtonElement
 const startExpressionsBtn = document.getElementById('startExpressions') as HTMLButtonElement
+const autoBtn = document.getElementById('autoBtn') as HTMLButtonElement
+const autoChooseBtn = document.getElementById('autoChooseBtn') as HTMLButtonElement
 const nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement
 const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement
@@ -227,3 +229,12 @@ startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block' }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }
+
+function refreshAutoButtons(){
+  autoBtn.textContent = `Auto: ${engine.isAutoAdvance()? 'On':'Off'}`
+  autoChooseBtn.textContent = `Auto-Choose: ${engine.isAutoDecide()? 'On':'Off'}`
+}
+
+autoBtn.onclick = () => { engine.setAutoAdvance(!engine.isAutoAdvance()); refreshAutoButtons() }
+autoChooseBtn.onclick = () => { engine.setAutoDecide(!engine.isAutoDecide()); refreshAutoButtons() }
+refreshAutoButtons()
