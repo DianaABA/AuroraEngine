@@ -44,6 +44,7 @@ const closeSettingsBtn = document.getElementById('closeSettings') as HTMLButtonE
 const settingsPanel = document.getElementById('settingsPanel') as HTMLDivElement
 const toggleSkipSeenBtn = document.getElementById('toggleSkipSeen') as HTMLButtonElement
 const toggleSkipTransitionsBtn = document.getElementById('toggleSkipTransitions') as HTMLButtonElement
+const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTMLButtonElement
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
@@ -77,8 +78,8 @@ const CODEX_META: Record<string, { title: string; body: string; category: string
   codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.', category: 'Locations' }
 }
 type Locale = 'en' | 'es'
-type Prefs = { skipSeenText: boolean; skipTransitions: boolean; locale: Locale }
-let prefs: Prefs = { skipSeenText: false, skipTransitions: false, locale: 'en' }
+type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; locale: Locale }
+let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, locale: 'en' }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
@@ -96,6 +97,7 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     skipFx: (c:{on:boolean})=> `Skip FX: ${c.on? 'On':'Off'}`,
     skipSeen: (c:{on:boolean})=> `Skip Seen Text: ${c.on? 'On':'Off'}`,
     skipTransitions: (c:{on:boolean})=> `Skip Transitions: ${c.on? 'On':'Off'}`,
+    debugToasts: (c:{on:boolean})=> `Debug Toasts: ${c.on? 'On':'Off'}`,
     clearSeen: ()=> 'Clear Seen',
     language: ()=> 'Language',
     english: ()=> 'English',
@@ -115,6 +117,7 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'Sí':'No'}`,
     skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'Sí':'No'}`,
     skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'Sí':'No'}`,
+    debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'Sí':'No'}`,
     clearSeen: ()=> 'Limpiar vistos',
     language: ()=> 'Idioma',
     english: ()=> 'Inglés',
@@ -133,7 +136,7 @@ function saveBacklog(){
   try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
 }
 function loadPrefs(){
-  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, locale: 'en' }
+  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, locale: 'en' }
   try {
     const raw = localStorage.getItem(PREFS_KEY)
     if(!raw){ prefs = defaults; return }
@@ -551,6 +554,7 @@ on('vn:auto-loop-guard', (d:any)=>{
 })
 
 function showToast(message: string){
+  if(!prefs.showDebugToasts) return
   try{
     const host = notifications || document.body
     const div = document.createElement('div')
@@ -704,6 +708,7 @@ closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none' }
 function refreshSettingsUI(){
   toggleSkipSeenBtn.textContent = t('skipSeen', { on: prefs.skipSeenText })
   toggleSkipTransitionsBtn.textContent = t('skipTransitions', { on: prefs.skipTransitions })
+  toggleDebugToastsBtn.textContent = t('debugToasts', { on: prefs.showDebugToasts })
   ;(document.getElementById('settingsTitle') as HTMLElement).textContent = t('settings')
   ;(document.getElementById('closeSettings') as HTMLButtonElement).textContent = t('close')
   ;(document.getElementById('langLabel') as HTMLElement).textContent = t('language')
@@ -712,6 +717,7 @@ function refreshSettingsUI(){
 }
 toggleSkipSeenBtn.onclick = () => { prefs.skipSeenText = !prefs.skipSeenText; savePrefs(); refreshSettingsUI() }
 toggleSkipTransitionsBtn.onclick = () => { prefs.skipTransitions = !prefs.skipTransitions; skipFx = prefs.skipTransitions; savePrefs(); refreshSettingsUI(); refreshSkipFx() }
+toggleDebugToastsBtn.onclick = () => { prefs.showDebugToasts = !prefs.showDebugToasts; savePrefs(); refreshSettingsUI() }
 clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
