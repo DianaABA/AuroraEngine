@@ -1,11 +1,6 @@
 export class GameStateCore {
     constructor() {
-        Object.defineProperty(this, "_state", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
+        this._state = null;
     }
     static getInstance() { if (!this.instance)
         this.instance = new GameStateCore(); return this.instance; }

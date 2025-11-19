@@ -1,61 +1,14 @@
 import { emit } from '../utils/eventBus';
+import { emitMusicTrackChange, emitMusicPlay } from '../utils/eventBus';
 import { evaluateCondition } from './expression';
 export class VNEngine {
     constructor(cfg = {}) {
-        Object.defineProperty(this, "scenes", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Map()
-        });
-        Object.defineProperty(this, "currentSceneId", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
-        Object.defineProperty(this, "index", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
-        Object.defineProperty(this, "flags", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Set()
-        });
-        Object.defineProperty(this, "vars", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
-        Object.defineProperty(this, "sprites", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
-        Object.defineProperty(this, "bg", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "music", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.scenes = new Map();
+        this.currentSceneId = null;
+        this.index = 0;
+        this.flags = new Set();
+        this.vars = {};
+        this.sprites = {};
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
     loadScenes(defs) { for (const s of defs) {
@@ -101,6 +54,8 @@ export class VNEngine {
                 break;
             case 'music':
                 this.music = step.track;
+                emitMusicTrackChange({ id: step.track, title: step.track });
+                emitMusicPlay({ id: step.track, title: step.track });
                 break;
             case 'flag':
                 step.value === false ? this.flags.delete(step.flag) : this.flags.add(step.flag);

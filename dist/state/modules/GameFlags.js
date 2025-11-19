@@ -1,17 +1,7 @@
 export class GameFlagsModule {
     constructor(get, set) {
-        Object.defineProperty(this, "get", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: get
-        });
-        Object.defineProperty(this, "set", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: set
-        });
+        this.get = get;
+        this.set = set;
     }
     addFlag(id) { const f = id.trim(); if (!f)
         return false; const st = this.get(); if (st.flags.has(f))

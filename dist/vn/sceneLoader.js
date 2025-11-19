@@ -80,3 +80,34 @@ export function simulateScene(s) {
     }
     return log;
 }
+// Convenience: parse scenes from a JSON string (array or object form)
+export function loadScenesFromJson(json) {
+    const errors = [];
+    try {
+        const data = JSON.parse(json);
+        if (Array.isArray(data))
+            return loadSceneDefsFromArray(data);
+        if (data && typeof data === 'object')
+            return loadSceneDefsFromObject(data);
+        return { scenes: [], errors: ['json_root_must_be_array_or_object'] };
+    }
+    catch (e) {
+        errors.push('json_parse_error:' + (e?.message || 'unknown'));
+        return { scenes: [], errors };
+    }
+}
+// Convenience: fetch scenes JSON from a URL (browser/Node18+)
+export async function loadScenesFromUrl(url) {
+    const errors = [];
+    try {
+        const res = await fetch(url);
+        if (!res.ok)
+            return { scenes: [], errors: ['http_' + res.status] };
+        const text = await res.text();
+        return loadScenesFromJson(text);
+    }
+    catch (e) {
+        errors.push('fetch_error:' + (e?.message || 'unknown'));
+        return { scenes: [], errors };
+    }
+}

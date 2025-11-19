@@ -11,36 +11,8 @@ const DEFAULT_STATE = {
 };
 class GameStateManager {
     constructor() {
-        Object.defineProperty(this, "state", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: safeDeepClone(DEFAULT_STATE)
-        });
-        Object.defineProperty(this, "flags", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "progression", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "metrics", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "listeners", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Map()
-        });
+        this.state = safeDeepClone(DEFAULT_STATE);
+        this.listeners = new Map();
         GameStateCore.getInstance().init(this.state);
         GameHistory.getInstance().configure(this.state.preferences.maxRollbackSteps);
         const get = () => this.state;

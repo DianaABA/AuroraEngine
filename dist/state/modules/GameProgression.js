@@ -1,23 +1,8 @@
 export class GameProgressionModule {
     constructor(_get, _set) {
-        Object.defineProperty(this, "_get", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: _get
-        });
-        Object.defineProperty(this, "_set", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: _set
-        });
-        Object.defineProperty(this, "plugins", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this._get = _get;
+        this._set = _set;
+        this.plugins = [];
         const snapshot = this._get();
         this._set(snapshot);
     }

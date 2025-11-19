@@ -1,17 +1,7 @@
 export class GameHistory {
     constructor() {
-        Object.defineProperty(this, "stack", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        Object.defineProperty(this, "max", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 50
-        });
+        this.stack = [];
+        this.max = 50;
     }
     static getInstance() { if (!this.instance)
         this.instance = new GameHistory(); return this.instance; }

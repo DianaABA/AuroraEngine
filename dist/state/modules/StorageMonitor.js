@@ -1,11 +1,6 @@
 export class StorageMonitor {
     constructor() {
-        Object.defineProperty(this, "timer", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
+        this.timer = null;
     }
     start() { if (this.timer)
         return; this.timer = setInterval(() => { }, 15000); }
