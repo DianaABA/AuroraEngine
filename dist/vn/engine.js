@@ -9,36 +9,72 @@ export class VNEngine {
         this.flags = new Set();
         this.vars = {};
         this.sprites = {};
+        this.inAutoLoop = false;
+        this.justEnteredSceneFromGoto = false;
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
     loadScenes(defs) { for (const s of defs) {
         this.scenes.set(s.id, s);
     } }
-    start(id) { if (!this.scenes.has(id))
-        throw new Error('scene_not_found:' + id); const scene = this.scenes.get(id); this.currentSceneId = id; this.index = 0; if (scene.bg)
-        this.bg = scene.bg; if (scene.music)
-        this.music = scene.music; this.emitStep(); this.runAutoLoop(); }
+    start(id) {
+        if (!this.scenes.has(id))
+            throw new Error('scene_not_found:' + id);
+        const scene = this.scenes.get(id);
+        this.currentSceneId = id;
+        this.index = 0;
+        if (scene.bg)
+            this.bg = scene.bg;
+        if (scene.music)
+            this.music = scene.music;
+        this.emitStep();
+        if (this.config.autoAdvance && !this.inAutoLoop)
+            this.runAutoLoop();
+    }
     getCurrentScene() { return this.currentSceneId ? this.scenes.get(this.currentSceneId) : null; }
     getCurrentStep() { const scene = this.getCurrentScene(); if (!scene)
         return null; return scene.steps[this.index] || null; }
-    next() { const scene = this.getCurrentScene(); if (!scene)
-        return; const step = this.getCurrentStep(); if (step && step.type === 'choice') {
+    next() {
+        const scene = this.getCurrentScene();
+        if (!scene)
+            return;
+        const step = this.getCurrentStep();
+        if (!step)
+            return;
+        if (step.type === 'choice') {
+            if (this.maybeAutoDecide())
+                return;
+            return;
+        }
+        if (step.type === 'goto') {
+            this.justEnteredSceneFromGoto = true;
+            this.start(step.scene);
+            return;
+        }
+        this.applySideEffects(step);
+        this.index++;
         if (this.maybeAutoDecide())
             return;
-        return;
-    } this.index++; const cur = this.getCurrentStep(); if (cur && cur.type === 'goto') {
-        this.start(cur.scene);
-        return;
-    } this.applySideEffects(cur); if (this.maybeAutoDecide())
-        return; this.emitStep(); this.runAutoLoop(); }
-    choose(optionIndex) { const step = this.getCurrentStep(); if (!step || step.type !== 'choice')
-        return; const choice = step.options[optionIndex]; if (!choice)
-        return; if (choice.setFlag)
-        this.flags.add(choice.setFlag); if (choice.goto) {
-        this.start(choice.goto);
-        return;
-    } this.index++; const cur = this.getCurrentStep(); this.applySideEffects(cur); if (this.maybeAutoDecide())
-        return; this.emitStep(); this.runAutoLoop(); }
+        this.emitStep();
+    }
+    choose(optionIndex) {
+        const step = this.getCurrentStep();
+        if (!step || step.type !== 'choice')
+            return;
+        const choice = step.options[optionIndex];
+        if (!choice)
+            return;
+        if (choice.setFlag)
+            this.flags.add(choice.setFlag);
+        if (choice.goto) {
+            this.justEnteredSceneFromGoto = true;
+            this.start(choice.goto);
+            return;
+        }
+        this.index++;
+        if (this.maybeAutoDecide())
+            return;
+        this.emitStep();
+    }
     applySideEffects(step) {
         if (!step)
             return;
@@ -111,34 +147,59 @@ export class VNEngine {
     runAutoLoop() {
         if (!this.config.autoAdvance)
             return;
+        if (this.inAutoLoop)
+            return;
+        this.inAutoLoop = true;
         let steps = 0;
-        while (this.config.autoAdvance) {
-            if (steps++ > (this.config.maxAutoSteps || 1000))
-                break;
-            const step = this.getCurrentStep();
-            if (!step)
-                break; // end of scene
-            if (step.type === 'dialogue') {
-                this.next();
-                continue;
-            }
-            if (step.type === 'choice') {
-                if (this.maybeAutoDecide()) {
+        let prevWasTransition = false;
+        const max = this.config.maxAutoSteps || 1000;
+        try {
+            while (this.config.autoAdvance) {
+                if (steps++ > max)
+                    break;
+                const step = this.getCurrentStep();
+                if (!step)
+                    break;
+                if (this.justEnteredSceneFromGoto) {
+                    // Pause on first dialogue after scene change via goto/choice
+                    if (step.type === 'dialogue') {
+                        this.justEnteredSceneFromGoto = false;
+                        break;
+                    }
+                    this.justEnteredSceneFromGoto = false;
+                }
+                if (step.type === 'choice') {
+                    if (this.maybeAutoDecide()) {
+                        prevWasTransition = false;
+                        continue;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                if (step.type === 'dialogue') {
+                    if (prevWasTransition)
+                        break;
+                    this.next();
+                    prevWasTransition = false;
                     continue;
                 }
-                else {
-                    break;
+                if (step.type === 'goto') {
+                    this.next();
+                    prevWasTransition = false;
+                    continue;
                 }
+                if (step.type === 'spriteShow' || step.type === 'spriteHide' || step.type === 'background' || step.type === 'music' || step.type === 'flag' || step.type === 'sfx' || step.type === 'transition') {
+                    const isTrans = step.type === 'transition';
+                    this.next();
+                    prevWasTransition = isTrans;
+                    continue;
+                }
+                break;
             }
-            if (step.type === 'goto') {
-                this.next();
-                continue;
-            }
-            if (step.type === 'spriteShow' || step.type === 'spriteHide' || step.type === 'background' || step.type === 'music' || step.type === 'flag' || step.type === 'sfx' || step.type === 'transition') {
-                this.next();
-                continue;
-            }
-            break;
+        }
+        finally {
+            this.inAutoLoop = false;
         }
     }
     getPublicState() { return { sceneId: this.currentSceneId, index: this.index, bg: this.bg, music: this.music, sprites: { ...this.sprites }, flags: [...this.flags], vars: { ...this.vars } }; }

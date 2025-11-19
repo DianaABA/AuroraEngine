@@ -15,6 +15,8 @@ export declare class VNEngine {
     private bg?;
     private music?;
     private config;
+    private inAutoLoop;
+    private justEnteredSceneFromGoto;
     constructor(cfg?: VNEngineConfig);
     loadScenes(defs: SceneDef[]): void;
     start(id: string): void;

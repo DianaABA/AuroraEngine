@@ -1,8 +1,38 @@
 export interface NotificationPayload { id?: string; type: string; title: string; message?: string }
 export interface MusicTrackEventDetail { id: string; title: string }
 const root: any = (typeof window !== 'undefined' && window) || globalThis
-export function emit<K extends string>(name: K, detail?: any){ try { root.dispatchEvent(new CustomEvent(name,{detail})) } catch {} }
-export function on<K extends string>(name: K, handler: (detail:any)=>void){ const fn=(e:Event)=>{handler((e as CustomEvent).detail)}; try { root.addEventListener(name,fn) } catch {}; return ()=>{ try { root.removeEventListener(name,fn) } catch {} } }
+
+// Fallback minimalist emitter for non-DOM environments (e.g., Node tests)
+const listeners = new Map<string, Set<(d:any)=>void>>()
+const hasDom = !!(root && typeof root.addEventListener === 'function' && typeof root.dispatchEvent === 'function')
+
+export function emit<K extends string>(name: K, detail?: any){
+	if(hasDom){
+		try { root.dispatchEvent(new CustomEvent(name,{detail})) } catch {}
+	}
+	const set = listeners.get(name)
+	if(set){
+		for(const h of Array.from(set)){
+			try { h(detail) } catch {}
+		}
+	}
+}
+
+export function on<K extends string>(name: K, handler: (detail:any)=>void){
+	let domFn: ((e:Event)=>void) | null = null
+	if(hasDom){
+		domFn = (e:Event)=>{ handler((e as CustomEvent).detail) }
+		try { root.addEventListener(name, domFn) } catch {}
+	}
+	let set = listeners.get(name)
+	if(!set){ set = new Set(); listeners.set(name, set) }
+	set.add(handler)
+	return ()=>{
+		if(hasDom && domFn){ try { root.removeEventListener(name, domFn) } catch {} }
+		const s = listeners.get(name); if(s){ s.delete(handler) }
+	}
+}
+
 export const emitNotification = (d: NotificationPayload)=> emit('ui:notification', d)
 export const onNotification = (h:(d:NotificationPayload)=>void)=> on('ui:notification', h)
 export const emitGameStateCorrupt = (d:{reason:string})=> emit('gameState:corrupt', d)

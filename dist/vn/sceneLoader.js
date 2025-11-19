@@ -1,16 +1,99 @@
 export function validateSceneDef(raw) {
+    const errs = [];
+    const ctx = (k) => `scene:${raw?.id ?? '?'}:${k}`;
     if (!raw || typeof raw !== 'object')
         return { error: 'invalid_scene_object' };
     if (typeof raw.id !== 'string' || !raw.id.trim())
-        return { error: 'scene_missing_id' };
+        errs.push('scene_missing_id');
     if (!Array.isArray(raw.steps))
-        return { error: 'scene_missing_steps:' + raw.id };
+        errs.push(ctx('steps') + ':missing_steps');
     const steps = [];
-    for (const s of raw.steps) {
-        if (!s || typeof s !== 'object' || typeof s.type !== 'string')
-            return { error: 'invalid_step:' + raw.id };
-        steps.push(s);
+    if (Array.isArray(raw.steps)) {
+        raw.steps.forEach((s, i) => {
+            const sp = `step[${i}]`;
+            if (!s || typeof s !== 'object') {
+                errs.push(ctx(sp) + ':invalid_object');
+                return;
+            }
+            if (typeof s.type !== 'string') {
+                errs.push(ctx(sp) + ':missing_type');
+                return;
+            }
+            // type-specific validation
+            switch (s.type) {
+                case 'dialogue':
+                    if (typeof s.text !== 'string')
+                        errs.push(ctx(sp) + ':dialogue.missing_text');
+                    if (s.char !== undefined && typeof s.char !== 'string')
+                        errs.push(ctx(sp) + ':dialogue.char_not_string');
+                    break;
+                case 'choice':
+                    if (!Array.isArray(s.options) || s.options.length === 0) {
+                        errs.push(ctx(sp) + ':choice.missing_options');
+                        break;
+                    }
+                    s.options.forEach((o, oi) => {
+                        const op = `${sp}.options[${oi}]`;
+                        if (!o || typeof o !== 'object') {
+                            errs.push(ctx(op) + ':invalid_object');
+                            return;
+                        }
+                        if (typeof o.label !== 'string')
+                            errs.push(ctx(op) + ':missing_label');
+                        if (o.goto !== undefined && typeof o.goto !== 'string')
+                            errs.push(ctx(op) + ':goto_not_string');
+                        if (o.setFlag !== undefined && typeof o.setFlag !== 'string')
+                            errs.push(ctx(op) + ':setFlag_not_string');
+                        if (o.condition !== undefined && typeof o.condition !== 'string')
+                            errs.push(ctx(op) + ':condition_not_string');
+                        if (o.weight !== undefined && typeof o.weight !== 'number')
+                            errs.push(ctx(op) + ':weight_not_number');
+                    });
+                    break;
+                case 'background':
+                    if (typeof s.src !== 'string')
+                        errs.push(ctx(sp) + ':background.missing_src');
+                    break;
+                case 'music':
+                    if (typeof s.track !== 'string')
+                        errs.push(ctx(sp) + ':music.missing_track');
+                    break;
+                case 'sfx':
+                    if (typeof s.track !== 'string')
+                        errs.push(ctx(sp) + ':sfx.missing_track');
+                    break;
+                case 'spriteShow':
+                    if (typeof s.id !== 'string' || typeof s.src !== 'string')
+                        errs.push(ctx(sp) + ':spriteShow.missing_id_or_src');
+                    break;
+                case 'spriteHide':
+                    if (typeof s.id !== 'string')
+                        errs.push(ctx(sp) + ':spriteHide.missing_id');
+                    break;
+                case 'flag':
+                    if (typeof s.flag !== 'string')
+                        errs.push(ctx(sp) + ':flag.missing_flag');
+                    if (s.value !== undefined && typeof s.value !== 'boolean')
+                        errs.push(ctx(sp) + ':flag.value_not_boolean');
+                    break;
+                case 'goto':
+                    if (typeof s.scene !== 'string')
+                        errs.push(ctx(sp) + ':goto.missing_scene');
+                    break;
+                case 'transition':
+                    if (s.kind !== 'fade' && s.kind !== 'slide')
+                        errs.push(ctx(sp) + ':transition.invalid_kind');
+                    if (s.duration !== undefined && typeof s.duration !== 'number')
+                        errs.push(ctx(sp) + ':transition.duration_not_number');
+                    break;
+                default:
+                    errs.push(ctx(sp) + `:unknown_type:${s.type}`);
+            }
+            steps.push(s);
+        });
     }
+    if (errs.length > 0)
+        return { error: errs.join(';') };
     return { def: { id: raw.id, bg: raw.bg, music: raw.music, steps } };
 }
 export function loadSceneDefsFromArray(arr) {

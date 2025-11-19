@@ -1,4 +1,5 @@
 # Aurora’s Engine
+[![CI](https://github.com/DianaABA/AuroraEngine/actions/workflows/ci.yml/badge.svg)](https://github.com/DianaABA/AuroraEngine/actions/workflows/ci.yml)
 A lightweight, creator-friendly Visual Novel engine built with modern web technologies.  
 Designed to help writers, solo devs, educators, and storytellers build narrative experiences without starting from scratch.
 
@@ -87,6 +88,8 @@ Full documentation is in `/docs`.
 - Scene format: `docs/scene-format.md`
 - Achievements (draft): `docs/achievements.md`
 - Audio Jukebox (draft): `docs/jukebox.md`
+- AI prompt examples: `docs/ai-prompts.md`
+- Error fix guide: `docs/prompt-fix-errors.md`
 
 ---
 

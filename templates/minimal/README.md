@@ -20,6 +20,11 @@ Then open http://localhost:5173
 - Listens for `vn:step` events and updates the DOM
 
 ## Deploy (Netlify)
+Deploy with one click:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/DianaABA/AuroraEngine&base=templates/minimal&build_command=npm%20run%20build&publish=templates/minimal/dist)
+
+Manual:
 1. Push your fork of this repo to GitHub
 2. In Netlify, create a new site from Git and select your fork
 3. Build command: `npm run build`

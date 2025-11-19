@@ -1,15 +1,52 @@
 const root = (typeof window !== 'undefined' && window) || globalThis;
-export function emit(name, detail) { try {
-    root.dispatchEvent(new CustomEvent(name, { detail }));
+// Fallback minimalist emitter for non-DOM environments (e.g., Node tests)
+const listeners = new Map();
+const hasDom = !!(root && typeof root.addEventListener === 'function' && typeof root.dispatchEvent === 'function');
+export function emit(name, detail) {
+    if (hasDom) {
+        try {
+            root.dispatchEvent(new CustomEvent(name, { detail }));
+        }
+        catch { }
+    }
+    const set = listeners.get(name);
+    if (set) {
+        for (const h of Array.from(set)) {
+            try {
+                h(detail);
+            }
+            catch { }
+        }
+    }
 }
-catch { } }
-export function on(name, handler) { const fn = (e) => { handler(e.detail); }; try {
-    root.addEventListener(name, fn);
+export function on(name, handler) {
+    let domFn = null;
+    if (hasDom) {
+        domFn = (e) => { handler(e.detail); };
+        try {
+            root.addEventListener(name, domFn);
+        }
+        catch { }
+    }
+    let set = listeners.get(name);
+    if (!set) {
+        set = new Set();
+        listeners.set(name, set);
+    }
+    set.add(handler);
+    return () => {
+        if (hasDom && domFn) {
+            try {
+                root.removeEventListener(name, domFn);
+            }
+            catch { }
+        }
+        const s = listeners.get(name);
+        if (s) {
+            s.delete(handler);
+        }
+    };
 }
-catch { } ; return () => { try {
-    root.removeEventListener(name, fn);
-}
-catch { } }; }
 export const emitNotification = (d) => emit('ui:notification', d);
 export const onNotification = (h) => on('ui:notification', h);
 export const emitGameStateCorrupt = (d) => emit('gameState:corrupt', d);
