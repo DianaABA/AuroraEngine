@@ -91,6 +91,8 @@ Full documentation is in `/docs`.
 - AI prompt examples: `docs/ai-prompts.md`
 - Error fix guide: `docs/prompt-fix-errors.md`
 
+- Changelog: `CHANGELOG.md`
+
 ---
 
 ## Template (Browser Demo)
