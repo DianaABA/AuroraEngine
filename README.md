@@ -1,86 +1,74 @@
+
 # Aurora’s Engine
 [![CI](https://github.com/DianaABA/AuroraEngine/actions/workflows/ci.yml/badge.svg)](https://github.com/DianaABA/AuroraEngine/actions/workflows/ci.yml)
-A lightweight, creator-friendly Visual Novel engine built with modern web technologies.  
-Designed to help writers, solo devs, educators, and storytellers build narrative experiences without starting from scratch.
 
-Aurora’s Engine supports:
-- Dialogue and character interaction  
-- Branching choices and conditional paths  
-- Simple scene scripting with JSON  
-- Background and sprite switching  
-- Music, sound effects, and emotional cues  
-- State, flags, and persistent memory  
-- Basic transitions and animations  
-- Quick deployment to the web (Netlify, Vercel)
-
-It is intentionally simple:  
-easy to learn, easy to build with, easy to share.
+A lightweight, creator-friendly Visual Novel engine. No coding required to get started!
 
 ---
 
-## Why Aurora’s Engine Exists
-Many beginner creators want to tell stories but feel blocked by:
-- complex tools  
-- confusing file structures  
-- frameworks requiring advanced coding
+## 🚀 Quick Start for Everyone
 
-Aurora’s Engine removes those barriers.
+1. **Download or clone this repo** (green "Code" button above)
+2. **Open the folder** on your computer
+3. **Double-click the `templates/minimal` folder**
+4. **Open a terminal in that folder** (right-click → "Open in Terminal" or use your code editor)
+5. **Copy and paste these commands:**
 
-It was originally developed alongside the visual novel Chakra Hearts, then rebuilt into a clean framework so others can:
-- write in plain text  
-- organize assets easily  
-- build interactive scenes with simple JSON  
-- publish projects quickly  
-- learn through AI-assisted workflows or traditional coding
+   ```powershell
+   npm install
+   npm run dev
+   ```
 
-Whether you prefer Snowflake’s structured path (clean code, clarity) or Necromancer’s creative path (AI-assisted writing, rapid prototyping), the engine supports both styles.
+6. **Open the link shown in the terminal** (usually http://localhost:5173)
+7. **Edit scenes and assets** in the `public/scenes` and `public/cgs` folders. Refresh the browser to see your changes!
 
----
-
-## Key Features
-- Scene Scripting System  
-  Create scenes using a simple JSON format. No complex logic required.
-
-- Dialogue Engine  
-  Define who speaks, what they say, and how emotions shift.
-
-- Choice System  
-  Branch stories using clear `choices` and `goto` fields.
-
-- State & Memory  
-  Flags, variables, emotional tracking, romance points, achievements.
-
-- Asset Management  
-  Drop in PNGs, backgrounds, and music. The engine handles loading.
-
-- Transitions & FX  
-  Fade, slide, shake, glitch burst, harmonic light, etc.
-
-- Web Deployment  
-  Designed to run anywhere: Netlify, GitHub Pages, Vercel, or as a desktop build.
+**No coding required!**
 
 ---
 
-## Who It’s For
-- Writers who want to publish a story quickly  
-- Students learning React or web fundamentals  
-- Educators wanting to gamify lessons  
-- Content creators who want to bundle narrative experiences  
-- Udemy learners following the “Build Your First Visual Novel” course  
-- Anyone who says:  
-  “I want to make a VN, but I don’t want to code everything myself.”
+## ✨ What Can Aurora’s Engine Do?
+
+- Write stories with dialogue, choices, and branching paths
+- Use your own backgrounds, sprites, and music
+- Simple scene scripting with easy-to-edit JSON files
+- Save and load progress, autosave, and multiple slots
+- Achievements, CG gallery, and music jukebox
+- Sprite motion, transitions, and effects (fade, slide, shake, etc.)
+- Keyboard navigation and accessibility features
+- Web deployment: share your game online with one click (Netlify, Vercel, GitHub Pages)
+- Built-in scene validator and linting for error-free stories
+- AI prompt helpers and non-coder tools (see `docs/non-coder-tools.md`)
 
 ---
 
-## Quick Start
-1. Clone or download the repository  
-2. Place your assets into `assets/`  
-3. Write scenes in `scenes/` using the provided JSON format  
-4. Add your entry scene to `main.json`  
-5. Run the project  
-6. Publish with one click (Netlify button included)
+## Who Is This For?
 
-Full documentation is in `/docs`.
+- Writers, solo devs, educators, students, and anyone who wants to make a visual novel or interactive story—no experience needed!
+
+---
+
+## More for Developers
+
+If you want to extend, customize, or automate:
+
+- Modular state system (flags, metrics, progression, storage monitor)
+- Event bus for custom UI and analytics
+- Expression evaluator for conditional logic
+- Scene runner and save schema versioning
+- CLI tools for previewing and linting scenes
+
+See the rest of this README and `/docs` for advanced usage.
+
+---
+
+## Full Documentation
+See the `/docs` folder for:
+- Scene format and scripting
+- Achievements, gallery, jukebox
+- AI prompt examples
+- Error fixing and non-coder helpers
+- Scene linting and validation
+- Sprite motion timelines
 
 ---
 
@@ -266,7 +254,11 @@ Use it to tell your story.
 Build something you’re proud of.  
 Bring your world to life.
 
-## Quick Start (5 Minutes)
+
+## Quick Start for Developers
+
+See the 5-minute code sample below if you want to use Aurora’s Engine in your own TypeScript/JS project:
+
 ```ts
 import { createEngine } from 'aurora-engine';
 
