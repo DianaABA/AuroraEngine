@@ -173,6 +173,16 @@
             <img id="slot3thumb" alt="" style="width:96px; height:54px; object-fit:cover; border-radius:4px; border:1px solid #27304a" />
             <span id="slotStatus" style="font-size:12px; color:#a8b0ff"></span>
           </div>
+          <div id="assetPanel" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border:1px dashed #27304a; border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="color:#a0e7ff; font-size:13px">Drag & Drop Assets (non-coder helper)</strong>
+              <button id="assetPick" class="secondary">Pick Files</button>
+            </div>
+            <div id="assetDrop" style="margin-top:6px; padding:10px; border:1px dashed #27304a; border-radius:8px; color:#a8b0ff; font-size:12px; text-align:center; background:#0b1020;">
+              Drop images/audio here to preview. Object URLs stay local to your browser.
+            </div>
+            <div id="assetList" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
           <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:#a0e7ff">Saves</strong>

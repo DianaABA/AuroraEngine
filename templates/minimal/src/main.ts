@@ -87,6 +87,9 @@ const volumeSlider = document.getElementById('volumeSlider') as HTMLInputElement
 const muteToggle = document.getElementById('muteToggle') as HTMLButtonElement
 const notifications = document.getElementById('notifications') as HTMLDivElement | null
 const debugHud = document.getElementById('debugHud') as HTMLDivElement
+const assetDrop = document.getElementById('assetDrop') as HTMLDivElement | null
+const assetList = document.getElementById('assetList') as HTMLDivElement | null
+const assetPick = document.getElementById('assetPick') as HTMLButtonElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -120,6 +123,8 @@ type CodexEntry = { id: string; title: string; body: string; category: string; u
 type CodexFilters = { category: string; favoritesOnly: boolean }
 let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false }
 let codexSelectedEntry: CodexEntry | null = null
+type LocalAsset = { name: string; type: string; size: number; url: string }
+let localAssets: LocalAsset[] = []
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -169,6 +174,13 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
   }
 }
 function t(key: string, ctx?: any){ const fn = STRINGS[prefs.locale][key]; return fn ? fn(ctx) : key }
+
+function resolveAssetUrl(src?: string): string {
+  if(!src) return ''
+  if(/^https?:\/\//i.test(src) || src.startsWith('blob:') || src.startsWith('data:')) return src
+  if(src.startsWith('/')) return src
+  return `/${src}`
+}
 
 const EASE_PRESETS: Record<string,string> = {
   easeOutBack: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -537,19 +549,20 @@ let _currentBgSrc: string | undefined = undefined
 function setBackground(src?: string){
   if(!src){ if(bgA) bgA.style.opacity='0'; if(bgB) bgB.style.opacity='0'; _currentBgSrc=undefined; return }
   if(_currentBgSrc === src) return
+  const resolved = resolveAssetUrl(src)
   const fadeMs = skipFx ? 0 : (prefs.bgFadeMs||400)
   if(bgA) bgA.style.transitionDuration = `${fadeMs}ms`
   if(bgB) bgB.style.transitionDuration = `${fadeMs}ms`
   const next = _activeBgLayer === 'A' ? bgB : bgA
   const cur = _activeBgLayer === 'A' ? bgA : bgB
   if(!next || !cur) { // fallback to old behavior
-    if(bgEl) bgEl.style.backgroundImage = `url(/${src})`
+    if(bgEl) bgEl.style.backgroundImage = `url(${resolved})`
     _currentBgSrc = src
     return
   }
   const testImg = new Image()
   testImg.onload = () => {
-    next.style.backgroundImage = `url(/${src})`
+    next.style.backgroundImage = `url(${resolved})`
     // crossfade
     next.style.opacity = '1'
     cur.style.opacity = '0'
@@ -559,7 +572,7 @@ function setBackground(src?: string){
   testImg.onerror = () => {
     console.error('Failed to load background image:', src)
   }
-  testImg.src = `/${src}`
+  testImg.src = resolved
 }
 
 on('vn:step', ({ step, state }) => {
@@ -629,6 +642,7 @@ on('vn:step', ({ step, state }) => {
     const meta = { ...global, ...(spriteMeta[id] || {}) }
     const pos = meta.pos || 'center'
     const scale = typeof meta.scale === 'number' ? meta.scale : 1
+    const resolvedSrc = resolveAssetUrl(src as string)
     let img = spriteEls[id]
     const existed = !!img
     if(!img){
@@ -647,9 +661,9 @@ on('vn:step', ({ step, state }) => {
       requestAnimationFrame(()=>{ img!.style.opacity = '1' })
     }
     // Crossfade on src change
-    if(img.src !== `${location.origin}/${src}`){
+    if(img.src !== resolvedSrc){
       img.style.opacity = '0'
-      setTimeout(()=>{ img!.src = `/${src}`; img!.style.opacity = '1' }, 120)
+      setTimeout(()=>{ img!.src = resolvedSrc; img!.style.opacity = '1' }, 120)
     }
     // Positioning and depth scaling
     // Allow per-step motion hints for the currently processed sprite
@@ -684,7 +698,7 @@ on('vn:step', ({ step, state }) => {
     } else {
       if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
     }
-    if(!existed && !img.src){ img.src = `/${src}` }
+    if(!existed && !img.src){ img.src = resolvedSrc }
   }
   // clear UI
   nameEl.textContent = ''
@@ -913,6 +927,83 @@ function metaFromState(): StepMeta{
     index: typeof (st as any).index === 'number' ? (st as any).index : 0,
     label: lastStepMeta?.label || ''
   }
+}
+
+function formatBytes(bytes: number): string{
+  if(!bytes) return '0B'
+  const units = ['B','KB','MB','GB']
+  const i = Math.min(units.length-1, Math.floor(Math.log(bytes)/Math.log(1024)))
+  const val = bytes / Math.pow(1024, i)
+  return `${val.toFixed(val >= 10 ? 0 : 1)}${units[i]}`
+}
+
+function renderAssets(){
+  if(!assetList) return
+  assetList.innerHTML = ''
+  if(localAssets.length === 0){
+    const div = document.createElement('div')
+    div.style.color = '#a8b0ff'
+    div.style.fontSize = '12px'
+    div.textContent = 'No local assets yet. Drop PNG/JPG/WebP/MP3/OGG files here.'
+    assetList.appendChild(div)
+    return
+  }
+  localAssets.slice().reverse().forEach((asset) => {
+    const row = document.createElement('div')
+    row.style.display = 'flex'
+    row.style.gap = '8px'
+    row.style.alignItems = 'center'
+    row.style.padding = '6px 8px'
+    row.style.background = '#111827'
+    row.style.border = '1px solid #27304a'
+    row.style.borderRadius = '6px'
+
+    const meta = document.createElement('div')
+    meta.style.flex = '1'
+    meta.style.color = '#a8b0ff'
+    meta.style.fontSize = '12px'
+    meta.innerHTML = `<strong style="color:#a0e7ff">${asset.name}</strong> · ${asset.type || 'file'} · ${formatBytes(asset.size)}`
+
+    const actions = document.createElement('div')
+    actions.style.display = 'flex'
+    actions.style.gap = '6px'
+
+    const bgBtn = document.createElement('button')
+    bgBtn.className = 'secondary'
+    bgBtn.textContent = 'Preview BG'
+    bgBtn.onclick = ()=> setBackground(asset.url)
+
+    const copyBtn = document.createElement('button')
+    copyBtn.className = 'secondary'
+    copyBtn.textContent = 'Copy URL'
+    copyBtn.onclick = async ()=>{
+      try{
+        await navigator.clipboard.writeText(asset.url)
+        showToast('Copied object URL (local only)')
+      }catch{}
+    }
+
+    actions.appendChild(bgBtn)
+    actions.appendChild(copyBtn)
+    row.appendChild(meta)
+    row.appendChild(actions)
+    assetList.appendChild(row)
+  })
+}
+
+function addLocalAssets(files: FileList | File[]){
+  const arr = Array.from(files || [])
+  for(const file of arr){
+    try{
+      const url = URL.createObjectURL(file)
+      localAssets.push({ name: file.name, type: file.type, size: file.size, url })
+    }catch{}
+  }
+  // Cap memory: keep last 12
+  if(localAssets.length > 12){
+    localAssets = localAssets.slice(localAssets.length - 12)
+  }
+  renderAssets()
 }
 
 nextBtn.onclick = () => engine.next()
