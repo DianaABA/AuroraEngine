@@ -1,26 +1,35 @@
 import type { SceneStep } from '../../src/vn/sceneTypes'
-import type { Gallery, Achievements } from '../../src'
 import type { VNEngine } from '../../src/vn/engine'
 
 export type VanillaRendererOptions = {
   engine: VNEngine
   mount: HTMLElement
-  gallery?: Gallery
-  achievements?: Achievements
+  classes?: {
+    line?: string
+    name?: string
+    text?: string
+    choices?: string
+    next?: string
+  }
 }
 
 export function createVanillaRenderer(opts: VanillaRendererOptions){
-  const { engine, mount } = opts
-  const el = mount
-  el.innerHTML = `
-    <div class="ae-line"><span class="ae-name"></span><span class="ae-text"></span></div>
-    <div class="ae-choices"></div>
-    <button class="ae-next">Next</button>
+  const { engine, mount, classes = {} } = opts
+  const lineClass = classes.line || 'ae-line'
+  const nameClass = classes.name || 'ae-name'
+  const textClass = classes.text || 'ae-text'
+  const choicesClass = classes.choices || 'ae-choices'
+  const nextClass = classes.next || 'ae-next'
+
+  mount.innerHTML = `
+    <div class="${lineClass}"><span class="${nameClass}"></span><span class="${textClass}"></span></div>
+    <div class="${choicesClass}"></div>
+    <button class="${nextClass}">Next</button>
   `
-  const nameEl = el.querySelector('.ae-name') as HTMLElement
-  const textEl = el.querySelector('.ae-text') as HTMLElement
-  const choicesEl = el.querySelector('.ae-choices') as HTMLElement
-  const nextBtn = el.querySelector('.ae-next') as HTMLButtonElement
+  const nameEl = mount.querySelector(`.${nameClass}`) as HTMLElement
+  const textEl = mount.querySelector(`.${textClass}`) as HTMLElement
+  const choicesEl = mount.querySelector(`.${choicesClass}`) as HTMLElement
+  const nextBtn = mount.querySelector(`.${nextClass}`) as HTMLButtonElement
 
   function render(step: SceneStep | null){
     nameEl.textContent = ''

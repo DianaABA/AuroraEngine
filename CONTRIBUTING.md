@@ -1,58 +1,99 @@
+
 # Contributing to AuroraEngine
 
-Thanks for your interest in improving AuroraEngine! This guide is beginner-friendly and aims to help you contribute quickly and confidently.
+Thank you for your interest in making AuroraEngine better! We welcome everyone—beginners, writers, artists, testers, and coders. You don’t need to be a developer to help out.
 
-## Getting Started
-- Fork the repo and clone your fork
-- Node.js LTS recommended (v18+)
-- Install deps:
+---
+
+## 🚩 Your First Issue
+
+Want to get started? Look for issues labeled **"good first issue"** or **"help wanted"** in the Issues tab. These are perfect for beginners and non-coders!
+
+You can also:
+- Suggest a new feature or improvement
+- Report a bug or typo
+- Help test new features
+- Improve documentation or tutorials
+- Share feedback on usability
+
+---
+
+## 🐞 How to Submit a Bug
+
+1. Go to the Issues tab and click **New Issue**
+2. Choose **Bug report**
+3. Fill in:
+  - What you expected to happen
+  - What actually happened
+  - Steps to reproduce (if possible)
+  - Screenshots or error messages (if any)
+4. Add the **type:bug** label if you can, or mention "bug" in your title/description
+
+---
+
+## 💡 How to Suggest a Feature
+
+1. Go to the Issues tab and click **New Issue**
+2. Choose **Feature request**
+3. Describe your idea and why it would help
+4. Add the **type:feat** label if you can
+
+---
+
+## 🏷️ Issue Labels
+
+We use labels like **good first issue**, **help wanted**, **type:bug**, and **type:feat** to organize issues. See `ISSUE_LABELS.md` for the full list and what they mean.
+
+If you’re not sure which label to use, don’t worry—a maintainer will help!
+
+---
+
+## 🛠️ Getting Started (for Coders)
+
+1. Fork the repo and clone your fork
+2. Node.js LTS recommended (v18+)
+3. Install dependencies:
   ```bash
   npm ci
   ```
-- Build (if needed):
+4. Build (if needed):
   ```bash
   npm run build
   ```
-- Run tests (if available):
+5. Run tests (if available):
   ```bash
   npm test
   ```
 
-## Project Structure (high-level)
+---
+
+## 🗂️ Project Structure (high-level)
 - `src/` — core engine (VN runtime, state, utils)
 - `docs/` — documentation
 - `tests/` — unit tests
 
-## Workflow
+---
+
+## 📝 Workflow (for Pull Requests)
 1. Create a branch: `feat/your-idea` or `fix/issue-123`
 2. Make focused changes with clear commits
 3. Ensure `npm test` passes
-4. Open a Pull Request (PR) with a concise description, screenshots or logs if relevant
+4. Open a Pull Request (PR) with a clear description, screenshots or logs if relevant
 
-## Commit Messages
-Conventional style helps keep history readable:
+---
+
+## ✍️ Commit Messages
+Use a clear, conventional style:
 - `feat: add transition fade` — new feature
 - `fix: handle empty scene steps` — bug fix
 - `docs: update README tutorial` — docs only
 - `refactor: simplify expression parser` — refactor, no behavior change
 
-## Issues
-- Check existing issues before creating a new one
-- Provide reproduction steps and expected behavior
-- Use labels (see `ISSUE_LABELS.md`) to categorize
+---
 
-## Code Style
-- Keep PRs small and focused
-- Prefer readable code over cleverness
-- Add or update docs/tests with behavior changes
-
-## Local Development Tips
-- Use the event bus to observe engine behavior (`vn:step`, `vn:transition`)
-- Leverage `save.ts` helpers for quick save/load during testing
-
-## Community
+## 🧑‍🤝‍🧑 Community
 - Be kind and constructive
 - Assume good intent
-- We welcome first-time contributors
+- We welcome first-time contributors and non-coders
 
-Thanks for making AuroraEngine better!
+Thank you for making AuroraEngine better!

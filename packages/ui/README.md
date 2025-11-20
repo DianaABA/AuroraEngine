@@ -6,7 +6,7 @@ Lightweight, framework-agnostic rendering helpers for AuroraEngine.
 
 ```ts
 import { createEngine } from 'aurora-engine'
-import { createVanillaRenderer } from '@aurora-engine/ui'
+import { createVanillaRenderer, styles } from '@aurora-engine/ui'
 
 const engine = createEngine({ autoEmit: true })
 engine.loadScenes([
@@ -15,6 +15,11 @@ engine.loadScenes([
 engine.start('intro')
 
 const mount = document.getElementById('app')!
+// Optional: inject default styles
+const style = document.createElement('style')
+style.textContent = styles
+document.head.appendChild(style)
+
 const ui = createVanillaRenderer({ engine, mount })
 
 // Render on each engine step (wire to your own event bus or call manually)

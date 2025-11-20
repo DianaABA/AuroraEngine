@@ -193,6 +193,50 @@
             <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
             <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
           </div>
+          <div id="sceneEditor" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border-radius:8px; border:1px solid #27304a;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="color:#a0e7ff; font-size:13px">Lightweight Scene Editor</strong>
+              <input id="editorSceneId" placeholder="scene id" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:120px" />
+              <input id="editorBg" placeholder="background (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:140px" />
+              <input id="editorMusic" placeholder="music (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:140px" />
+            </div>
+            <div style="margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px; align-items:flex-start;">
+              <div>
+                <label style="color:#a8b0ff; font-size:12px">Step Type</label>
+                <select id="editorStepType" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff">
+                  <option value="dialogue">dialogue</option>
+                  <option value="choice">choice</option>
+                  <option value="background">background</option>
+                  <option value="spriteShow">spriteShow</option>
+                  <option value="spriteSwap">spriteSwap</option>
+                  <option value="music">music</option>
+                  <option value="flag">flag</option>
+                  <option value="transition">transition</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:#a8b0ff; font-size:12px">Char / Sprite / Flag</label>
+                <input id="editorChar" placeholder="char or sprite id / flag key" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
+              </div>
+              <div>
+                <label style="color:#a8b0ff; font-size:12px">Text / Src / Track</label>
+                <input id="editorText" placeholder="dialogue text, sprite src, audio track" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
+              </div>
+              <div>
+                <label style="color:#a8b0ff; font-size:12px">Choice options (label|goto per line)</label>
+                <textarea id="editorOptions" style="width:100%; min-height:80px; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; font-size:12px"></textarea>
+              </div>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button id="editorAddStep" class="secondary">Add Step</button>
+              <button id="editorReset" class="secondary">Reset</button>
+              <button id="editorLoad" class="">Build & Run</button>
+              <button id="editorDownload" class="secondary">Download JSON</button>
+            </div>
+            <div id="editorSteps" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; color:#a8b0ff; font-size:12px;"></div>
+            <pre id="editorPreview" style="margin-top:8px; background:#0b1020; color:#a0e7ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-size:12px; max-height:180px; overflow:auto;"></pre>
+            <div id="editorErrors" style="margin-top:6px; color:#ffb4b4; font-size:12px; white-space:pre-wrap"></div>
+          </div>
           <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:#a0e7ff">Saves</strong>

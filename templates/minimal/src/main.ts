@@ -95,6 +95,20 @@ const customLoadBtn = document.getElementById('customLoadBtn') as HTMLButtonElem
 const customFileBtn = document.getElementById('customFileBtn') as HTMLButtonElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
+const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
+const editorBg = document.getElementById('editorBg') as HTMLInputElement | null
+const editorMusic = document.getElementById('editorMusic') as HTMLInputElement | null
+const editorStepType = document.getElementById('editorStepType') as HTMLSelectElement | null
+const editorChar = document.getElementById('editorChar') as HTMLInputElement | null
+const editorText = document.getElementById('editorText') as HTMLInputElement | null
+const editorOptions = document.getElementById('editorOptions') as HTMLTextAreaElement | null
+const editorAddStep = document.getElementById('editorAddStep') as HTMLButtonElement | null
+const editorReset = document.getElementById('editorReset') as HTMLButtonElement | null
+const editorLoad = document.getElementById('editorLoad') as HTMLButtonElement | null
+const editorDownload = document.getElementById('editorDownload') as HTMLButtonElement | null
+const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
+const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
+const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -131,6 +145,9 @@ let codexSelectedEntry: CodexEntry | null = null
 type LocalAsset = { name: string; type: string; size: number; url: string }
 let localAssets: LocalAsset[] = []
 type MoveStep = { x?: number; y?: number; ms?: number; ease?: string }
+type EditorScene = { id: string; bg?: string; music?: string; steps: any[] }
+let editorSteps: any[] = []
+const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -1703,11 +1720,11 @@ onbShortcutsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); toggleHotkeyH
 onbSettingsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); openSettingsBtn.click() }
 
 // Drag-and-drop assets helper (non-coder friendly)
-  if(assetDrop){
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.multiple = true
-    fileInput.accept = 'image/*,audio/*'
+if(assetDrop){
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.multiple = true
+  fileInput.accept = 'image/*,audio/*'
   fileInput.onchange = ()=>{ if(fileInput.files) addLocalAssets(fileInput.files) }
   if(assetPick){ assetPick.onclick = ()=> fileInput.click() }
   assetDrop.addEventListener('dragover', (e)=>{ e.preventDefault(); assetDrop.style.borderColor = '#3e59ff' })
@@ -1760,6 +1777,131 @@ if(customLoadBtn && customJsonInput){
     }
   }
 }
+
+// Lightweight scene editor (browser-only helper)
+function renderEditorPreview(){
+  if(!editorPreview) return
+  const scene: EditorScene = {
+    id: (editorSceneId?.value?.trim() || 'custom'),
+    bg: editorBg?.value?.trim() || undefined,
+    music: editorMusic?.value?.trim() || undefined,
+    steps: editorSteps.slice()
+  }
+  editorPreview.textContent = JSON.stringify([scene], null, 2)
+}
+
+function renderEditorSteps(){
+  if(!editorStepsEl) return
+  editorStepsEl.innerHTML = ''
+  if(editorSteps.length === 0){
+    const div = document.createElement('div')
+    div.textContent = 'No steps yet. Add dialogue/choice/sprite/background.'
+    div.style.color = '#a8b0ff'
+    div.style.fontSize = '12px'
+    editorStepsEl.appendChild(div)
+    return
+  }
+  editorSteps.forEach((st, idx)=>{
+    const row = document.createElement('div')
+    row.style.background = '#111827'
+    row.style.border = '1px solid #27304a'
+    row.style.borderRadius = '6px'
+    row.style.padding = '6px 8px'
+    row.style.color = '#a8b0ff'
+    row.style.fontSize = '12px'
+    row.textContent = `#${idx} ${st.type} ${st.text||st.src||''} ${st.goto? '-> '+st.goto:''}`
+    const del = document.createElement('button')
+    del.className = 'secondary'
+    del.style.marginLeft = '8px'
+    del.textContent = 'Delete'
+    del.onclick = ()=>{ editorSteps.splice(idx,1); renderEditorSteps(); renderEditorPreview() }
+    row.appendChild(del)
+    editorStepsEl.appendChild(row)
+  })
+}
+
+function editorAdd(){
+  const type = editorStepType?.value || 'dialogue'
+  if(type === 'dialogue'){
+    const text = editorText?.value?.trim() || ''
+    if(!text){ editorErrors!.textContent = 'Dialogue needs text'; return }
+    editorSteps.push({ type:'dialogue', char: editorChar?.value?.trim() || undefined, text })
+  } else if(type === 'choice'){
+    const raw = editorOptions?.value || ''
+    const opts = raw.split('\n').map(l => l.trim()).filter(Boolean).map(line=>{
+      const [label, goto] = line.split('|').map(s=> (s||'').trim())
+      return { label, goto }
+    }).filter(o => o.label)
+    if(!opts.length){ editorErrors!.textContent = 'Add at least one choice option (label|goto)'; return }
+    editorSteps.push({ type:'choice', options: opts })
+  } else if(type === 'background'){
+    const src = editorText?.value?.trim() || ''
+    if(!src){ editorErrors!.textContent = 'Background needs src'; return }
+    editorSteps.push({ type:'background', src })
+  } else if(type === 'spriteShow'){
+    const id = editorChar?.value?.trim() || ''
+    const src = editorText?.value?.trim() || ''
+    if(!id || !src){ editorErrors!.textContent = 'Sprite needs id and src'; return }
+    editorSteps.push({ type:'spriteShow', id, src })
+  } else if(type === 'spriteSwap'){
+    const id = editorChar?.value?.trim() || ''
+    const src = editorText?.value?.trim() || ''
+    if(!id || !src){ editorErrors!.textContent = 'Sprite swap needs id and src'; return }
+    editorSteps.push({ type:'spriteSwap', id, src })
+  } else if(type === 'music'){
+    const track = editorText?.value?.trim() || ''
+    if(!track){ editorErrors!.textContent = 'Music needs track'; return }
+    editorSteps.push({ type:'music', track })
+  } else if(type === 'flag'){
+    const flag = editorChar?.value?.trim() || ''
+    if(!flag){ editorErrors!.textContent = 'Flag step needs flag key'; return }
+    const val = editorText?.value?.trim()
+    const value = val === 'false' ? false : true
+    editorSteps.push({ type:'flag', flag, value })
+  } else if(type === 'transition'){
+    const kind = (editorText?.value?.trim() || '').toLowerCase()
+    if(!TRANSITIONS.includes(kind)){ editorErrors!.textContent = 'Transition kind must be fade|slide|zoom|shake|flash'; return }
+    editorSteps.push({ type:'transition', kind })
+  }
+  if(editorErrors) editorErrors.textContent = ''
+  renderEditorSteps()
+  renderEditorPreview()
+}
+
+if(editorAddStep){ editorAddStep.onclick = editorAdd }
+if(editorReset){ editorReset.onclick = ()=>{ editorSteps = []; if(editorErrors) editorErrors.textContent = ''; renderEditorSteps(); renderEditorPreview() } }
+if(editorLoad){
+  editorLoad.onclick = ()=>{
+    const sceneId = editorSceneId?.value?.trim() || 'custom'
+    const scene: EditorScene = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
+    const json = JSON.stringify([scene])
+    const { scenes, errors } = loadScenesFromJsonStrict(json)
+    const issues = [...(errors||[]), ...validateSceneLinksStrict(scenes)]
+    if(issues.length){
+      if(editorErrors) editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      return
+    }
+    if(editorErrors) editorErrors.textContent = ''
+    editorPreview!.textContent = JSON.stringify(scenes, null, 2)
+    bootFromScenes(scenes as any, sceneId)
+  }
+}
+if(editorDownload){
+  editorDownload.onclick = ()=>{
+    const sceneId = editorSceneId?.value?.trim() || 'custom'
+    const scene: EditorScene = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
+    const json = JSON.stringify([scene], null, 2)
+    const blob = new Blob([json], { type:'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${sceneId || 'scene'}.json`
+    a.click()
+    setTimeout(()=> URL.revokeObjectURL(url), 500)
+  }
+}
+renderEditorPreview()
+renderEditorSteps()
 
 if(codexCategory){
   codexCategory.addEventListener('change', ()=>{

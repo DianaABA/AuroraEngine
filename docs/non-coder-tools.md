@@ -28,6 +28,12 @@ Tips:
 - If valid, it starts from your chosen start id (or defaults to the first scene).
 - Authoring roles: you can set `roles` on scenes to map `role` to sprite ids (e.g., `"guide": "spr_guide"`), and `spriteShow/swap` can reference `role`.
 
+## Lightweight Scene Editor (Template)
+
+- In the template UI, use the “Lightweight Scene Editor” to add steps (dialogue, choice, background, spriteShow/swap, music, flag, transition).
+- See a live JSON preview as you add steps; strict validation runs when you click “Build & Run.”
+- Starts the engine with your authored scene immediately for quick testing.
+
 ## AI Prompt Examples
 
 See `docs/ai-prompts.md` for ready-to-use prompts:
