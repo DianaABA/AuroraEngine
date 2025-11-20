@@ -1637,6 +1637,27 @@ onbStartBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); startExampleBtn.c
 onbShortcutsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); toggleHotkeyHelp() }
 onbSettingsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); openSettingsBtn.click() }
 
+// Drag-and-drop assets helper (non-coder friendly)
+if(assetDrop){
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.multiple = true
+  fileInput.accept = 'image/*,audio/*'
+  fileInput.onchange = ()=>{ if(fileInput.files) addLocalAssets(fileInput.files) }
+  if(assetPick){ assetPick.onclick = ()=> fileInput.click() }
+  assetDrop.addEventListener('dragover', (e)=>{ e.preventDefault(); assetDrop.style.borderColor = '#3e59ff' })
+  assetDrop.addEventListener('dragleave', ()=>{ assetDrop.style.borderColor = '#27304a' })
+  assetDrop.addEventListener('drop', (e)=>{
+    e.preventDefault()
+    assetDrop.style.borderColor = '#27304a'
+    const dt = e.dataTransfer
+    if(dt && dt.files && dt.files.length){
+      addLocalAssets(dt.files)
+    }
+  })
+  renderAssets()
+}
+
 if(codexCategory){
   codexCategory.addEventListener('change', ()=>{
     codexFiltersState = { favoritesOnly:false, category: codexCategory.value }

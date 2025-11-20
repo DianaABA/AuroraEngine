@@ -13,6 +13,8 @@ Now includes:
 - Basic i18n (English/Spanish) for key UI labels
 - Auto / Auto-Choose toggles, and Skip FX toggle
 - Music controls (Play/Pause) with status
+- Drag-and-drop asset helper (local preview for images/audio; copy object URLs)
+- Codex pins/favorites with filters and badges
 
 ## Local Run
 ```powershell
