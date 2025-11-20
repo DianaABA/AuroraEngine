@@ -28,7 +28,8 @@
     "test": "vitest run",
     "preview": "npm run build; node dist/examples/preview.js",
     "template:minimal:dev": "npm run build && cd templates/minimal && npm install && npm run dev",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "release:notes": "node scripts/gen-release-notes.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",

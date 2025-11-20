@@ -40,10 +40,13 @@ const closeCodexBtn = document.getElementById('closeCodex') as HTMLButtonElement
 const codexPanel = document.getElementById('codexPanel') as HTMLDivElement
 const codexList = document.getElementById('codexList') as HTMLDivElement
 const codexCategory = document.getElementById('codexCategory') as HTMLSelectElement
+const codexFilters = document.getElementById('codexFilters') as HTMLDivElement
 const codexDetail = document.getElementById('codexDetail') as HTMLDivElement
 const codexDetailTitle = document.getElementById('codexDetailTitle') as HTMLDivElement
 const codexDetailBody = document.getElementById('codexDetailBody') as HTMLDivElement
 const codexDetailClose = document.getElementById('codexDetailClose') as HTMLButtonElement
+const codexFavBtn = document.getElementById('codexFavBtn') as HTMLButtonElement
+const codexPinBtn = document.getElementById('codexPinBtn') as HTMLButtonElement
 const openAchBtn = document.getElementById('openAch') as HTMLButtonElement
 const closeAchBtn = document.getElementById('closeAch') as HTMLButtonElement
 const achPanel = document.getElementById('achPanel') as HTMLDivElement
@@ -91,7 +94,7 @@ const achievements = new Achievements('aurora:minimal:ach')
 let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
-type SpriteCfg = { pos?: 'left'|'center'|'right'; x?: number; z?: number; scale?: number }
+type SpriteCfg = { pos?: 'left'|'center'|'right'; x?: number; y?: number; z?: number; scale?: number }
 const spriteMeta: Record<string, SpriteCfg> = {}
 const sceneSpriteDefaults: Record<string, Record<string, SpriteCfg>> = {}
 const BACKLOG_KEY = 'aurora:minimal:backlog'
@@ -113,6 +116,10 @@ let choiceButtons: HTMLButtonElement[] = []
 let choiceFocusIndex = 0
 type StepMeta = { sceneId: string; index: number; label: string }
 let lastStepMeta: StepMeta | null = null
+type CodexEntry = { id: string; title: string; body: string; category: string; unlockedAt: string; favorite?: boolean; pinned?: boolean }
+type CodexFilters = { category: string; favoritesOnly: boolean }
+let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false }
+let codexSelectedEntry: CodexEntry | null = null
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -162,6 +169,18 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
   }
 }
 function t(key: string, ctx?: any){ const fn = STRINGS[prefs.locale][key]; return fn ? fn(ctx) : key }
+
+const EASE_PRESETS: Record<string,string> = {
+  easeOutBack: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  easeInOutCubic: 'cubic-bezier(0.65, 0, 0.35, 1)',
+  easeOutQuad: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  easeOutExpo: 'cubic-bezier(0.19, 1, 0.22, 1)',
+  easeInOutSine: 'cubic-bezier(0.37, 0, 0.63, 1)'
+}
+function resolveEase(name?: string, fallback = 'ease-in-out'){
+  if(!name) return fallback
+  return EASE_PRESETS[name] || name
+}
 
 function loadBacklog(){
   try { const raw = localStorage.getItem(BACKLOG_KEY); backlog = raw ? JSON.parse(raw) : [] } catch { backlog = [] }
@@ -279,7 +298,6 @@ function renderAchievements(){
 }
 
 // Codex utility (template-side)
-type CodexEntry = { id: string; title: string; body: string; category: string; unlockedAt: string }
 function readCodex(): CodexEntry[]{ try { return JSON.parse(localStorage.getItem(CODEX_KEY) || '[]') } catch { return [] } }
 function writeCodex(list: CodexEntry[]){ try { localStorage.setItem(CODEX_KEY, JSON.stringify(list)) } catch {} }
 function codexHas(id: string){ return readCodex().some(e => e.id === id) }
@@ -288,57 +306,151 @@ function codexUnlock(id: string){
   if(!meta) return
   const list = readCodex()
   if(list.some(e => e.id === id)) return
-  list.push({ id, title: meta.title, body: meta.body, category: meta.category, unlockedAt: new Date().toISOString() })
+  list.push({ id, title: meta.title, body: meta.body, category: meta.category, unlockedAt: new Date().toISOString(), favorite:false, pinned:false })
   writeCodex(list)
+}
+function codexUpdate(id: string, patch: Partial<CodexEntry>){
+  const list = readCodex()
+  const next = list.map(it => it.id === id ? { ...it, ...patch } : it)
+  writeCodex(next)
+}
+function codexToggleFavorite(id: string){
+  const list = readCodex()
+  const next = list.map(it => it.id===id ? { ...it, favorite: !it.favorite } : it)
+  writeCodex(next)
+}
+function codexTogglePinned(id: string){
+  const list = readCodex()
+  const next = list.map(it => it.id===id ? { ...it, pinned: !it.pinned } : it)
+  writeCodex(next)
+}
+function renderCodexFilters(allItems: CodexEntry[]){
+  if(!codexFilters) return
+  codexFilters.innerHTML = ''
+  const categories: Record<string, number> = {}
+  let favCount = 0
+  allItems.forEach(it => {
+    categories[it.category] = (categories[it.category]||0)+1
+    if(it.favorite) favCount++
+  })
+  const addChip = (label: string, active: boolean, onClick: ()=>void) => {
+    const btn = document.createElement('button')
+    btn.className = active ? '' : 'secondary'
+    btn.style.padding = '4px 8px'
+    btn.style.borderRadius = '999px'
+    btn.style.border = '1px solid #27304a'
+    btn.style.background = active ? '#111827' : '#0b1020'
+    btn.style.color = '#a8b0ff'
+    btn.textContent = label
+    btn.onclick = onClick
+    codexFilters.appendChild(btn)
+  }
+  addChip(`All (${allItems.length})`, !codexFiltersState.favoritesOnly && !codexFiltersState.category, ()=>{ codexFiltersState = { favoritesOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex() })
+  addChip(`Favorites (${favCount})`, codexFiltersState.favoritesOnly, ()=>{ codexFiltersState = { ...codexFiltersState, favoritesOnly: !codexFiltersState.favoritesOnly }; renderCodex() })
+  Object.keys(categories).sort().forEach(cat=>{
+    const count = categories[cat]
+    const label = `${cat} (${count})`
+    addChip(label, !codexFiltersState.favoritesOnly && codexFiltersState.category.toLowerCase() === cat.toLowerCase(), ()=>{
+      codexFiltersState = { favoritesOnly:false, category: cat }
+      if(codexCategory) codexCategory.value = cat
+      renderCodex()
+    })
+  })
 }
 function renderCodex(){
   codexList.innerHTML = ''
   const q = (document.getElementById('codexSearch') as HTMLInputElement)?.value?.toLowerCase() || ''
-  const selectedCat = (codexCategory?.value||'').trim().toLowerCase()
+  const selectedCat = (codexFiltersState.category || (codexCategory?.value||'')).trim().toLowerCase()
   const allItems = readCodex()
-  // Populate categories based on unlocked items
+  // Populate categories based on unlocked items (select fallback)
   if(codexCategory && codexCategory.options.length <= 1){
     const cats = Array.from(new Set(allItems.map(it=> it.category))).sort()
     for(const c of cats){ const opt = document.createElement('option'); opt.value = c; opt.textContent = c; codexCategory.appendChild(opt) }
   }
-  const items = allItems.filter(it =>
+  renderCodexFilters(allItems)
+  let items = allItems.filter(it =>
     (!q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)) &&
     (!selectedCat || it.category.toLowerCase() === selectedCat)
   )
+  if(codexFiltersState.favoritesOnly){
+    items = items.filter(it => !!it.favorite)
+  }
   if(items.length===0){
     const p = document.createElement('div')
     p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries yet.'
     codexList.appendChild(p)
     return
   }
-  // Group by category
+  // Pinned/favorite first, then newest
+  items.sort((a,b)=>{
+    const pinDiff = Number(!!b.pinned) - Number(!!a.pinned)
+    if(pinDiff !== 0) return pinDiff
+    const favDiff = Number(!!b.favorite) - Number(!!a.favorite)
+    if(favDiff !== 0) return favDiff
+    return (b.unlockedAt || '').localeCompare(a.unlockedAt || '')
+  })
   const groups: Record<string, CodexEntry[]> = {}
   for(const it of items){ (groups[it.category] ||= []).push(it) }
   const cats = Object.keys(groups).sort()
   for(const cat of cats){
     const header = document.createElement('div')
-    header.style.color = '#a0e7ff'; header.style.fontWeight = '600'; header.style.margin = '6px 0 2px'; header.textContent = cat
+    header.style.color = '#a0e7ff'; header.style.fontWeight = '600'; header.style.margin = '6px 0 2px'; header.textContent = `${cat} (${groups[cat].length})`
     codexList.appendChild(header)
     for(const it of groups[cat]){
       const row = document.createElement('div')
       row.style.background = '#111827'; row.style.border = '1px solid #27304a'; row.style.borderRadius = '6px'; row.style.padding = '6px 8px'
       row.style.cursor = 'pointer'
+      row.style.display = 'flex'
+      row.style.flexDirection = 'column'
+      row.style.gap = '4px'
+      const top = document.createElement('div')
+      top.style.display = 'flex'
+      top.style.justifyContent = 'space-between'
+      top.style.alignItems = 'center'
       const title = document.createElement('div')
       title.style.color = '#a0e7ff'; title.style.fontSize = '13px'; title.style.fontWeight = '600'
       title.textContent = it.title
+      const badges = document.createElement('div')
+      badges.style.display = 'flex'
+      badges.style.gap = '6px'
+      const badge = (text:string)=>{ const b = document.createElement('span'); b.textContent = text; b.style.fontSize='11px'; b.style.padding='2px 6px'; b.style.border='1px solid #27304a'; b.style.borderRadius='10px'; b.style.background='#0b1020'; b.style.color='#a0e7ff'; return b }
+      if(it.pinned) badges.appendChild(badge('PIN'))
+      if(it.favorite) badges.appendChild(badge('FAV'))
+      top.appendChild(title); top.appendChild(badges)
       const body = document.createElement('div')
       body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body.length>120 ? (it.body.slice(0,120)+'…') : it.body
       const time = document.createElement('div')
       time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
-      row.appendChild(title); row.appendChild(body); row.appendChild(time)
+      const actions = document.createElement('div')
+      actions.style.display = 'flex'
+      actions.style.gap = '6px'
+      actions.style.marginTop = '4px'
+      const favBtn = document.createElement('button')
+      favBtn.className = 'secondary'
+      favBtn.textContent = it.favorite ? 'Unfavorite' : 'Favorite'
+      favBtn.onclick = (ev)=>{ ev.stopPropagation(); codexToggleFavorite(it.id); renderCodex() }
+      const pinBtn = document.createElement('button')
+      pinBtn.className = 'secondary'
+      pinBtn.textContent = it.pinned ? 'Unpin' : 'Pin'
+      pinBtn.onclick = (ev)=>{ ev.stopPropagation(); codexTogglePinned(it.id); renderCodex() }
+      actions.appendChild(favBtn); actions.appendChild(pinBtn)
+      row.appendChild(top); row.appendChild(body); row.appendChild(time); row.appendChild(actions)
       row.onclick = ()=>{
+        codexSelectedEntry = it
         codexDetailTitle.textContent = it.title
         codexDetailBody.textContent = it.body
         codexDetail.style.display = 'block'
+        refreshCodexDetailActions()
       }
       codexList.appendChild(row)
     }
   }
+}
+
+function refreshCodexDetailActions(){
+  if(!codexSelectedEntry){ codexDetail.style.display = 'none'; return }
+  codexFavBtn.textContent = codexSelectedEntry.favorite ? 'Unfavorite' : 'Favorite'
+  codexPinBtn.textContent = codexSelectedEntry.pinned ? 'Unpin' : 'Pin'
 }
 
 async function boot(scenePath: string, startSceneId: string = 'intro'){
@@ -465,12 +577,19 @@ on('vn:step', ({ step, state }) => {
         const pos = (step as any).pos as ('left'|'center'|'right'|undefined)
         const z = typeof (step as any).z === 'number' ? (step as any).z as number : undefined
         const x = typeof (step as any).x === 'number' ? (step as any).x as number : undefined
+        const y = typeof (step as any).y === 'number' ? (step as any).y as number : undefined
         const scale = typeof (step as any).scale === 'number' ? (step as any).scale as number : undefined
+        const moveTo = (step as any).moveTo as any
         const cur = spriteMeta[id] || {}
         if(pos) cur.pos = pos
         if(z !== undefined) cur.z = z
         if(x !== undefined) cur.x = x
+        if(y !== undefined) cur.y = y
         if(scale !== undefined) cur.scale = scale
+        if(moveTo && typeof moveTo === 'object'){
+          if(typeof moveTo.x === 'number') cur.x = moveTo.x
+          if(typeof moveTo.y === 'number') cur.y = moveTo.y
+        }
         spriteMeta[id] = cur
       }
     }
@@ -509,7 +628,6 @@ on('vn:step', ({ step, state }) => {
     const global = (sceneSpriteDefaults[sceneId] || {})[id] || {}
     const meta = { ...global, ...(spriteMeta[id] || {}) }
     const pos = meta.pos || 'center'
-    const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
     const scale = typeof meta.scale === 'number' ? meta.scale : 1
     let img = spriteEls[id]
     const existed = !!img
@@ -536,23 +654,33 @@ on('vn:step', ({ step, state }) => {
     // Positioning and depth scaling
     // Allow per-step motion hints for the currently processed sprite
     let moveMs = 250
-    let moveEase = 'ease-in-out'
+    let moveEase = resolveEase(undefined)
     try{
       if(step && (step.type==='spriteShow' || step.type==='spriteSwap') && (step as any).id === id){
         if(typeof (step as any).moveMs === 'number') moveMs = Math.max(0, (step as any).moveMs as number)
-        if(typeof (step as any).moveEase === 'string') moveEase = String((step as any).moveEase)
+        if(typeof (step as any).moveEase === 'string') moveEase = resolveEase(String((step as any).moveEase))
+        const moveTo = (step as any).moveTo
+        if(moveTo){
+          if(typeof moveTo.ms === 'number') moveMs = Math.max(0, moveTo.ms as number)
+          if(typeof moveTo.ease === 'string') moveEase = resolveEase(String(moveTo.ease))
+          if(typeof moveTo.x === 'number') meta.x = moveTo.x
+          if(typeof moveTo.y === 'number') meta.y = moveTo.y
+        }
       }
     }catch{}
+    const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
+    const yPct = typeof meta.y === 'number' ? Math.max(-200, Math.min(200, meta.y)) : 0
+    const moveDur = skipFx ? 0 : moveMs
     const fadeDur = skipFx ? 0 : (prefs.spriteFadeMs||220)
-    img.style.transition = `opacity ${fadeDur}ms ease, transform 200ms ease, left ${moveMs}ms ${moveEase}`
+    img.style.transition = `opacity ${fadeDur}ms ease, transform ${moveDur}ms ${moveEase}, left ${moveDur}ms ${moveEase}`
     img.style.left = leftPct + '%'
-    img.style.transform = `translateX(-50%) scale(${scale})`
+    img.style.transform = `translate(-50%, ${-yPct}%) scale(${scale})`
     const prevZ = Number(img.style.zIndex || '0')
     const nextZ = typeof meta.z === 'number' ? meta.z : prevZ
     if(nextZ !== prevZ){
       // Animate scale briefly to suggest depth change, then swap z-index
-      img.style.transform = `translateX(-50%) scale(${scale * 1.03})`
-      setTimeout(()=>{ img!.style.zIndex = String(nextZ); img!.style.transform = `translateX(-50%) scale(${scale})` }, 180)
+      img.style.transform = `translate(-50%, ${-yPct}%) scale(${scale * 1.03})`
+      setTimeout(()=>{ img!.style.zIndex = String(nextZ); img!.style.transform = `translate(-50%, ${-yPct}%) scale(${scale})` }, 180)
     } else {
       if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
     }
@@ -942,11 +1070,9 @@ openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = '
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
 openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(achPanel) }
 closeAchBtn.onclick = () => { achPanel.style.display = 'none'; updateBackdrop() }
-openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(codexPanel) }
+openCodexBtn.onclick = () => { codexFiltersState = { favoritesOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex(); codexPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(codexPanel) }
 closeCodexBtn.onclick = () => { codexPanel.style.display = 'none'; updateBackdrop() }
-;(document.getElementById('codexSearch') as HTMLInputElement).addEventListener('input', ()=> renderCodex())
-codexCategory.addEventListener('change', ()=> renderCodex())
-codexDetailClose.onclick = ()=> { codexDetail.style.display = 'none' }
+codexDetailClose.onclick = ()=> { codexSelectedEntry = null; codexDetail.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(backlogPanel) }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none'; updateBackdrop() }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(settingsPanel) }
@@ -1419,6 +1545,30 @@ onbDismissBtn.onclick = ()=>{ hideOnboarding(); markOnboarded() }
 onbStartBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); startExampleBtn.click() }
 onbShortcutsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); toggleHotkeyHelp() }
 onbSettingsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); openSettingsBtn.click() }
+
+if(codexCategory){
+  codexCategory.addEventListener('change', ()=>{
+    codexFiltersState = { favoritesOnly:false, category: codexCategory.value }
+    renderCodex()
+  })
+}
+;(document.getElementById('codexSearch') as HTMLInputElement | null)?.addEventListener('input', ()=> renderCodex())
+codexFavBtn.onclick = ()=>{
+  if(!codexSelectedEntry) return
+  codexToggleFavorite(codexSelectedEntry.id)
+  const refreshed = readCodex().find(e=> e.id === codexSelectedEntry!.id) || null
+  codexSelectedEntry = refreshed
+  refreshCodexDetailActions()
+  renderCodex()
+}
+codexPinBtn.onclick = ()=>{
+  if(!codexSelectedEntry) return
+  codexTogglePinned(codexSelectedEntry.id)
+  const refreshed = readCodex().find(e=> e.id === codexSelectedEntry!.id) || null
+  codexSelectedEntry = refreshed
+  refreshCodexDetailActions()
+  renderCodex()
+}
 
 // -----------------------------
 // Debug HUD

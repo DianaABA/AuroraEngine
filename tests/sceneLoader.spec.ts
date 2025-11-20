@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { loadScenesFromJson, validateSceneDef } from '../src/vn/sceneLoader'
+import { loadScenesFromJson, validateSceneDef, validateSceneDefStrict } from '../src/vn/sceneLoader'
 
 describe('sceneLoader', () => {
   it('parses valid array of scenes', () => {
@@ -11,10 +11,14 @@ describe('sceneLoader', () => {
   })
   it('reports missing fields with indexed paths', () => {
     const bad = { id:'intro', steps:[ { type:'dialogue' }, { type:'choice', options: [] } ] }
-    const { error } = validateSceneDef(bad) as any
-    expect(error).toBeTruthy()
-    expect(error).toContain('scene:intro:step[0]:dialogue.missing_text')
-    expect(error).toContain('scene:intro:step[1]:choice.missing_options')
+    const { errors } = validateSceneDefStrict(bad) as any
+    expect(errors.length).toBeGreaterThan(0)
+    const codes = errors.map((e:any)=> e.code)
+    const paths = errors.map((e:any)=> e.path)
+    expect(codes).toContain('dialogue.missing_text')
+    expect(codes).toContain('choice.missing_options')
+    expect(paths.some((p:string)=> p.includes('step[0]'))).toBe(true)
+    expect(paths.some((p:string)=> p.includes('step[1]'))).toBe(true)
   })
   it('handles root non-array/object', () => {
     const { scenes, errors } = loadScenesFromJson('"oops"')

@@ -75,11 +75,16 @@
                 <option value="">All Categories</option>
               </select>
             </div>
+            <div id="codexFilters" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px"></div>
             <div id="codexList" style="display:flex; flex-direction:column; gap:6px;"></div>
             <div id="codexDetail" style="display:none; margin-top:8px; padding:10px; background:#0b1020; border:1px solid #27304a; border-radius:8px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <strong id="codexDetailTitle" style="color:#a0e7ff">Title</strong>
-                <button id="codexDetailClose" class="secondary">Close</button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <button id="codexPinBtn" class="secondary" title="Pin/unpin">Pin</button>
+                  <button id="codexFavBtn" class="secondary" title="Favorite/unfavorite">Favorite</button>
+                  <button id="codexDetailClose" class="secondary">Close</button>
+                </div>
               </div>
               <div id="codexDetailBody" style="color:#a8b0ff; font-size:13px; white-space:pre-wrap"></div>
             </div>

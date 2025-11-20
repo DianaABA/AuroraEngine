@@ -1,7 +1,9 @@
 export type DialogueStep = { type:'dialogue'; char?: string; text: string }
-export type SpriteShowStep = { type:'spriteShow'; id: string; src: string }
+export type SpritePlacement = { pos?: 'left'|'center'|'right'; x?: number; y?: number; z?: number; scale?: number }
+export type SpriteMotion = { moveMs?: number; moveEase?: string; moveTo?: { x?: number; y?: number; ms?: number; ease?: string } }
+export type SpriteShowStep = { type:'spriteShow'; id: string; src: string } & SpritePlacement & SpriteMotion
 export type SpriteHideStep = { type:'spriteHide'; id: string }
-export type SpriteSwapStep = { type:'spriteSwap'; id: string; src: string }
+export type SpriteSwapStep = { type:'spriteSwap'; id: string; src: string } & SpritePlacement & SpriteMotion
 export type BackgroundStep = { type:'background'; src: string }
 export type ChoiceOption = { label: string; goto?: string; setFlag?: string; condition?: string; weight?: number }
 export type ChoiceStep = { type:'choice'; options: ChoiceOption[]; autoSingle?: boolean; autoStrategy?: 'firstValid'|'random'|'highestWeight' }
