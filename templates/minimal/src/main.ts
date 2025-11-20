@@ -1,4 +1,4 @@
-import { createEngine, on, loadScenesFromUrl, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -90,6 +90,11 @@ const debugHud = document.getElementById('debugHud') as HTMLDivElement
 const assetDrop = document.getElementById('assetDrop') as HTMLDivElement | null
 const assetList = document.getElementById('assetList') as HTMLDivElement | null
 const assetPick = document.getElementById('assetPick') as HTMLButtonElement | null
+const customJsonInput = document.getElementById('customJson') as HTMLTextAreaElement | null
+const customLoadBtn = document.getElementById('customLoadBtn') as HTMLButtonElement | null
+const customFileBtn = document.getElementById('customFileBtn') as HTMLButtonElement | null
+const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
+const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -125,6 +130,7 @@ let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false }
 let codexSelectedEntry: CodexEntry | null = null
 type LocalAsset = { name: string; type: string; size: number; url: string }
 let localAssets: LocalAsset[] = []
+type MoveStep = { x?: number; y?: number; ms?: number; ease?: string }
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -479,21 +485,7 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   await preloadAssets(manifest, (p)=>{
     textEl.textContent = `Loading assets (${p.loaded}/${p.total})`
   })
-  // Optional authoring helper: roles mapping per scene to sprite IDs
-  const remappedScenes = (scenes as any[]).map(s => {
-    const roles = (s as any).roles as Record<string,string> | undefined
-    if(!roles) return s
-    const copy = JSON.parse(JSON.stringify(s))
-    copy.steps = (copy.steps||[]).map((st:any)=>{
-      if(st && typeof st === 'object' && (st.type==='spriteShow' || st.type==='spriteSwap' || st.type==='spriteHide')){
-        const role = st.role as string | undefined
-        if(role && roles[role]){ st.id = roles[role] }
-        delete st.role
-      }
-      return st
-    })
-    return copy
-  })
+  const remappedScenes = remapRoles(scenes as any)
   try{
     engine.loadScenes(remappedScenes as any)
   }catch(e:any){
@@ -538,6 +530,48 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     return
   }
   // Load slot thumbnails if present
+  refreshSlotThumb(1)
+  refreshSlotThumb(2)
+  refreshSlotThumb(3)
+}
+
+async function bootFromScenes(scenes: any[], startSceneId?: string){
+  console.log('BootFromScenes called with start:', startSceneId)
+  try{
+    const manifest = buildPreloadManifest(scenes as any)
+    textEl.textContent = 'Loading assets...'
+    await preloadAssets(manifest, (p)=>{ textEl.textContent = `Loading assets (${p.loaded}/${p.total})` })
+  }catch(e){ console.error('preload failed', e) }
+  const roleMapped = remapRoles(scenes as any)
+  try{
+    engine.loadScenes(roleMapped as any)
+  }catch(e:any){
+    console.error('Scene load failed', e)
+    textEl.textContent = 'Scene validation failed: '+ (e?.message||e)
+    return
+  }
+  try {
+    sceneSpriteDefaults as any
+    for(const s of scenes as any[]){
+      const sid = s.id as string
+      const defs = (s as any).spriteDefaults as Record<string, SpriteCfg> | undefined
+      if(sid && defs && typeof defs === 'object'){
+        sceneSpriteDefaults[sid] = { ...defs }
+      }
+    }
+  } catch {}
+  loadBacklog()
+  loadPrefs()
+  updateDebugHud()
+  loadSeen()
+  skipFx = !!prefs.skipTransitions
+  try{
+    engine.start(startSceneId || (scenes[0]?.id || 'intro'))
+  }catch(e:any){
+    console.error('Engine start failed', e)
+    textEl.textContent = 'Engine start failed: '+ (e?.message||e)
+    return
+  }
   refreshSlotThumb(1)
   refreshSlotThumb(2)
   refreshSlotThumb(3)
@@ -680,6 +714,14 @@ on('vn:step', ({ step, state }) => {
           if(typeof moveTo.x === 'number') meta.x = moveTo.x
           if(typeof moveTo.y === 'number') meta.y = moveTo.y
         }
+        const movesArr = Array.isArray((step as any).moves) ? (step as any).moves as MoveStep[] : []
+        if(movesArr.length){
+          // Update meta to final target so we end at the last move position
+          for(const mv of movesArr){
+            if(typeof mv.x === 'number') meta.x = mv.x
+            if(typeof mv.y === 'number') meta.y = mv.y
+          }
+        }
       }
     }catch{}
     const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
@@ -699,6 +741,29 @@ on('vn:step', ({ step, state }) => {
       if(typeof meta.z === 'number') img.style.zIndex = String(meta.z)
     }
     if(!existed && !img.src){ img.src = resolvedSrc }
+
+    const moveChain = Array.isArray((step as any)?.moves) ? ((step as any).moves as MoveStep[]) : []
+    if(moveChain.length && !skipFx){
+      let currentX = leftPct
+      let currentY = yPct
+      let delay = 0
+      for(const mv of moveChain){
+        const targetX = typeof mv.x === 'number' ? Math.max(0, Math.min(100, mv.x)) : currentX
+        const targetY = typeof mv.y === 'number' ? Math.max(-200, Math.min(200, mv.y)) : currentY
+        const dur = mv.ms != null ? Math.max(0, mv.ms) : moveMs
+        const ease = resolveEase(mv.ease, moveEase)
+        setTimeout(()=> {
+          try{
+            img!.style.transition = `opacity ${fadeDur}ms ease, transform ${dur}ms ${ease}, left ${dur}ms ${ease}`
+            img!.style.left = `${targetX}%`
+            img!.style.transform = `translate(-50%, ${-targetY}%) scale(${scale})`
+          }catch{}
+        }, delay)
+        delay += dur
+        currentX = targetX
+        currentY = targetY
+      }
+    }
   }
   // clear UI
   nameEl.textContent = ''
@@ -1638,11 +1703,11 @@ onbShortcutsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); toggleHotkeyH
 onbSettingsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); openSettingsBtn.click() }
 
 // Drag-and-drop assets helper (non-coder friendly)
-if(assetDrop){
-  const fileInput = document.createElement('input')
-  fileInput.type = 'file'
-  fileInput.multiple = true
-  fileInput.accept = 'image/*,audio/*'
+  if(assetDrop){
+    const fileInput = document.createElement('input')
+    fileInput.type = 'file'
+    fileInput.multiple = true
+    fileInput.accept = 'image/*,audio/*'
   fileInput.onchange = ()=>{ if(fileInput.files) addLocalAssets(fileInput.files) }
   if(assetPick){ assetPick.onclick = ()=> fileInput.click() }
   assetDrop.addEventListener('dragover', (e)=>{ e.preventDefault(); assetDrop.style.borderColor = '#3e59ff' })
@@ -1656,6 +1721,44 @@ if(assetDrop){
     }
   })
   renderAssets()
+}
+// Custom scene loader (paste JSON, strict validation)
+if(customLoadBtn && customJsonInput){
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'application/json'
+  fileInput.onchange = async ()=> {
+    const f = fileInput.files?.[0]
+    if(!f) return
+    try{
+      const txt = await f.text()
+      customJsonInput.value = txt
+      customErrors!.textContent = `Loaded ${f.name}`
+    }catch(e:any){
+      customErrors!.textContent = 'Failed to read file: '+ (e?.message||e)
+    }
+  }
+  if(customFileBtn){ customFileBtn.onclick = ()=> fileInput.click() }
+  customLoadBtn.onclick = ()=>{
+    const json = customJsonInput.value || ''
+    if(!json.trim()){ customErrors!.textContent = 'Paste scene JSON first.'; return }
+    let parsed: any
+    try{ parsed = JSON.parse(json) }catch(e:any){ customErrors!.textContent = 'JSON parse error: '+ (e?.message||e); return }
+    try{
+      const { scenes, errors } = loadScenesFromJsonStrict(json)
+      const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+      const issues = [...(errors||[]), ...(linkIssues||[])]
+      if(issues.length){
+        customErrors!.textContent = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+        return
+      }
+      const startId = (customStartIdInput?.value?.trim()) || (scenes[0]?.id || 'intro')
+      customErrors!.textContent = `Loaded ${scenes.length} scene(s). Starting at ${startId}.`
+      bootFromScenes(scenes as any, startId)
+    }catch(e:any){
+      customErrors!.textContent = 'Validation failed: '+ (e?.message||e)
+    }
+  }
 }
 
 if(codexCategory){

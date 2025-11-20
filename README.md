@@ -92,6 +92,8 @@ Full documentation is in `/docs`.
 - AI prompt examples: `docs/ai-prompts.md`
 - Error fix guide: `docs/prompt-fix-errors.md`
 - Non-coder helpers: `docs/non-coder-tools.md`
+- Scene lint: `npm run scenes:lint -- --file scenes/example.json`
+- Sprite motion timelines (draft): `docs/timelines.md`
 
 - Changelog: `CHANGELOG.md`
  - Expressions: `docs/expressions.md`

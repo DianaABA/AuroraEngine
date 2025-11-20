@@ -21,6 +21,7 @@ export declare function validateScenesStrictCollection(raw: any[]): {
     scenes: SceneDef[];
     errors: ValidationIssue[];
 };
+export declare function remapRoles(scenes: SceneDef[]): SceneDef[];
 export declare function loadSceneDefsFromObject(record: Record<string, any>): SceneLoadResult;
 export declare function loadSceneDefsStrict(arr: any[]): {
     scenes: SceneDef[];

@@ -15,6 +15,12 @@ Now includes:
 - Music controls (Play/Pause) with status
 - Drag-and-drop asset helper (local preview for images/audio; copy object URLs)
 - Codex pins/favorites with filters and badges
+- In-browser “Load Custom Scenes” (paste JSON, strict-validated)
+
+## One-click Starts
+- **StackBlitz:** `https://stackblitz.com/github/DianaABA/AuroraEngine?file=templates/minimal/src/main.ts&terminal=dev`
+- **Netlify Deploy:** From your fork, set publish directory to `templates/minimal/dist` (after `npm run build`).
+- **Deploy Button:** [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/DianaABA/AuroraEngine&base=templates/minimal&build_command=npm%20run%20build&publish=templates/minimal/dist)
 
 ## Local Run
 ```powershell

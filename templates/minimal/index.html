@@ -183,6 +183,16 @@
             </div>
             <div id="assetList" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;"></div>
           </div>
+          <div id="sceneLoader" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border-radius:8px; border:1px solid #27304a;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="color:#a0e7ff; font-size:13px">Load Custom Scenes (paste JSON)</strong>
+              <input id="customStartId" placeholder="Start scene id (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
+              <button id="customFileBtn" class="secondary">Pick JSON</button>
+              <button id="customLoadBtn">Run</button>
+            </div>
+            <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
+            <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
+          </div>
           <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:#a0e7ff">Saves</strong>

@@ -11,7 +11,8 @@
   "files": [
     "dist",
     "README.md",
-    "src"
+    "src",
+    "packages/ui/dist"
   ],
   "exports": {
     ".": {
@@ -29,7 +30,8 @@
     "preview": "npm run build; node dist/examples/preview.js",
     "template:minimal:dev": "npm run build && cd templates/minimal && npm install && npm run dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "release:notes": "node scripts/gen-release-notes.js"
+    "release:notes": "node scripts/gen-release-notes.js",
+    "scenes:lint": "node scripts/scene-lint.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",

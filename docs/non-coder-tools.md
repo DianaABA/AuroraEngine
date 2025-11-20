@@ -15,6 +15,19 @@ Tips:
 - Use small assets while prototyping; large files can drain memory because object URLs stay in RAM.
 - If you copy the object URL, it only works on this tab; for shipping, put assets into `public/` or a CDN and update your scene JSON to point there.
 
+## Scene Lint (Strict Validation)
+
+- Build once: `npm run build`
+- Lint a JSON file: `npm run scenes:lint -- --file scenes/example.json`
+- Output shows structured codes/paths for quick fixes.
+
+## Paste-and-Play in the Template
+
+- In the browser demo (`templates/minimal`), use “Load Custom Scenes” to paste JSON or pick a file.
+- Strict validation runs in-browser; errors list the path/code/message.
+- If valid, it starts from your chosen start id (or defaults to the first scene).
+- Authoring roles: you can set `roles` on scenes to map `role` to sprite ids (e.g., `"guide": "spr_guide"`), and `spriteShow/swap` can reference `role`.
+
 ## AI Prompt Examples
 
 See `docs/ai-prompts.md` for ready-to-use prompts:

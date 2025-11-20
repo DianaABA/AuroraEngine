@@ -56,3 +56,12 @@ jobs:
           release_name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || 'Canary' }}
           body: ${{ steps.notes.outputs.notes }}
           prerelease: ${{ github.ref_type != 'tag' }}
+
+      - name: Publish canary to npm (if token present)
+        if: github.ref_type == 'branch' && github.ref_name == 'main' && secrets.NPM_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          npm version --no-git-tag-version "$(node -p \"require('./package.json').version+'-canary.'+Date.now()\")"
+          npm publish --tag canary --access public

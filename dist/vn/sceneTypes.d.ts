@@ -20,11 +20,22 @@ export type SpriteMotion = {
         ease?: string;
     };
 };
+export type SpriteMove = {
+    type: 'move';
+    x?: number;
+    y?: number;
+    ms?: number;
+    ease?: string;
+};
+export type SpriteTimeline = {
+    moves?: SpriteMove[];
+};
 export type SpriteShowStep = {
     type: 'spriteShow';
     id: string;
     src: string;
-} & SpritePlacement & SpriteMotion;
+    role?: string;
+} & SpritePlacement & SpriteMotion & SpriteTimeline;
 export type SpriteHideStep = {
     type: 'spriteHide';
     id: string;
@@ -33,7 +44,8 @@ export type SpriteSwapStep = {
     type: 'spriteSwap';
     id: string;
     src: string;
-} & SpritePlacement & SpriteMotion;
+    role?: string;
+} & SpritePlacement & SpriteMotion & SpriteTimeline;
 export type BackgroundStep = {
     type: 'background';
     src: string;

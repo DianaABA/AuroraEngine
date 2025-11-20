@@ -34,6 +34,19 @@ function validateSpriteMotion(raw: any, path: string, push: (issue: ValidationIs
       if(raw.moveTo.ease!==undefined && typeof raw.moveTo.ease!=='string') push({ path:`${path}.moveTo.ease`, code:'sprite.moveTo.ease_not_string', message:'moveTo.ease must be a string' })
     }
   }
+  if(raw.moves!==undefined && Array.isArray(raw.moves)){
+    raw.moves.forEach((mv:any, mi:number)=>{
+      const mp = `${path}.moves[${mi}]`
+      if(!mv || typeof mv !== 'object'){ push({ path: mp, code:'sprite.moves.invalid_object', message:'move must be an object' }); return }
+      if(mv.type && mv.type !== 'move') push({ path: mp, code:'sprite.moves.invalid_type', message:'move type must be "move"' })
+      if(mv.x!==undefined && typeof mv.x !== 'number') push({ path:`${mp}.x`, code:'sprite.moves.x_not_number', message:'move.x must be number' })
+      if(mv.y!==undefined && typeof mv.y !== 'number') push({ path:`${mp}.y`, code:'sprite.moves.y_not_number', message:'move.y must be number' })
+      if(mv.ms!==undefined && typeof mv.ms !== 'number') push({ path:`${mp}.ms`, code:'sprite.moves.ms_not_number', message:'move.ms must be number' })
+      if(mv.ease!==undefined && typeof mv.ease !== 'string') push({ path:`${mp}.ease`, code:'sprite.moves.ease_not_string', message:'move.ease must be string' })
+    })
+  } else if (raw.moves!==undefined && !Array.isArray(raw.moves)){
+    push({ path:`${path}.moves`, code:'sprite.moves_not_array', message:'moves must be an array' })
+  }
   return raw as any
 }
 
@@ -73,6 +86,7 @@ export function validateSceneDefStrict(raw: any): { def?: SceneDef; errors: Vali
         case 'spriteShow':
         case 'spriteSwap':
           if(typeof s.id!=='string' || typeof s.src!=='string') issues.push({ path: stepPath, code:'spriteShow.missing_id_or_src', message:'Sprite show/swap needs id and src' })
+          if(s.role!==undefined && typeof s.role!=='string') issues.push({ path: `${stepPath}.role`, code:'sprite.role_not_string', message:'Sprite role must be string' })
           validateSpriteMotion(s, stepPath, (iss)=> issues.push(iss))
           break
         case 'spriteHide':
@@ -119,6 +133,24 @@ export function validateScenesStrictCollection(raw: any[]): { scenes: SceneDef[]
   const { scenes, errors } = loadSceneDefsStrict(raw)
   const linkIssues = validateSceneLinksStrict(scenes)
   return { scenes, errors: [...errors, ...linkIssues] }
+}
+
+// Optional helper: map authoring "role" placeholders to concrete sprite ids using scene.roles
+export function remapRoles(scenes: SceneDef[]): SceneDef[] {
+  return scenes.map((s: any) => {
+    const roles = s.roles as Record<string,string> | undefined
+    if(!roles) return s
+    const copy = JSON.parse(JSON.stringify(s))
+    copy.steps = (copy.steps || []).map((st:any)=>{
+      if(st && typeof st === 'object' && (st.type==='spriteShow' || st.type==='spriteSwap' || st.type==='spriteHide')){
+        const role = st.role as string | undefined
+        if(role && roles[role]){ st.id = roles[role] }
+        delete st.role
+      }
+      return st
+    })
+    return copy as SceneDef
+  })
 }
 
 export function loadSceneDefsFromObject(record: Record<string, any>): SceneLoadResult {
