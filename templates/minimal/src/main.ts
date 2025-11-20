@@ -98,9 +98,12 @@ const customStartIdInput = document.getElementById('customStartId') as HTMLInput
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
 const editorBg = document.getElementById('editorBg') as HTMLInputElement | null
 const editorMusic = document.getElementById('editorMusic') as HTMLInputElement | null
+const editorSceneRoles = document.getElementById('editorSceneRoles') as HTMLInputElement | null
+const editorBundleIds = document.getElementById('editorBundleIds') as HTMLInputElement | null
 const editorStepType = document.getElementById('editorStepType') as HTMLSelectElement | null
 const editorChar = document.getElementById('editorChar') as HTMLInputElement | null
 const editorText = document.getElementById('editorText') as HTMLInputElement | null
+const editorMove = document.getElementById('editorMove') as HTMLInputElement | null
 const editorOptions = document.getElementById('editorOptions') as HTMLTextAreaElement | null
 const editorAddStep = document.getElementById('editorAddStep') as HTMLButtonElement | null
 const editorReset = document.getElementById('editorReset') as HTMLButtonElement | null
@@ -148,6 +151,22 @@ type MoveStep = { x?: number; y?: number; ms?: number; ease?: string }
 type EditorScene = { id: string; bg?: string; music?: string; steps: any[] }
 let editorSteps: any[] = []
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
+const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
+
+function parseMove(input: string): MoveStep | null {
+  if(!input) return null
+  const parts = input.split(',').map(p=> p.trim()).filter(Boolean)
+  if(!parts.length) return null
+  const mv: MoveStep = { ...DEFAULT_SPRITE_MOVE }
+  for(const p of parts){
+    const [k,v] = p.split('=').map(s=> (s||'').trim())
+    if(k === 'x') mv.x = Number(v)
+    if(k === 'y') mv.y = Number(v)
+    if(k === 'ms') mv.ms = Number(v)
+    if(k === 'ease') mv.ease = v
+  }
+  return mv
+}
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -1781,13 +1800,26 @@ if(customLoadBtn && customJsonInput){
 // Lightweight scene editor (browser-only helper)
 function renderEditorPreview(){
   if(!editorPreview) return
-  const scene: EditorScene = {
+  const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
+  const scenes: EditorScene[] = []
+  const primary: EditorScene = {
     id: (editorSceneId?.value?.trim() || 'custom'),
     bg: editorBg?.value?.trim() || undefined,
     music: editorMusic?.value?.trim() || undefined,
     steps: editorSteps.slice()
   }
-  editorPreview.textContent = JSON.stringify([scene], null, 2)
+  try{
+    const rolesRaw = editorSceneRoles?.value?.trim()
+    if(rolesRaw){ primary['roles'] = JSON.parse(rolesRaw) }
+  }catch{}
+  scenes.push(primary as any)
+  // stub additional ids as empty scenes for bundle wiring
+  for(const extra of bundleIds){
+    if(extra && extra !== primary.id){
+      scenes.push({ id: extra, steps: [] })
+    }
+  }
+  editorPreview.textContent = JSON.stringify(scenes, null, 2)
 }
 
 function renderEditorSteps(){
@@ -1842,12 +1874,18 @@ function editorAdd(){
     const id = editorChar?.value?.trim() || ''
     const src = editorText?.value?.trim() || ''
     if(!id || !src){ editorErrors!.textContent = 'Sprite needs id and src'; return }
-    editorSteps.push({ type:'spriteShow', id, src })
+    const move = parseMove(editorMove?.value||'')
+    const step:any = { type:'spriteShow', id, src }
+    if(move) step.moves = [move]
+    editorSteps.push(step)
   } else if(type === 'spriteSwap'){
     const id = editorChar?.value?.trim() || ''
     const src = editorText?.value?.trim() || ''
     if(!id || !src){ editorErrors!.textContent = 'Sprite swap needs id and src'; return }
-    editorSteps.push({ type:'spriteSwap', id, src })
+    const move = parseMove(editorMove?.value||'')
+    const step:any = { type:'spriteSwap', id, src }
+    if(move) step.moves = [move]
+    editorSteps.push(step)
   } else if(type === 'music'){
     const track = editorText?.value?.trim() || ''
     if(!track){ editorErrors!.textContent = 'Music needs track'; return }
@@ -1873,24 +1911,48 @@ if(editorReset){ editorReset.onclick = ()=>{ editorSteps = []; if(editorErrors) 
 if(editorLoad){
   editorLoad.onclick = ()=>{
     const sceneId = editorSceneId?.value?.trim() || 'custom'
-    const scene: EditorScene = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
-    const json = JSON.stringify([scene])
-    const { scenes, errors } = loadScenesFromJsonStrict(json)
-    const issues = [...(errors||[]), ...validateSceneLinksStrict(scenes)]
+    const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
+    const scenes: EditorScene[] = []
+    const base: any = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
+    try{
+      const rolesRaw = editorSceneRoles?.value?.trim()
+      if(rolesRaw) base.roles = JSON.parse(rolesRaw)
+    }catch{}
+    scenes.push(base)
+    for(const extra of bundleIds){
+      if(extra && extra !== sceneId){
+        scenes.push({ id: extra, steps: [] })
+      }
+    }
+    const json = JSON.stringify(scenes)
+    const { scenes: parsed, errors } = loadScenesFromJsonStrict(json)
+    const issues = [...(errors||[]), ...validateSceneLinksStrict(parsed)]
     if(issues.length){
       if(editorErrors) editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
       return
     }
     if(editorErrors) editorErrors.textContent = ''
-    editorPreview!.textContent = JSON.stringify(scenes, null, 2)
-    bootFromScenes(scenes as any, sceneId)
+    editorPreview!.textContent = JSON.stringify(parsed, null, 2)
+    bootFromScenes(parsed as any, sceneId)
   }
 }
 if(editorDownload){
   editorDownload.onclick = ()=>{
     const sceneId = editorSceneId?.value?.trim() || 'custom'
-    const scene: EditorScene = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
-    const json = JSON.stringify([scene], null, 2)
+    const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
+    const scenes: EditorScene[] = []
+    const base: any = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
+    try{
+      const rolesRaw = editorSceneRoles?.value?.trim()
+      if(rolesRaw) base.roles = JSON.parse(rolesRaw)
+    }catch{}
+    scenes.push(base)
+    for(const extra of bundleIds){
+      if(extra && extra !== sceneId){
+        scenes.push({ id: extra, steps: [] })
+      }
+    }
+    const json = JSON.stringify(scenes, null, 2)
     const blob = new Blob([json], { type:'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

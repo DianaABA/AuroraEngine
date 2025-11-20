@@ -24,6 +24,7 @@
   "scripts": {
     "start": "npm run template:minimal:dev",
     "build": "tsc -p tsconfig.json",
+    "build:ui": "cd packages/ui && npm install && npm run build",
     "clean": "rimraf dist",
     "dev": "npm run build -- --watch",
     "test": "vitest run",

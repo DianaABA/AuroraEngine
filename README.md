@@ -101,6 +101,7 @@ See the `/docs` folder for:
 - Scene lint: `npm run scenes:lint -- --file scenes/example.json`
 - Sprite motion timelines (draft): `docs/timelines.md`
 - Lightweight Scene Editor (template): `docs/scene-editor.md`
+- UI kit (prototype): `packages/ui/README.md`
 
 - Changelog: `CHANGELOG.md`
  - Expressions: `docs/expressions.md`

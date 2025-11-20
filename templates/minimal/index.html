@@ -199,6 +199,8 @@
               <input id="editorSceneId" placeholder="scene id" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:120px" />
               <input id="editorBg" placeholder="background (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:140px" />
               <input id="editorMusic" placeholder="music (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:140px" />
+              <input id="editorSceneRoles" placeholder='roles (JSON e.g. {"guide":"spr_guide"})' style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:200px" />
+              <input id="editorBundleIds" placeholder="bundle (comma ids)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:180px" />
             </div>
             <div style="margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px; align-items:flex-start;">
               <div>
@@ -221,6 +223,10 @@
               <div>
                 <label style="color:#a8b0ff; font-size:12px">Text / Src / Track</label>
                 <input id="editorText" placeholder="dialogue text, sprite src, audio track" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
+              </div>
+              <div>
+                <label style="color:#a8b0ff; font-size:12px">Move (x,y,ms,ease)</label>
+                <input id="editorMove" placeholder="e.g. x=40,y=-10,ms=400" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
               </div>
               <div>
                 <label style="color:#a8b0ff; font-size:12px">Choice options (label|goto per line)</label>
