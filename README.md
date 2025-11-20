@@ -6,6 +6,24 @@ A lightweight, creator-friendly Visual Novel engine. No coding required to get s
 
 ---
 
+## 🎮 Live Demo
+
+Want to see Aurora’s Engine in action? Try the browser demo included in this repo!
+
+**How to run the demo locally:**
+
+1. Open the `templates/minimal` folder in your terminal.
+2. Run:
+  ```powershell
+  npm install
+  npm run dev
+  ```
+3. Open the link shown in the terminal (usually http://localhost:5173) in your browser.
+
+You can edit scenes and assets in `public/scenes` and `public/cgs` and see changes live.
+
+---
+
 ## 🚀 Quick Start for Everyone
 
 1. **Download or clone this repo** (green "Code" button above)
