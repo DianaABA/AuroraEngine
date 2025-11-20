@@ -5,6 +5,7 @@ import { evaluateCondition } from './expression'
 import { validateSceneLinks } from './sceneLoader'
 
 export interface VNEngineConfig { autoEmit?: boolean; autoDecide?: boolean; autoAdvance?: boolean; maxAutoSteps?: number }
+type AutoChoiceCandidate = { idx: number; choice: ChoiceOption; strategy: string; options: number; validOptions: number }
 
 export class VNEngine {
   private scenes = new Map<string, SceneDef>()
@@ -19,6 +20,7 @@ export class VNEngine {
   private inAutoLoop = false
   private pauseOnNextDialogue = false
   private pauseAfterTransition = false
+  private cachedAutoChoice: { sceneId: string | null; index: number; candidate: AutoChoiceCandidate | null } = { sceneId: null, index: -1, candidate: null }
   constructor(cfg: VNEngineConfig = {}){ this.config = { maxAutoSteps: 1000, ...cfg } }
   loadScenes(defs: SceneDef[]){
     for(const s of defs){ this.scenes.set(s.id, s) }
@@ -32,6 +34,7 @@ export class VNEngine {
     const scene = this.scenes.get(id)!
     this.currentSceneId = id
     this.index = 0
+    this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null }
     if(scene.bg) this.bg = scene.bg
     if(scene.music) this.music = scene.music
     this.emitStep()
@@ -55,6 +58,7 @@ export class VNEngine {
     if(choice.setFlag) this.flags.add(choice.setFlag)
     if(choice.goto) { this.pauseOnNextDialogue = true; this.start(choice.goto); return }
     this.index++
+    this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null }
     if(this.maybeAutoDecide()) return
     this.emitStep()
   }
@@ -71,49 +75,88 @@ export class VNEngine {
   getVar(key:string){ return this.vars[key] }
   hasFlag(f:string){ return this.flags.has(f) }
   snapshot(): SnapshotData { return { sceneId: this.currentSceneId||'', index: this.index, flags:[...this.flags], vars:{...this.vars}, sprites:{...this.sprites}, bg:this.bg, music:this.music } }
-  restore(data: SnapshotData){ if(!this.scenes.has(data.sceneId)) throw new Error('restore_scene_missing'); this.currentSceneId = data.sceneId; this.index = data.index; this.flags = new Set(data.flags); this.vars = { ...data.vars }; this.sprites = { ...data.sprites }; this.bg=data.bg; this.music=data.music; this.emitStep() }
-  private emitStep(){ if(!this.config.autoEmit) return; const step = this.getCurrentStep(); emit('vn:step', { step, state: this.getPublicState() }) }
+  restore(data: SnapshotData){ if(!this.scenes.has(data.sceneId)) throw new Error('restore_scene_missing'); this.currentSceneId = data.sceneId; this.index = data.index; this.flags = new Set(data.flags); this.vars = { ...data.vars }; this.sprites = { ...data.sprites }; this.bg=data.bg; this.music=data.music; this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null }; this.emitStep() }
+  private emitStep(){
+    if(!this.config.autoEmit) return
+    const step = this.getCurrentStep()
+    const state = this.getPublicState()
+    if(step && step.type === 'choice'){
+      const hint = this.computeAutoChoice(step as ChoiceStep, true)
+      if(hint){
+        emit('vn:auto-choice-hint', {
+          sceneId: state.sceneId,
+          index: state.index,
+          chosenIndex: hint.idx,
+          chosenLabel: hint.choice.label,
+          strategy: hint.strategy,
+          options: hint.options,
+          validOptions: hint.validOptions,
+          willAutoDecide: !!(this.config.autoDecide || (step as ChoiceStep).autoSingle || !!(step as ChoiceStep).autoStrategy),
+          state
+        })
+      }
+    }
+    emit('vn:step', { step, state })
+  }
   private validChoiceOptions(step: ChoiceStep): ChoiceOption[] { return step.options.filter(o => !o.condition || evaluateCondition(o.condition, this.flags, this.vars)) }
+  private computeAutoChoice(step: ChoiceStep, useCache = false): AutoChoiceCandidate | null {
+    if(useCache && this.cachedAutoChoice.sceneId === this.currentSceneId && this.cachedAutoChoice.index === this.index){
+      return this.cachedAutoChoice.candidate
+    }
+    const valid = this.validChoiceOptions(step)
+    if(valid.length === 0) return null
+    const cfg = this.config
+    const autoRequested = cfg.autoDecide || step.autoSingle || !!step.autoStrategy
+    if(!autoRequested){
+      if(useCache) this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate: null }
+      return null
+    }
+    let chosen: ChoiceOption | null = null
+    let strategy: string | undefined = undefined
+    if(step.autoSingle && valid.length===1) {
+      chosen = valid[0]
+      strategy = 'autoSingle'
+    } else if(step.autoStrategy==='firstValid') {
+      chosen = valid[0]
+      strategy = 'firstValid'
+    } else if(step.autoStrategy==='random') {
+      chosen = valid[Math.floor(Math.random()*valid.length)]
+      strategy = 'random'
+    } else if(step.autoStrategy==='highestWeight') {
+      chosen = valid.slice().sort((a,b)=> (b.weight||0)-(a.weight||0))[0]
+      strategy = 'highestWeight'
+    } else if(cfg.autoDecide && valid.length===1) {
+      chosen = valid[0]
+      strategy = 'autoDecideSingle'
+    }
+    if(!chosen){
+      if(useCache) this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate: null }
+      return null
+    }
+    const idx = step.options.indexOf(chosen)
+    const candidate = { idx, choice: chosen, strategy: strategy || 'autoDecide', options: step.options.length, validOptions: valid.length }
+    if(useCache){
+      this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate }
+    }
+    return candidate
+  }
   private maybeAutoDecide(): boolean {
     const step = this.getCurrentStep();
     if(!step || step.type!=='choice') return false;
     const choiceStep = step as ChoiceStep;
-    const valid = this.validChoiceOptions(choiceStep);
-    if(valid.length===0) return false;
-    const cfg = this.config;
-    const shouldAuto = cfg.autoDecide || choiceStep.autoSingle || !!choiceStep.autoStrategy;
-    if(!shouldAuto) return false;
-    let chosen: ChoiceOption | null = null;
-    let strategy: string | undefined = undefined;
-    if(choiceStep.autoSingle && valid.length===1) {
-      chosen = valid[0];
-      strategy = 'autoSingle';
-    } else if(choiceStep.autoStrategy==='firstValid') {
-      chosen = valid[0];
-      strategy = 'firstValid';
-    } else if(choiceStep.autoStrategy==='random') {
-      chosen = valid[Math.floor(Math.random()*valid.length)];
-      strategy = 'random';
-    } else if(choiceStep.autoStrategy==='highestWeight') {
-      chosen = valid.slice().sort((a,b)=> (b.weight||0)-(a.weight||0))[0];
-      strategy = 'highestWeight';
-    } else if(cfg.autoDecide && valid.length===1) {
-      chosen = valid[0];
-      strategy = 'autoDecideSingle';
-    }
-    if(!chosen) return false;
-    const idx = choiceStep.options.indexOf(chosen);
+    const candidate = this.computeAutoChoice(choiceStep, true);
+    if(!candidate) return false;
     emit('vn:auto-choice', {
       sceneId: this.currentSceneId,
       index: this.index,
-      chosenIndex: idx,
-      chosenLabel: chosen.label,
-      strategy,
-      options: choiceStep.options.length,
-      validOptions: valid.length,
+      chosenIndex: candidate.idx,
+      chosenLabel: candidate.choice.label,
+      strategy: candidate.strategy,
+      options: candidate.options,
+      validOptions: candidate.validOptions,
       state: this.getPublicState()
     })
-    this.choose(idx);
+    this.choose(candidate.idx);
     return true;
   }
   private runAutoLoop(){

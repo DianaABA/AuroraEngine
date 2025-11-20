@@ -7,15 +7,22 @@
     <style>
       html,body,#app{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
       #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#151a2d,#28314a);overflow:hidden}
-      #bg{position:absolute;inset:0;background-size:cover;background-position:center center;filter:brightness(.95)}
-      #fx{position:absolute;inset:0;pointer-events:none}
-      #sprites{position:absolute;left:0;right:0;bottom:20%;pointer-events:none}
+      /* Ensure proper stacking order so UI stays above background */
+      #bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+      #bg .bg-layer{position:absolute;inset:0;background-size:cover;background-position:center center;filter:brightness(.95);opacity:0;transition:opacity 400ms ease-in-out}
+      #bg #bgA{opacity:1}
+      #sprites{position:absolute;left:0;right:0;bottom:20%;pointer-events:none;z-index:2}
+      #fx{position:absolute;inset:0;pointer-events:none;z-index:3}
+      #backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter: blur(0.5px);display:none;z-index:4}
+      #bgLabel{position:absolute;top:8px;left:8px;z-index:6}
+      #content{position:relative;z-index:5}
       #sprites img{position:absolute;bottom:0;max-height:60vh;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));transform:translateX(-50%)}
       #bgLabel{position:absolute;top:8px;left:8px;color:#a8b0ff;font-size:12px;opacity:.8}
       #content{margin-top:auto;background:rgba(0,0,0,.5);color:#fff;padding:16px}
       #name{font-weight:600;color:#a0e7ff}
       #choices{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
       button{background:#3e59ff;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+      button:focus-visible{outline:2px solid #a0e7ff; outline-offset:2px}
       button.secondary{background:#2b2f43}
       #notifications{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:60vw;}
 
@@ -33,10 +40,15 @@
   <body>
     <div id="app">
       <div id="stage">
-        <div id="bg"></div>
+        <div id="bg">
+          <div id="bgA" class="bg-layer"></div>
+          <div id="bgB" class="bg-layer"></div>
+        </div>
         <div id="fx"></div>
+        <div id="backdrop" aria-hidden="true"></div>
         <div id="sprites"></div>
         <div id="bgLabel"></div>
+        <div id="debugHud" style="position:absolute; top:8px; right:8px; z-index:6; background:rgba(0,0,0,.6); border:1px solid #27304a; border-radius:6px; padding:6px 8px; color:#a8b0ff; font-size:12px; display:none"></div>
         <div id="content">
           <div id="achPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin-bottom:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -88,8 +100,22 @@
               <button id="toggleSkipSeen" class="secondary">Skip Seen Text: Off</button>
               <button id="toggleSkipTransitions" class="secondary">Skip Transitions: Off</button>
               <button id="toggleDebugToasts" class="secondary">Debug Toasts: Off</button>
+              <button id="toggleHotkeys" class="secondary">Hotkeys: On</button>
+              <button id="toggleDebugHud" class="secondary">Debug HUD: Off</button>
               <button id="clearSeen" class="secondary">Clear Seen</button>
               <span style="font-size:12px; color:#a8b0ff">Skips dialogue lines you have already seen.</span>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+              <div style="display:flex; gap:6px; align-items:center">
+                <label for="bgFadeMs" style="font-size:12px; color:#a8b0ff">BG Fade</label>
+                <input id="bgFadeMs" type="range" min="0" max="1500" step="50" value="400" style="width:160px; accent-color:#3e59ff" />
+                <span id="bgFadeMsVal" style="font-size:12px; color:#a8b0ff">400ms</span>
+              </div>
+              <div style="display:flex; gap:6px; align-items:center">
+                <label for="spriteFadeMs" style="font-size:12px; color:#a8b0ff">Sprite Fade</label>
+                <input id="spriteFadeMs" type="range" min="0" max="1500" step="50" value="220" style="width:160px; accent-color:#3e59ff" />
+                <span id="spriteFadeMsVal" style="font-size:12px; color:#a8b0ff">220ms</span>
+              </div>
             </div>
             <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
               <strong style="color:#a0e7ff; font-size:12px" id="langLabel">Language</strong>
@@ -112,16 +138,22 @@
             <button id="openSettings" class="secondary">Settings</button>
             <button id="openBacklog" class="secondary">Backlog</button>
             <button id="openSaves" class="secondary">Saves</button>
+            <button id="openShortcuts" class="secondary">Shortcuts (?)</button>
             <button id="nextBtn" class="secondary">Next</button>
             <button id="saveBtn">Quick Save</button>
             <button id="loadBtn" class="secondary">Quick Load</button>
             <span id="saveStatus" style="font-size:12px; color:#a8b0ff"></span>
+          </div>
+          <div id="shortcutHint" style="margin-top:6px; font-size:12px; color:#a8b0ff; opacity:.85">
+            Tip: Press <strong>?</strong> for shortcuts — Space/Enter: Next, A: Auto, Ctrl+S: Save
           </div>
           <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
             <strong style="color:#a0e7ff; font-size:12px">Music:</strong>
             <button class="secondary" id="musicPlay">Play</button>
             <button class="secondary" id="musicPause">Pause</button>
             <span id="musicStatus" style="font-size:12px; color:#a8b0ff"></span>
+            <input id="volumeSlider" type="range" min="0" max="100" step="1" value="80" title="Volume" style="width:140px; accent-color:#3e59ff" />
+            <button class="secondary" id="muteToggle" title="Mute/unmute">Mute</button>
           </div>
           <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
             <strong style="color:#a0e7ff; font-size:12px">Slots:</strong>
@@ -142,6 +174,28 @@
               <button id="closeSaves" class="secondary">Close</button>
             </div>
             <div id="savesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+        </div>
+        <!-- First-run onboarding modal -->
+        <div id="onboarding" style="display:none; position:absolute; inset:0; z-index:7; display:none; align-items:center; justify-content:center;">
+          <div style="max-width:560px; width:92%; background:#0b1020; border:1px solid #27304a; border-radius:10px; padding:14px; color:#a8b0ff; box-shadow:0 20px 40px rgba(0,0,0,.6)">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#a0e7ff">Welcome to Aurora Minimal</strong>
+              <button id="onbDismiss" class="secondary">Close</button>
+            </div>
+            <div style="font-size:13px; margin-bottom:10px; line-height:1.5">
+              Get started quickly:
+              <ul style="margin:6px 0 0 16px; padding:0">
+                <li>Press <strong>Start Example</strong> to load a sample scene.</li>
+                <li>Press <strong>?</strong> or <strong>Shortcuts</strong> to see hotkeys.</li>
+                <li>Tap/click the scene to advance; use choices to branch.</li>
+              </ul>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button id="onbStart" class="secondary">Start Example</button>
+              <button id="onbShortcuts" class="secondary">Shortcuts</button>
+              <button id="onbSettings" class="secondary">Settings</button>
+            </div>
           </div>
         </div>
       </div>

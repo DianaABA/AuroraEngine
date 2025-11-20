@@ -18,6 +18,7 @@ export declare class VNEngine {
     private inAutoLoop;
     private pauseOnNextDialogue;
     private pauseAfterTransition;
+    private cachedAutoChoice;
     constructor(cfg?: VNEngineConfig);
     loadScenes(defs: SceneDef[]): void;
     start(id: string): void;
@@ -33,6 +34,7 @@ export declare class VNEngine {
     restore(data: SnapshotData): void;
     private emitStep;
     private validChoiceOptions;
+    private computeAutoChoice;
     private maybeAutoDecide;
     private runAutoLoop;
     getPublicState(): {

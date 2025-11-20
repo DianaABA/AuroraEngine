@@ -25,6 +25,10 @@ const slot2thumb = document.getElementById('slot2thumb') as HTMLImageElement
 const slot3thumb = document.getElementById('slot3thumb') as HTMLImageElement
 const bgLabel = document.getElementById('bgLabel')!
 const bgEl = document.getElementById('bg') as HTMLDivElement
+const bgA = document.getElementById('bgA') as HTMLDivElement
+const bgB = document.getElementById('bgB') as HTMLDivElement
+const stageEl = document.getElementById('stage') as HTMLDivElement
+const backdropEl = document.getElementById('backdrop') as HTMLDivElement
 const spritesEl = document.getElementById('sprites') as HTMLDivElement
 const fxEl = document.getElementById('fx')!
 const openGalleryBtn = document.getElementById('openGallery') as HTMLButtonElement
@@ -50,6 +54,8 @@ const settingsPanel = document.getElementById('settingsPanel') as HTMLDivElement
 const toggleSkipSeenBtn = document.getElementById('toggleSkipSeen') as HTMLButtonElement
 const toggleSkipTransitionsBtn = document.getElementById('toggleSkipTransitions') as HTMLButtonElement
 const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTMLButtonElement
+const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButtonElement
+const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonElement
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
@@ -61,10 +67,23 @@ const openSavesBtn = document.getElementById('openSaves') as HTMLButtonElement
 const closeSavesBtn = document.getElementById('closeSaves') as HTMLButtonElement
 const savesPanel = document.getElementById('savesPanel') as HTMLDivElement
 const savesList = document.getElementById('savesList') as HTMLDivElement
+const openShortcutsBtn = document.getElementById('openShortcuts') as HTMLButtonElement
+const bgFadeMsInput = document.getElementById('bgFadeMs') as HTMLInputElement
+const spriteFadeMsInput = document.getElementById('spriteFadeMs') as HTMLInputElement
+const bgFadeMsVal = document.getElementById('bgFadeMsVal') as HTMLSpanElement
+const spriteFadeMsVal = document.getElementById('spriteFadeMsVal') as HTMLSpanElement
+const onboardingEl = document.getElementById('onboarding') as HTMLDivElement
+const onbDismissBtn = document.getElementById('onbDismiss') as HTMLButtonElement
+const onbStartBtn = document.getElementById('onbStart') as HTMLButtonElement
+const onbShortcutsBtn = document.getElementById('onbShortcuts') as HTMLButtonElement
+const onbSettingsBtn = document.getElementById('onbSettings') as HTMLButtonElement
 const musicPlayBtn = document.getElementById('musicPlay') as HTMLButtonElement
 const musicPauseBtn = document.getElementById('musicPause') as HTMLButtonElement
 const musicStatus = document.getElementById('musicStatus') as HTMLSpanElement
+const volumeSlider = document.getElementById('volumeSlider') as HTMLInputElement
+const muteToggle = document.getElementById('muteToggle') as HTMLButtonElement
 const notifications = document.getElementById('notifications') as HTMLDivElement | null
+const debugHud = document.getElementById('debugHud') as HTMLDivElement
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -83,11 +102,17 @@ const CODEX_META: Record<string, { title: string; body: string; category: string
   codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.', category: 'Locations' }
 }
 type Locale = 'en' | 'es'
-type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; locale: Locale }
-let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, locale: 'en' }
+type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale }
+let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en' }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
+type AutoChoiceHint = { key: string; chosenIndex: number; chosenLabel: string; strategy?: string; willAutoDecide: boolean; options: number; validOptions: number }
+let autoChoiceHint: AutoChoiceHint | null = null
+let choiceButtons: HTMLButtonElement[] = []
+let choiceFocusIndex = 0
+type StepMeta = { sceneId: string; index: number; label: string }
+let lastStepMeta: StepMeta | null = null
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -103,6 +128,8 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     skipSeen: (c:{on:boolean})=> `Skip Seen Text: ${c.on? 'On':'Off'}`,
     skipTransitions: (c:{on:boolean})=> `Skip Transitions: ${c.on? 'On':'Off'}`,
     debugToasts: (c:{on:boolean})=> `Debug Toasts: ${c.on? 'On':'Off'}`,
+    debugHud: (c:{on:boolean})=> `Debug HUD: ${c.on? 'On':'Off'}`,
+    hotkeys: (c:{on:boolean})=> `Hotkeys: ${c.on? 'On':'Off'}`,
     clearSeen: ()=> 'Clear Seen',
     language: ()=> 'Language',
     english: ()=> 'English',
@@ -123,6 +150,8 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'Sí':'No'}`,
     skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'Sí':'No'}`,
     debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'Sí':'No'}`,
+    debugHud: (c:{on:boolean})=> `HUD debug: ${c.on? 'Sí':'No'}`,
+    hotkeys: (c:{on:boolean})=> `Atajos: ${c.on? 'Sí':'No'}`,
     clearSeen: ()=> 'Limpiar vistos',
     language: ()=> 'Idioma',
     english: ()=> 'Inglés',
@@ -141,7 +170,7 @@ function saveBacklog(){
   try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
 }
 function loadPrefs(){
-  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, locale: 'en' }
+  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en' }
   try {
     const raw = localStorage.getItem(PREFS_KEY)
     if(!raw){ prefs = defaults; return }
@@ -313,7 +342,9 @@ function renderCodex(){
 }
 
 async function boot(scenePath: string, startSceneId: string = 'intro'){
+  console.log('Boot called with:', scenePath, startSceneId)
   const { scenes, errors } = await loadScenesFromUrl(scenePath)
+  console.log('Loaded scenes:', scenes, 'errors:', errors)
   if(errors.length){
     textEl.textContent = 'Failed to load scenes: '+errors.join(', ')
     return
@@ -359,6 +390,7 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   } catch {}
   loadBacklog()
   loadPrefs()
+  updateDebugHud()
   loadSeen()
   // Apply preferences that affect runtime
   skipFx = !!prefs.skipTransitions
@@ -366,7 +398,11 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   const ts = localStorage.getItem('aurora:minimal:autosave:ts')
   if(ts){
     continueBtn.style.display = 'inline-block'
-    continueBtn.textContent = `Continue (saved ${new Date(parseInt(ts)).toLocaleString()})`
+    const meta = readStepMeta('aurora:minimal:autosave:meta')
+    const desc = formatStepMeta(meta)
+    const when = new Date(parseInt(ts)).toLocaleString()
+    continueBtn.textContent = desc ? `Continue ${desc} (saved ${when})` : `Continue (saved ${when})`
+    continueBtn.title = desc || continueBtn.textContent
   } else {
     continueBtn.style.display = 'none'
   }
@@ -383,7 +419,44 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
   refreshSlotThumb(3)
 }
 
+let _activeBgLayer: 'A'|'B' = 'A'
+let _currentBgSrc: string | undefined = undefined
+
+function setBackground(src?: string){
+  if(!src){ if(bgA) bgA.style.opacity='0'; if(bgB) bgB.style.opacity='0'; _currentBgSrc=undefined; return }
+  if(_currentBgSrc === src) return
+  const fadeMs = skipFx ? 0 : (prefs.bgFadeMs||400)
+  if(bgA) bgA.style.transitionDuration = `${fadeMs}ms`
+  if(bgB) bgB.style.transitionDuration = `${fadeMs}ms`
+  const next = _activeBgLayer === 'A' ? bgB : bgA
+  const cur = _activeBgLayer === 'A' ? bgA : bgB
+  if(!next || !cur) { // fallback to old behavior
+    if(bgEl) bgEl.style.backgroundImage = `url(/${src})`
+    _currentBgSrc = src
+    return
+  }
+  const testImg = new Image()
+  testImg.onload = () => {
+    next.style.backgroundImage = `url(/${src})`
+    // crossfade
+    next.style.opacity = '1'
+    cur.style.opacity = '0'
+    _activeBgLayer = _activeBgLayer === 'A' ? 'B' : 'A'
+    _currentBgSrc = src
+  }
+  testImg.onerror = () => {
+    console.error('Failed to load background image:', src)
+  }
+  testImg.src = `/${src}`
+}
+
 on('vn:step', ({ step, state }) => {
+  console.log('vn:step received:', { step, state })
+  lastStepMeta = {
+    sceneId: state.sceneId || '',
+    index: typeof state.index === 'number' ? state.index : 0,
+    label: describeStep(state, step)
+  }
   // Update sprite metadata if step carries positioning hints
   try {
     if(step && (step.type === 'spriteShow' || step.type === 'spriteSwap')){
@@ -413,10 +486,10 @@ on('vn:step', ({ step, state }) => {
       if (seenLines.has(k)) { engine.next(); return }
     }
   } catch {}
-  // background label (we don't actually load images in this minimal demo)
+  // background label (we also render actual image)
   bgLabel.textContent = state.bg ? `Background: ${state.bg}` : ''
-  // Render background image
-  bgEl.style.backgroundImage = state.bg ? `url(/${state.bg})` : ''
+  // Crossfade-render background image
+  setBackground(state.bg)
   // Render sprites as positioned images with reconciliation and transitions
   ;(window as any)._spriteEls = (window as any)._spriteEls || {}
   const spriteEls: Record<string, HTMLImageElement> = (window as any)._spriteEls
@@ -470,7 +543,8 @@ on('vn:step', ({ step, state }) => {
         if(typeof (step as any).moveEase === 'string') moveEase = String((step as any).moveEase)
       }
     }catch{}
-    img.style.transition = `opacity 200ms ease, transform 200ms ease, left ${moveMs}ms ${moveEase}`
+    const fadeDur = skipFx ? 0 : (prefs.spriteFadeMs||220)
+    img.style.transition = `opacity ${fadeDur}ms ease, transform 200ms ease, left ${moveMs}ms ${moveEase}`
     img.style.left = leftPct + '%'
     img.style.transform = `translateX(-50%) scale(${scale})`
     const prevZ = Number(img.style.zIndex || '0')
@@ -488,7 +562,11 @@ on('vn:step', ({ step, state }) => {
   nameEl.textContent = ''
   textEl.textContent = ''
   choicesEl.innerHTML = ''
+  choiceButtons = []
+  choiceFocusIndex = 0
   nextBtn.style.display = 'inline-block'
+
+  const stepKey = state.sceneId != null ? `${state.sceneId}:${state.index}` : ''
 
   if(!step){
     textEl.textContent = 'End of scene.'
@@ -512,12 +590,31 @@ on('vn:step', ({ step, state }) => {
     saveBacklog()
   } else if(step.type === 'choice'){
     nextBtn.style.display = 'none'
+    const hint = autoChoiceHint && autoChoiceHint.key === stepKey ? autoChoiceHint : null
     step.options.forEach((opt, idx) => {
       const b = document.createElement('button')
-      b.textContent = opt.label
+      b.textContent = ''
+      const label = document.createElement('span')
+      label.textContent = opt.label
+      b.appendChild(label)
+      if(hint && hint.chosenIndex === idx){
+        const badge = document.createElement('span')
+        badge.textContent = hint.willAutoDecide ? 'AUTO' : 'DEFAULT'
+        badge.style.marginLeft = '8px'
+        badge.style.fontSize = '11px'
+        badge.style.padding = '2px 6px'
+        badge.style.borderRadius = '10px'
+        badge.style.background = hint.willAutoDecide ? '#1f2937' : '#111827'
+        badge.style.border = '1px solid #27304a'
+        badge.style.color = '#a0e7ff'
+        badge.title = hint.willAutoDecide ? 'Auto-decide will pick this option' : 'Default option'
+        b.appendChild(badge)
+      }
       b.onclick = () => engine.choose(idx)
       choicesEl.appendChild(b)
+      choiceButtons.push(b)
     })
+    focusChoiceButton(hint ? hint.chosenIndex : 0)
   } else {
     // auto-advance steps are handled by engine.next() calls triggered via user Next
     textEl.textContent = `${step.type}`
@@ -527,6 +624,7 @@ on('vn:step', ({ step, state }) => {
     const snap = engine.snapshot()
     localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
     localStorage.setItem('aurora:minimal:autosave:ts', String(Date.now()))
+    writeStepMeta('aurora:minimal:autosave:meta', lastStepMeta || metaFromState())
   }catch{}
 
   // Demo: unlock a CG when the scene sets a specific flag
@@ -548,6 +646,7 @@ on('vn:step', ({ step, state }) => {
       if(codexPanel.style.display !== 'none') renderCodex()
     }
   }catch{}
+  updateDebugHud()
 })
 
 // Visualize transitions with simple CSS effects
@@ -580,6 +679,24 @@ on('vn:transition', (e:any)=>{
   if(kind==='fade' || kind==='flash'){
     setTimeout(()=>{ fxEl.className = ''; (fxEl as HTMLElement).style.animationDuration = '' }, duration)
   }
+})
+
+on('vn:auto-choice-hint', (d:any)=>{
+  try{
+    autoChoiceHint = {
+      key: `${d.sceneId}:${d.index}`,
+      chosenIndex: Number(d.chosenIndex ?? -1),
+      chosenLabel: d.chosenLabel,
+      strategy: d.strategy,
+      willAutoDecide: !!d.willAutoDecide,
+      options: Number(d.options || 0),
+      validOptions: Number(d.validOptions || 0)
+    }
+    if(prefs.showDebugToasts){
+      const msg = `[auto-choice hint] ${(d.strategy||'auto')} -> #${d.chosenIndex} "${d.chosenLabel}" (${d.validOptions}/${d.options})`
+      showToast(msg)
+    }
+  }catch{}
 })
 
 // Debug: surface new engine events as ephemeral toasts
@@ -617,13 +734,68 @@ function showToast(message: string){
   }catch{}
 }
 
+function describeStep(state: any, step: any): string{
+  if(!step){
+    return 'End'
+  }
+  if(step.type === 'dialogue'){
+    const who = step.char ? `${step.char}: ` : ''
+    return truncateLabel(who + step.text)
+  }
+  if(step.type === 'choice'){
+    const labels = (step.options||[]).map((o:any)=> o?.label).filter(Boolean).slice(0,3)
+    return truncateLabel('Choice: '+labels.join(' / '))
+  }
+  return String(step.type || 'step')
+}
+
+function truncateLabel(s: string, max = 60): string{
+  if(!s) return ''
+  const clean = s.replace(/\s+/g, ' ').trim()
+  return clean.length > max ? clean.slice(0, max-1)+'…' : clean
+}
+
+function formatStepMeta(meta: StepMeta | null): string{
+  if(!meta) return ''
+  const scene = meta.sceneId || 'scene'
+  const idx = typeof meta.index === 'number' ? meta.index : 0
+  const label = meta.label ? ` · ${meta.label}` : ''
+  return `${scene}#${idx}${label}`
+}
+
+function readStepMeta(key: string): StepMeta | null{
+  try{
+    const raw = localStorage.getItem(key)
+    if(!raw) return null
+    return JSON.parse(raw) as StepMeta
+  }catch{ return null }
+}
+
+function writeStepMeta(key: string, meta: StepMeta | null){
+  try{
+    if(!meta){ localStorage.removeItem(key); return }
+    localStorage.setItem(key, JSON.stringify(meta))
+  }catch{}
+}
+
+function metaFromState(): StepMeta{
+  const st = engine.getPublicState()
+  return {
+    sceneId: st.sceneId || '',
+    index: typeof (st as any).index === 'number' ? (st as any).index : 0,
+    label: lastStepMeta?.label || ''
+  }
+}
+
 nextBtn.onclick = () => engine.next()
 
 const SAVE_KEY = 'aurora:minimal:quicksave'
 saveBtn.onclick = () => {
   const snap = engine.snapshot()
+  const meta = lastStepMeta || metaFromState()
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap))
+    writeStepMeta(`${SAVE_KEY}:meta`, meta)
     saveStatus.textContent = 'Saved'
   }catch{
     saveStatus.textContent = 'Save failed (storage)'
@@ -634,7 +806,9 @@ loadBtn.onclick = () => {
     const raw = localStorage.getItem(SAVE_KEY)
     if(!raw){ saveStatus.textContent = 'No save found'; return }
     engine.restore(JSON.parse(raw))
-    saveStatus.textContent = 'Loaded'
+    const meta = readStepMeta(`${SAVE_KEY}:meta`)
+    const desc = formatStepMeta(meta)
+    saveStatus.textContent = desc ? `Loaded (${desc})` : 'Loaded'
   }catch{
     saveStatus.textContent = 'Load failed'
   }
@@ -645,16 +819,29 @@ continueBtn.onclick = () => {
     const raw = localStorage.getItem('aurora:minimal:autosave')
     if(!raw){ saveStatus.textContent = 'No autosave'; return }
     engine.restore(JSON.parse(raw))
-    saveStatus.textContent = 'Continued'
+    const meta = readStepMeta('aurora:minimal:autosave:meta')
+    const desc = formatStepMeta(meta)
+    saveStatus.textContent = desc ? `Continued (${desc})` : 'Continued'
   }catch{ saveStatus.textContent = 'Continue failed' }
 }
 
 function saveToSlot(n: number){
   const key = `aurora:minimal:slot${n}`
   try{
+    // Confirm overwrite if an existing save is present
+    try{
+      const existing = localStorage.getItem(key)
+      if(existing){
+        const ts = localStorage.getItem(`${key}:ts`)
+        const when = ts ? new Date(parseInt(ts)).toLocaleString() : 'unknown time'
+        const ok = window.confirm(`Overwrite slot ${n}? (existing: ${when})`)
+        if(!ok) { slotStatus.textContent = `Canceled save ${n}`; return }
+      }
+    }catch{}
     const snap = engine.snapshot()
     localStorage.setItem(key, JSON.stringify(snap))
     localStorage.setItem(`${key}:ts`, String(Date.now()))
+    writeStepMeta(`${key}:meta`, lastStepMeta || metaFromState())
     // Generate and store a thumbnail
     captureThumbnail(engine.getPublicState()).then(url=>{ try { if(url) localStorage.setItem(`${key}:thumb`, url); refreshSlotThumb(n) } catch {} })
     slotStatus.textContent = `Saved to ${n}`
@@ -667,7 +854,10 @@ function loadFromSlot(n: number){
     if(!raw){ slotStatus.textContent = `No save ${n}`; return }
     engine.restore(JSON.parse(raw))
     const ts = localStorage.getItem(`${key}:ts`)
-    slotStatus.textContent = ts ? `Loaded ${n} (${new Date(parseInt(ts)).toLocaleString()})` : `Loaded ${n}`
+    const meta = readStepMeta(`${key}:meta`)
+    const desc = formatStepMeta(meta)
+    const when = ts ? new Date(parseInt(ts)).toLocaleString() : ''
+    slotStatus.textContent = desc ? `Loaded ${n} (${desc})` : ts ? `Loaded ${n} (${when})` : `Loaded ${n}`
   }catch{ slotStatus.textContent = `Load ${n} failed` }
 }
 slot1save.onclick = ()=> saveToSlot(1)
@@ -676,6 +866,17 @@ slot2save.onclick = ()=> saveToSlot(2)
 slot2load.onclick = ()=> loadFromSlot(2)
 slot3save.onclick = ()=> saveToSlot(3)
 slot3load.onclick = ()=> loadFromSlot(3)
+
+// Extra autosave on tab hide/close
+function writeAutosave(){
+  try{
+    const snap = engine.snapshot()
+    localStorage.setItem('aurora:minimal:autosave', JSON.stringify(snap))
+    localStorage.setItem('aurora:minimal:autosave:ts', String(Date.now()))
+  }catch{}
+}
+window.addEventListener('beforeunload', writeAutosave)
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) writeAutosave() })
 
 async function captureThumbnail(state: ReturnType<typeof engine.getPublicState>): Promise<string|null>{
   try{
@@ -737,38 +938,48 @@ boot('/scenes/example.json', 'intro')
 startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 
-openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block' }
-closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none' }
-openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block' }
-closeAchBtn.onclick = () => { achPanel.style.display = 'none' }
-openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block' }
-closeCodexBtn.onclick = () => { codexPanel.style.display = 'none' }
+openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(galleryPanel) }
+closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
+openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(achPanel) }
+closeAchBtn.onclick = () => { achPanel.style.display = 'none'; updateBackdrop() }
+openCodexBtn.onclick = () => { renderCodex(); codexPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(codexPanel) }
+closeCodexBtn.onclick = () => { codexPanel.style.display = 'none'; updateBackdrop() }
 ;(document.getElementById('codexSearch') as HTMLInputElement).addEventListener('input', ()=> renderCodex())
 codexCategory.addEventListener('change', ()=> renderCodex())
 codexDetailClose.onclick = ()=> { codexDetail.style.display = 'none' }
-openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block' }
-closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none' }
-openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block' }
-closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none' }
+openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(backlogPanel) }
+closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none'; updateBackdrop() }
+openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(settingsPanel) }
+closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none'; updateBackdrop() }
 function refreshSettingsUI(){
   toggleSkipSeenBtn.textContent = t('skipSeen', { on: prefs.skipSeenText })
   toggleSkipTransitionsBtn.textContent = t('skipTransitions', { on: prefs.skipTransitions })
   toggleDebugToastsBtn.textContent = t('debugToasts', { on: prefs.showDebugToasts })
+  if(toggleDebugHudBtn) toggleDebugHudBtn.textContent = t('debugHud', { on: prefs.showDebugHud })
+  toggleHotkeysBtn.textContent = t('hotkeys', { on: prefs.hotkeysEnabled })
   ;(document.getElementById('settingsTitle') as HTMLElement).textContent = t('settings')
   ;(document.getElementById('closeSettings') as HTMLButtonElement).textContent = t('close')
   ;(document.getElementById('langLabel') as HTMLElement).textContent = t('language')
   langEnBtn.textContent = t('english')
   langEsBtn.textContent = t('spanish')
+  try{
+    if(bgFadeMsInput){ bgFadeMsInput.value = String(prefs.bgFadeMs); bgFadeMsVal.textContent = `${prefs.bgFadeMs}ms` }
+    if(spriteFadeMsInput){ spriteFadeMsInput.value = String(prefs.spriteFadeMs); spriteFadeMsVal.textContent = `${prefs.spriteFadeMs}ms` }
+  }catch{}
 }
 toggleSkipSeenBtn.onclick = () => { prefs.skipSeenText = !prefs.skipSeenText; savePrefs(); refreshSettingsUI() }
 toggleSkipTransitionsBtn.onclick = () => { prefs.skipTransitions = !prefs.skipTransitions; skipFx = prefs.skipTransitions; savePrefs(); refreshSettingsUI(); refreshSkipFx() }
 toggleDebugToastsBtn.onclick = () => { prefs.showDebugToasts = !prefs.showDebugToasts; savePrefs(); refreshSettingsUI() }
+if(toggleDebugHudBtn){ toggleDebugHudBtn.onclick = () => { prefs.showDebugHud = !prefs.showDebugHud; savePrefs(); refreshSettingsUI(); updateDebugHud() } }
+toggleHotkeysBtn.onclick = () => { prefs.hotkeysEnabled = !prefs.hotkeysEnabled; savePrefs(); refreshSettingsUI() }
 clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
+bgFadeMsInput?.addEventListener('input', ()=>{ const v = parseInt(bgFadeMsInput.value||'400',10); prefs.bgFadeMs = Math.max(0, Math.min(5000, v)); savePrefs(); refreshSettingsUI() })
+spriteFadeMsInput?.addEventListener('input', ()=>{ const v = parseInt(spriteFadeMsInput.value||'220',10); prefs.spriteFadeMs = Math.max(0, Math.min(5000, v)); savePrefs(); refreshSettingsUI() })
 
-openSavesBtn.onclick = () => { renderSaves(); savesPanel.style.display = 'block' }
-closeSavesBtn.onclick = () => { savesPanel.style.display = 'none' }
+openSavesBtn.onclick = () => { renderSaves(); savesPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(savesPanel) }
+closeSavesBtn.onclick = () => { savesPanel.style.display = 'none'; updateBackdrop() }
 function renderSaves(){
   savesList.innerHTML = ''
   for(let n=1;n<=3;n++){
@@ -789,7 +1000,19 @@ function renderSaves(){
     meta.style.color = '#a8b0ff'
     meta.style.fontSize = '12px'
     const ts = localStorage.getItem(`${key}:ts`)
-    meta.textContent = ts ? new Date(parseInt(ts)).toLocaleString() : '—'
+    const label = localStorage.getItem(`${key}:label`) || ''
+    const when = ts ? new Date(parseInt(ts)).toLocaleString() : '—'
+    const metaObj = readStepMeta(`${key}:meta`)
+    const desc = formatStepMeta(metaObj)
+    meta.textContent = label ? `${label} — ${when}` : when
+    if(desc){
+      const sub = document.createElement('div')
+      sub.style.color = '#7082c1'
+      sub.style.fontSize = '11px'
+      sub.textContent = desc
+      meta.appendChild(document.createElement('br'))
+      meta.appendChild(sub)
+    }
     const actions = document.createElement('div')
     const saveB = document.createElement('button')
     saveB.className = 'secondary'
@@ -799,8 +1022,35 @@ function renderSaves(){
     loadB.className = 'secondary'
     loadB.textContent = t('loadN', { n })
     loadB.onclick = ()=> loadFromSlot(n)
+    const renameB = document.createElement('button')
+    renameB.className = 'secondary'
+    renameB.textContent = 'Rename'
+    renameB.onclick = ()=>{
+      const cur = localStorage.getItem(`${key}:label`) || ''
+      const name = window.prompt('Slot name:', cur)
+      if(name!=null){ try{ localStorage.setItem(`${key}:label`, name.trim()) }catch{}; renderSaves() }
+    }
+      const delB = document.createElement('button')
+      delB.className = 'secondary'
+      delB.textContent = 'Delete'
+      delB.onclick = ()=>{
+        const has = !!localStorage.getItem(key)
+      if(!has){ slotStatus.textContent = `No save ${n}`; return }
+      const ok = window.confirm(`Delete slot ${n}?`)
+      if(!ok) return
+        try{
+          localStorage.removeItem(key)
+          localStorage.removeItem(`${key}:ts`)
+          localStorage.removeItem(`${key}:thumb`)
+          localStorage.removeItem(`${key}:label`)
+          localStorage.removeItem(`${key}:meta`)
+        }catch{}
+        renderSaves()
+      }
     actions.appendChild(saveB)
     actions.appendChild(loadB)
+    actions.appendChild(renameB)
+    actions.appendChild(delB)
     row.appendChild(img)
     row.appendChild(meta)
     row.appendChild(actions)
@@ -823,7 +1073,9 @@ refreshSkipFx()
 
 function updateMusicStatus(){
   const track = engine.getPublicState().music
-  musicStatus.textContent = track ? `${track} — ${isPlaying? 'Playing':'Paused'}` : 'No track'
+  const volPct = Math.round((prefs.volume || 0) * 100)
+  const volLabel = prefs.muted ? 'Muted' : `Vol ${volPct}%`
+  musicStatus.textContent = track ? `${track} — ${isPlaying? 'Playing':'Paused'} — ${volLabel}` : `No track — ${volLabel}`
 }
 on('music:track-change', ()=> { /* engine updates track */ updateMusicStatus() })
 on('music:play', ()=> { isPlaying = true; updateMusicStatus() })
@@ -834,3 +1086,364 @@ musicPlayBtn.onclick = () => {
   Jukebox.play(track, track)
 }
 musicPauseBtn.onclick = () => { Jukebox.pause() }
+
+// Volume + Mute controls (template-level; engine jukebox is event-only)
+function refreshVolumeUI(){
+  if(volumeSlider) volumeSlider.value = String(Math.round((prefs.volume||0)*100))
+  if(muteToggle) muteToggle.textContent = prefs.muted ? 'Unmute' : 'Mute'
+  updateMusicStatus()
+}
+if(volumeSlider){
+  volumeSlider.addEventListener('input', ()=>{
+    const v = Math.max(0, Math.min(100, parseInt(volumeSlider.value||'0',10)))
+    prefs.volume = v/100
+    savePrefs()
+    refreshVolumeUI()
+  })
+}
+if(muteToggle){
+  muteToggle.onclick = ()=>{ prefs.muted = !prefs.muted; savePrefs(); refreshVolumeUI() }
+}
+refreshVolumeUI()
+
+// -----------------------------
+// Keyboard Shortcuts
+// -----------------------------
+function isTypingTarget(el: EventTarget | null): boolean {
+  const t = el as HTMLElement | null
+  if(!t) return false
+  const tag = (t.tagName || '').toLowerCase()
+  return tag === 'input' || tag === 'textarea' || (t as any).isContentEditable === true || tag === 'select'
+}
+
+function anyPanelOpen(){
+  return [galleryPanel, achPanel, codexPanel, backlogPanel, settingsPanel, savesPanel].some(p => p.style.display !== 'none')
+}
+function updateBackdrop(){
+  if(!backdropEl) return
+  backdropEl.style.display = anyPanelOpen() ? 'block' : 'none'
+}
+
+function toggle(el: HTMLElement, render?: ()=>void){
+  const open = el.style.display !== 'none'
+  if(open){ el.style.display = 'none' }
+  else { if(render) render(); el.style.display = 'block' }
+  updateBackdrop()
+}
+
+let hotkeyHelpEl: HTMLDivElement | null = null
+function toggleHotkeyHelp(){
+  if(hotkeyHelpEl){ hotkeyHelpEl.remove(); hotkeyHelpEl = null; return }
+  const div = document.createElement('div')
+  div.style.position = 'fixed'
+  div.style.top = '12px'
+  div.style.right = '12px'
+  div.style.maxWidth = '420px'
+  div.style.background = '#0b1020'
+  div.style.border = '1px solid #27304a'
+  div.style.color = '#a8b0ff'
+  div.style.padding = '10px 12px'
+  div.style.borderRadius = '8px'
+  div.style.boxShadow = '0 10px 24px rgba(0,0,0,.5)'
+  div.style.zIndex = '9999'
+  div.style.fontSize = '12px'
+  div.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <strong style="color:#a0e7ff">Shortcuts</strong>
+      <button class="secondary" id="hkClose">Close</button>
+    </div>
+    <div style="display:grid; grid-template-columns: auto 1fr; gap:6px 12px">
+      <div>Space/Enter</div><div>Next</div>
+      <div>→</div><div>Next</div>
+      <div>A</div><div>Toggle Auto</div>
+      <div>C</div><div>Toggle Auto-Choose</div>
+      <div>F</div><div>Toggle Skip Transitions</div>
+      <div>G</div><div>Gallery</div>
+      <div>B</div><div>Backlog</div>
+      <div>S</div><div>Saves panel</div>
+      <div>P</div><div>Settings</div>
+      <div>M</div><div>Music Play/Pause</div>
+      <div>Ctrl+S</div><div>Quick Save</div>
+      <div>Ctrl+L</div><div>Quick Load</div>
+      <div>Ctrl+1/2/3</div><div>Save to slot 1/2/3</div>
+      <div>Alt+1/2/3</div><div>Load slot 1/2/3</div>
+      <div>Esc</div><div>Close open panels</div>
+      <div>?</div><div>Toggle this help</div>
+    </div>
+  `
+  document.body.appendChild(div)
+  hotkeyHelpEl = div
+  ;(div.querySelector('#hkClose') as HTMLButtonElement).onclick = ()=> toggleHotkeyHelp()
+}
+
+function closePanels(){
+  galleryPanel.style.display = 'none'
+  achPanel.style.display = 'none'
+  codexPanel.style.display = 'none'
+  backlogPanel.style.display = 'none'
+  settingsPanel.style.display = 'none'
+  savesPanel.style.display = 'none'
+  if(hotkeyHelpEl) toggleHotkeyHelp()
+  updateBackdrop()
+  releaseFocusTrap()
+}
+
+function focusChoiceButton(idx: number){
+  if(choiceButtons.length === 0) return
+  const clamped = Math.max(0, Math.min(choiceButtons.length - 1, idx))
+  choiceFocusIndex = clamped
+  choiceButtons.forEach((btn, i)=>{
+    if(i === clamped){
+      btn.focus()
+      btn.dataset.focused = 'true'
+      btn.style.outline = '2px solid #a0e7ff'
+      btn.style.outlineOffset = '0'
+    } else {
+      btn.dataset.focused = 'false'
+      btn.style.outline = ''
+    }
+  })
+}
+
+function handleChoiceKeyNav(e: KeyboardEvent): boolean {
+  if(choiceButtons.length === 0) return false
+  const moveNext = e.key === 'ArrowDown' || e.key === 'ArrowRight'
+  const movePrev = e.key === 'ArrowUp' || e.key === 'ArrowLeft'
+  if(moveNext){ e.preventDefault(); focusChoiceButton(choiceFocusIndex + 1); return true }
+  if(movePrev){ e.preventDefault(); focusChoiceButton(choiceFocusIndex - 1); return true }
+  if(e.key === 'Home'){ e.preventDefault(); focusChoiceButton(0); return true }
+  if(e.key === 'End'){ e.preventDefault(); focusChoiceButton(choiceButtons.length - 1); return true }
+  if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault()
+    const btn = choiceButtons[choiceFocusIndex]
+    if(btn) btn.click()
+    return true
+  }
+  return false
+}
+
+document.addEventListener('keydown', (e: KeyboardEvent)=>{
+  if(!prefs.hotkeysEnabled) return
+  if(isTypingTarget(e.target)) return
+  if(choiceButtons.length > 0){
+    if(handleChoiceKeyNav(e)) return
+    // When a choice is open, avoid triggering global navigation
+  }
+  // Help
+  if((e.key === '?' ) || (e.key === '/' && e.shiftKey)) { e.preventDefault(); toggleHotkeyHelp(); return }
+  // Close
+  if(e.key === 'Escape'){ closePanels(); return }
+  // Next
+  if(e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight'){
+    e.preventDefault()
+    try{ nextBtn.click() }catch{}
+    return
+  }
+  switch(e.key.toLowerCase()){
+    case 'a': { e.preventDefault(); autoBtn.click(); break }
+    case 'c': { e.preventDefault(); autoChooseBtn.click(); break }
+    case 'f': { e.preventDefault(); skipFxBtn.click(); break }
+    case 'g': { e.preventDefault(); toggle(galleryPanel, renderGallery); break }
+    case 'b': { e.preventDefault(); toggle(backlogPanel, renderBacklog); break }
+    case 's': { if(!e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); toggle(savesPanel, renderSaves); } break }
+    case 'p': { e.preventDefault(); toggle(settingsPanel, refreshSettingsUI); break }
+    case 'm': { e.preventDefault(); isPlaying ? Jukebox.pause() : Jukebox.play(engine.getPublicState().music||'demo-track'); break }
+    case 'l': { if(e.ctrlKey || e.metaKey){ e.preventDefault(); loadBtn.click() } break }
+  }
+  // Quick save
+  if(e.key.toLowerCase() === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveBtn.click(); return }
+  // Slot saves/loads
+  if(['1','2','3'].includes(e.key)){
+    const n = parseInt(e.key, 10)
+    if(e.ctrlKey || e.metaKey){ e.preventDefault(); saveToSlot(n); return }
+    if(e.altKey){ e.preventDefault(); loadFromSlot(n); return }
+  }
+})
+
+// Clicking the dim backdrop closes panels
+backdropEl.addEventListener('click', ()=> closePanels())
+
+// Click-to-advance on stage (mobile-friendly). If panels open, clicks outside content close them.
+stageEl.addEventListener('click', (e)=>{
+  const path = (e.composedPath ? (e.composedPath() as any[]) : []) as HTMLElement[]
+  const isIn = (id:string)=> path.some(el=> (el as any).id === id)
+  if(anyPanelOpen()){
+    if(!isIn('content')){ closePanels(); return }
+    return
+  }
+  if(isIn('content')||isIn('galleryPanel')||isIn('achPanel')||isIn('codexPanel')||isIn('backlogPanel')||isIn('settingsPanel')||isIn('savesPanel')) return
+  if(choicesEl.childElementCount>0) return
+  if(nextBtn.style.display==='none') return
+  nextBtn.click()
+})
+
+// Swipe-to-advance (mobile-friendly). Right/left swipe triggers next; ignore when panels open or choices shown.
+let touchStartX = 0, touchStartY = 0, touchTime = 0
+const SWIPE_THRESHOLD_PX = 40
+const SWIPE_MAX_TIME_MS = 600
+stageEl.addEventListener('touchstart', (e: TouchEvent)=>{
+  if(anyPanelOpen()) return
+  if(e.touches.length !== 1) return
+  const t = e.touches[0]
+  touchStartX = t.clientX; touchStartY = t.clientY; touchTime = Date.now()
+})
+stageEl.addEventListener('touchend', (e: TouchEvent)=>{
+  if(anyPanelOpen()) return
+  if(choicesEl.childElementCount>0) return
+  const dt = Date.now() - touchTime
+  if(dt > SWIPE_MAX_TIME_MS) return
+  const t = e.changedTouches[0]
+  const dx = t.clientX - touchStartX
+  const dy = t.clientY - touchStartY
+  if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX){
+    // treat as next
+    if(nextBtn.style.display==='none') return
+    nextBtn.click()
+  }
+})
+
+// -----------------------------
+// Focus trap within open panels for accessibility
+// -----------------------------
+let _focusTrapEl: HTMLElement | null = null
+let _prevFocusEl: HTMLElement | null = null
+let _focusTrapHandler: ((e: KeyboardEvent)=>void) | null = null
+
+function trapFocusIn(el: HTMLElement){
+  releaseFocusTrap()
+  _focusTrapEl = el
+  _prevFocusEl = (document.activeElement as HTMLElement) || null
+  const focusables = getFocusable(el)
+  if(focusables.length){ focusables[0].focus() }
+  _focusTrapHandler = (e: KeyboardEvent)=>{
+    if(e.key !== 'Tab' || !_focusTrapEl) return
+    const list = getFocusable(_focusTrapEl)
+    if(list.length === 0) return
+    const first = list[0], last = list[list.length-1]
+    if(e.shiftKey){
+      if(document.activeElement === first){ e.preventDefault(); last.focus() }
+    } else {
+      if(document.activeElement === last){ e.preventDefault(); first.focus() }
+    }
+  }
+  document.addEventListener('keydown', _focusTrapHandler)
+}
+
+function releaseFocusTrap(){
+  if(_focusTrapHandler){ document.removeEventListener('keydown', _focusTrapHandler) }
+  _focusTrapHandler = null
+  _focusTrapEl = null
+  try{ _prevFocusEl?.focus() }catch{}
+  _prevFocusEl = null
+}
+
+function getFocusable(root: HTMLElement): HTMLElement[]{
+  const sel = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  const arr = Array.from(root.querySelectorAll<HTMLElement>(sel))
+  return arr.filter(el => !el.hasAttribute('disabled') && el.tabIndex !== -1 && el.offsetParent !== null)
+}
+
+// Friendly one-time nudge to discover hotkeys
+function oneTimeHint(id: string, message: string){
+  try{
+    const key = `aurora:minimal:hint:${id}`
+    if(localStorage.getItem(key)) return
+    const host = notifications || document.body
+    const div = document.createElement('div')
+    div.textContent = message
+    div.style.position = notifications? 'relative' : 'fixed'
+    if(!notifications){ div.style.right = '12px'; div.style.bottom = '12px' }
+    div.style.background = '#0b1020'
+    div.style.border = '1px solid #27304a'
+    div.style.color = '#a8b0ff'
+    div.style.padding = '6px 8px'
+    div.style.marginTop = '6px'
+    div.style.borderRadius = '6px'
+    div.style.fontSize = '12px'
+    div.style.boxShadow = '0 6px 14px rgba(0,0,0,.5)'
+    div.style.zIndex = '9999'
+    host.appendChild(div)
+    setTimeout(()=>{ try{ div.remove() }catch{} }, 5000)
+    localStorage.setItem(key, '1')
+  }catch{}
+}
+
+oneTimeHint('hotkeys', 'Tip: Press ? for shortcuts — Space/Enter: Next, A: Auto, Ctrl+S: Save')
+
+// Shortcuts button opens overlay
+openShortcutsBtn.onclick = () => toggleHotkeyHelp()
+
+// Add helpful tooltips to controls (also advertise hotkeys)
+function setControlTitles(){
+  continueBtn.title = 'Continue last autosave'
+  startExampleBtn.title = 'Load example scenes'
+  startExpressionsBtn.title = 'Load expressions demo'
+  autoBtn.title = 'Toggle Auto (A)'
+  autoChooseBtn.title = 'Toggle Auto-Choose (C)'
+  skipFxBtn.title = 'Toggle Skip Transitions (F)'
+  openGalleryBtn.title = 'Open Gallery (G)'
+  openAchBtn.title = 'Open Achievements'
+  openCodexBtn.title = 'Open Codex'
+  openSettingsBtn.title = 'Open Settings (P)'
+  openBacklogBtn.title = 'Open Backlog (B)'
+  openSavesBtn.title = 'Open Saves (S)'
+  openShortcutsBtn.title = 'Show Shortcuts (?)'
+  nextBtn.title = 'Next (Space / Enter / →)'
+  saveBtn.title = 'Quick Save (Ctrl+S)'
+  loadBtn.title = 'Quick Load (Ctrl+L)'
+  musicPlayBtn.title = 'Play music (M)'
+  musicPauseBtn.title = 'Pause music (M)'
+  slot1save.title = 'Save to Slot 1 (Ctrl+1)'
+  slot2save.title = 'Save to Slot 2 (Ctrl+2)'
+  slot3save.title = 'Save to Slot 3 (Ctrl+3)'
+  slot1load.title = 'Load Slot 1 (Alt+1)'
+  slot2load.title = 'Load Slot 2 (Alt+2)'
+  slot3load.title = 'Load Slot 3 (Alt+3)'
+}
+setControlTitles()
+
+// Friendly tap hint on mobile (once)
+function isProbablyMobile(){ return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || window.innerWidth < 640 }
+if(isProbablyMobile()) oneTimeHint('tap', 'Tip: Tap anywhere on the scene to advance')
+
+// -----------------------------
+// Onboarding modal — show once on first run
+// -----------------------------
+function showOnboarding(){ if(onboardingEl){ onboardingEl.style.display = 'flex'; trapFocusIn(onboardingEl) } }
+function hideOnboarding(){ if(onboardingEl){ onboardingEl.style.display = 'none'; releaseFocusTrap() } }
+function markOnboarded(){ try{ localStorage.setItem('aurora:minimal:onboarded','1') }catch{} }
+function shouldShowOnboarding(): boolean { try{ return !localStorage.getItem('aurora:minimal:onboarded') }catch{ return true } }
+
+if(shouldShowOnboarding()) showOnboarding()
+onbDismissBtn.onclick = ()=>{ hideOnboarding(); markOnboarded() }
+onbStartBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); startExampleBtn.click() }
+onbShortcutsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); toggleHotkeyHelp() }
+onbSettingsBtn.onclick = ()=>{ hideOnboarding(); markOnboarded(); openSettingsBtn.click() }
+
+// -----------------------------
+// Debug HUD
+// -----------------------------
+function updateDebugHud(){
+  try{
+    if(!debugHud) return
+    if(!prefs.showDebugHud){ debugHud.style.display='none'; debugHud.innerHTML=''; return }
+    const st = engine.getPublicState()
+    debugHud.style.display='block'
+    const flags = (st.flags||[]) as string[]
+    const spriteIds = Object.keys(st.sprites||{})
+    const lines: string[] = []
+    lines.push(`Scene: ${st.sceneId || '—'} (#${st.index ?? 0})`)
+    lines.push(`Background: ${st.bg || '—'}`)
+    lines.push(`Music: ${st.music || '—'} ${isPlaying? '(playing)':'(paused)'}`)
+    lines.push(`AutoAdvance: ${engine.isAutoAdvance()}`)
+    lines.push(`AutoDecide: ${engine.isAutoDecide()}`)
+    lines.push(`Sprites (${spriteIds.length}): ${spriteIds.join(', ') || '—'}`)
+    lines.push(`Flags (${flags.length}): ${flags.join(', ') || '—'}`)
+    lines.push(`SkipTransitions: ${prefs.skipTransitions}`)
+    lines.push(`Hotkeys: ${prefs.hotkeysEnabled}`)
+    lines.push(`Volume: ${prefs.muted? 'Muted' : Math.round(prefs.volume*100)+'%'}`)
+    lines.push(`BG Fade: ${prefs.bgFadeMs}ms  Sprite Fade: ${prefs.spriteFadeMs}ms`)
+    debugHud.innerHTML = `<pre style="margin:0; font-family:monospace; font-size:11px; line-height:1.4; white-space:pre-wrap;">${lines.join('\n')}</pre>`
+  }catch{ /* ignore */ }
+}
+

@@ -13,6 +13,7 @@ export class VNEngine {
         this.inAutoLoop = false;
         this.pauseOnNextDialogue = false;
         this.pauseAfterTransition = false;
+        this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null };
         this.config = { maxAutoSteps: 1000, ...cfg };
     }
     loadScenes(defs) {
@@ -30,6 +31,7 @@ export class VNEngine {
         const scene = this.scenes.get(id);
         this.currentSceneId = id;
         this.index = 0;
+        this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null };
         if (scene.bg)
             this.bg = scene.bg;
         if (scene.music)
@@ -79,6 +81,7 @@ export class VNEngine {
             return;
         }
         this.index++;
+        this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null };
         if (this.maybeAutoDecide())
             return;
         this.emitStep();
@@ -117,37 +120,60 @@ export class VNEngine {
     hasFlag(f) { return this.flags.has(f); }
     snapshot() { return { sceneId: this.currentSceneId || '', index: this.index, flags: [...this.flags], vars: { ...this.vars }, sprites: { ...this.sprites }, bg: this.bg, music: this.music }; }
     restore(data) { if (!this.scenes.has(data.sceneId))
-        throw new Error('restore_scene_missing'); this.currentSceneId = data.sceneId; this.index = data.index; this.flags = new Set(data.flags); this.vars = { ...data.vars }; this.sprites = { ...data.sprites }; this.bg = data.bg; this.music = data.music; this.emitStep(); }
-    emitStep() { if (!this.config.autoEmit)
-        return; const step = this.getCurrentStep(); emit('vn:step', { step, state: this.getPublicState() }); }
-    validChoiceOptions(step) { return step.options.filter(o => !o.condition || evaluateCondition(o.condition, this.flags, this.vars)); }
-    maybeAutoDecide() {
+        throw new Error('restore_scene_missing'); this.currentSceneId = data.sceneId; this.index = data.index; this.flags = new Set(data.flags); this.vars = { ...data.vars }; this.sprites = { ...data.sprites }; this.bg = data.bg; this.music = data.music; this.cachedAutoChoice = { sceneId: null, index: -1, candidate: null }; this.emitStep(); }
+    emitStep() {
+        if (!this.config.autoEmit)
+            return;
         const step = this.getCurrentStep();
-        if (!step || step.type !== 'choice')
-            return false;
-        const choiceStep = step;
-        const valid = this.validChoiceOptions(choiceStep);
+        const state = this.getPublicState();
+        if (step && step.type === 'choice') {
+            const hint = this.computeAutoChoice(step, true);
+            if (hint) {
+                emit('vn:auto-choice-hint', {
+                    sceneId: state.sceneId,
+                    index: state.index,
+                    chosenIndex: hint.idx,
+                    chosenLabel: hint.choice.label,
+                    strategy: hint.strategy,
+                    options: hint.options,
+                    validOptions: hint.validOptions,
+                    willAutoDecide: !!(this.config.autoDecide || step.autoSingle || !!step.autoStrategy),
+                    state
+                });
+            }
+        }
+        emit('vn:step', { step, state });
+    }
+    validChoiceOptions(step) { return step.options.filter(o => !o.condition || evaluateCondition(o.condition, this.flags, this.vars)); }
+    computeAutoChoice(step, useCache = false) {
+        if (useCache && this.cachedAutoChoice.sceneId === this.currentSceneId && this.cachedAutoChoice.index === this.index) {
+            return this.cachedAutoChoice.candidate;
+        }
+        const valid = this.validChoiceOptions(step);
         if (valid.length === 0)
-            return false;
+            return null;
         const cfg = this.config;
-        const shouldAuto = cfg.autoDecide || choiceStep.autoSingle || !!choiceStep.autoStrategy;
-        if (!shouldAuto)
-            return false;
+        const autoRequested = cfg.autoDecide || step.autoSingle || !!step.autoStrategy;
+        if (!autoRequested) {
+            if (useCache)
+                this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate: null };
+            return null;
+        }
         let chosen = null;
         let strategy = undefined;
-        if (choiceStep.autoSingle && valid.length === 1) {
+        if (step.autoSingle && valid.length === 1) {
             chosen = valid[0];
             strategy = 'autoSingle';
         }
-        else if (choiceStep.autoStrategy === 'firstValid') {
+        else if (step.autoStrategy === 'firstValid') {
             chosen = valid[0];
             strategy = 'firstValid';
         }
-        else if (choiceStep.autoStrategy === 'random') {
+        else if (step.autoStrategy === 'random') {
             chosen = valid[Math.floor(Math.random() * valid.length)];
             strategy = 'random';
         }
-        else if (choiceStep.autoStrategy === 'highestWeight') {
+        else if (step.autoStrategy === 'highestWeight') {
             chosen = valid.slice().sort((a, b) => (b.weight || 0) - (a.weight || 0))[0];
             strategy = 'highestWeight';
         }
@@ -155,20 +181,37 @@ export class VNEngine {
             chosen = valid[0];
             strategy = 'autoDecideSingle';
         }
-        if (!chosen)
+        if (!chosen) {
+            if (useCache)
+                this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate: null };
+            return null;
+        }
+        const idx = step.options.indexOf(chosen);
+        const candidate = { idx, choice: chosen, strategy: strategy || 'autoDecide', options: step.options.length, validOptions: valid.length };
+        if (useCache) {
+            this.cachedAutoChoice = { sceneId: this.currentSceneId, index: this.index, candidate };
+        }
+        return candidate;
+    }
+    maybeAutoDecide() {
+        const step = this.getCurrentStep();
+        if (!step || step.type !== 'choice')
             return false;
-        const idx = choiceStep.options.indexOf(chosen);
+        const choiceStep = step;
+        const candidate = this.computeAutoChoice(choiceStep, true);
+        if (!candidate)
+            return false;
         emit('vn:auto-choice', {
             sceneId: this.currentSceneId,
             index: this.index,
-            chosenIndex: idx,
-            chosenLabel: chosen.label,
-            strategy,
-            options: choiceStep.options.length,
-            validOptions: valid.length,
+            chosenIndex: candidate.idx,
+            chosenLabel: candidate.choice.label,
+            strategy: candidate.strategy,
+            options: candidate.options,
+            validOptions: candidate.validOptions,
             state: this.getPublicState()
         });
-        this.choose(idx);
+        this.choose(candidate.idx);
         return true;
     }
     runAutoLoop() {
