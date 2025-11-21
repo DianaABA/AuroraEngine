@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 
-// Re-implement parseMove logic in test to cover edge cases without DOM dependency
 function parseMove(input: string){
   if(!input) return null
   const parts = input.split(',').map(p=> p.trim()).filter(Boolean)

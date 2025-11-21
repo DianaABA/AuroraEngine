@@ -100,6 +100,8 @@ const editorBg = document.getElementById('editorBg') as HTMLInputElement | null
 const editorMusic = document.getElementById('editorMusic') as HTMLInputElement | null
 const editorSceneRoles = document.getElementById('editorSceneRoles') as HTMLInputElement | null
 const editorBundleIds = document.getElementById('editorBundleIds') as HTMLInputElement | null
+const editorTabs = document.getElementById('editorTabs') as HTMLDivElement | null
+const editorNewSceneBtn = document.getElementById('editorNewScene') as HTMLButtonElement | null
 const editorStepType = document.getElementById('editorStepType') as HTMLSelectElement | null
 const editorChar = document.getElementById('editorChar') as HTMLInputElement | null
 const editorText = document.getElementById('editorText') as HTMLInputElement | null
@@ -154,6 +156,8 @@ let editorSteps: any[] = []
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
 const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
+let editorScenes: Record<string, EditorScene> = {}
+let activeSceneId: string = 'custom'
 
 function parseMove(input: string): MoveStep | null {
   if(!input) return null
@@ -1802,40 +1806,41 @@ if(customLoadBtn && customJsonInput){
 // Lightweight scene editor (browser-only helper)
 function renderEditorPreview(){
   if(!editorPreview) return
-  const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
-  const scenes: EditorScene[] = []
-  const primary: EditorScene = {
-    id: (editorSceneId?.value?.trim() || 'custom'),
+  editorScenes[activeSceneId] = {
+    id: editorSceneId?.value?.trim() || 'custom',
     bg: editorBg?.value?.trim() || undefined,
     music: editorMusic?.value?.trim() || undefined,
-    steps: editorSteps.slice()
+    steps: editorSteps.slice(),
+    roles: (()=> {
+      try{
+        const rolesRaw = editorSceneRoles?.value?.trim()
+        if(!rolesRaw) return undefined
+        const parsed = JSON.parse(rolesRaw)
+        if(typeof parsed === 'object' && parsed) return parsed
+        if(editorErrors) editorErrors.textContent = 'Roles must be a JSON object'
+      }catch(e:any){
+        if(editorErrors) editorErrors.textContent = 'Roles JSON parse error: '+ (e?.message||e)
+      }
+      return undefined
+    })()
   }
-  try{
-    const rolesRaw = editorSceneRoles?.value?.trim()
-    if(rolesRaw){
-      const parsed = JSON.parse(rolesRaw)
-      if(typeof parsed === 'object' && parsed) primary['roles'] = parsed
-      if(editorErrors) editorErrors.textContent = ''
-    }
-  }catch(e:any){
-    if(editorErrors) editorErrors.textContent = 'Roles JSON parse error: '+ (e?.message||e)
+  const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
+  const scenes: EditorScene[] = []
+  for(const [id, scene] of Object.entries(editorScenes)){
+    const stored = { ...scene, steps: scene.steps || [] }
+    scenes.push(stored)
   }
-  scenes.push(primary as any)
-  // stub additional ids as empty scenes for bundle wiring
   for(const extra of bundleIds){
-    if(extra && extra !== primary.id){
+    if(extra && !scenes.find(s=> s.id === extra)){
       scenes.push({ id: extra, steps: [] })
     }
   }
   editorPreview.textContent = JSON.stringify(scenes, null, 2)
   try{
     const state = {
-      sceneId: editorSceneId?.value || '',
-      bg: editorBg?.value || '',
-      music: editorMusic?.value || '',
-      roles: editorSceneRoles?.value || '',
-      bundle: editorBundleIds?.value || '',
-      steps: editorSteps
+      active: activeSceneId,
+      scenes: editorScenes,
+      bundle: editorBundleIds?.value || ''
     }
     localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
   }catch{}
@@ -1873,6 +1878,7 @@ function renderEditorSteps(){
 
 function editorAdd(){
   const type = editorStepType?.value || 'dialogue'
+  if(editorErrors) editorErrors.textContent = ''
   if(type === 'dialogue'){
     const text = editorText?.value?.trim() || ''
     if(!text){ editorErrors!.textContent = 'Dialogue needs text'; return }
@@ -2009,12 +2015,15 @@ if(editorImport){
       const extras = parsed.slice(1).map((s:any)=> s.id).filter(Boolean)
       editorBundleIds!.value = extras.join(', ')
       // If multiple scenes have steps, merge them into the editor list for quick tweaking
-      const allSteps: any[] = []
+      editorScenes = {}
       for(const s of parsed as any[]){
-        if(Array.isArray(s.steps)) allSteps.push(...s.steps)
+        if(!s.id) continue
+        editorScenes[s.id] = { id: s.id, bg: s.bg, music: s.music, roles: s.roles, steps: Array.isArray(s.steps)? s.steps : [] }
       }
-      editorSteps = allSteps.length ? allSteps : (Array.isArray(first.steps) ? first.steps : [])
+      activeSceneId = first.id || 'custom'
+      editorSteps = editorScenes[activeSceneId]?.steps || []
       renderEditorSteps()
+      renderEditorTabs()
       renderEditorPreview()
       if(editorErrors) editorErrors.textContent = `Imported ${parsed.length} scene(s) from ${f.name}`
     }catch(e:any){
@@ -2027,16 +2036,84 @@ function hydrateEditorFromStorage(){
     const raw = localStorage.getItem(EDITOR_STATE_KEY)
     if(!raw) return
     const st = JSON.parse(raw)
-    if(editorSceneId) editorSceneId.value = st.sceneId || 'custom'
-    if(editorBg) editorBg.value = st.bg || ''
-    if(editorMusic) editorMusic.value = st.music || ''
-    if(editorSceneRoles) editorSceneRoles.value = st.roles || ''
+    editorScenes = st.scenes || {}
+    activeSceneId = st.active || Object.keys(editorScenes)[0] || 'custom'
+    const current = editorScenes[activeSceneId] || { id: activeSceneId, steps: [] }
+    if(editorSceneId) editorSceneId.value = current.id || 'custom'
+    if(editorBg) editorBg.value = current.bg || ''
+    if(editorMusic) editorMusic.value = current.music || ''
+    if(editorSceneRoles) editorSceneRoles.value = current.roles ? JSON.stringify(current.roles) : ''
     if(editorBundleIds) editorBundleIds.value = st.bundle || ''
-    if(Array.isArray(st.steps)) editorSteps = st.steps
+    editorSteps = Array.isArray(current.steps) ? current.steps : []
+    renderEditorTabs()
     renderEditorSteps()
     renderEditorPreview()
   }catch{}
 }
+function ensureScene(id: string): EditorScene{
+  if(!id.trim()) id = 'custom'
+  if(!editorScenes[id]) editorScenes[id] = { id, steps: [] }
+  return editorScenes[id]
+}
+
+function loadSceneToForm(id: string){
+  activeSceneId = id
+  const sc = ensureScene(id)
+  if(editorSceneId) editorSceneId.value = sc.id
+  if(editorBg) editorBg.value = sc.bg || ''
+  if(editorMusic) editorMusic.value = sc.music || ''
+  if(editorSceneRoles) editorSceneRoles.value = sc.roles ? JSON.stringify(sc.roles) : ''
+  editorSteps = Array.isArray(sc.steps) ? sc.steps : []
+  renderEditorSteps()
+  renderEditorPreview()
+  renderEditorTabs()
+}
+
+function renderEditorTabs(){
+  if(!editorTabs) return
+  if(!activeSceneId) activeSceneId = 'custom'
+  ensureScene(activeSceneId)
+  editorTabs.innerHTML = ''
+  const ids = Object.keys(editorScenes)
+  if(ids.length === 0) ids.push(activeSceneId)
+  ids.forEach(id=>{
+    const tab = document.createElement('div')
+    tab.style.display = 'flex'
+    tab.style.alignItems = 'center'
+    tab.style.gap = '4px'
+    const btn = document.createElement('button')
+    btn.className = 'secondary'
+    btn.textContent = id === activeSceneId ? `● ${id}` : id
+    btn.style.fontWeight = id === activeSceneId ? '700' : '400'
+    btn.onclick = ()=> loadSceneToForm(id)
+    tab.appendChild(btn)
+    if(ids.length > 1){
+      const del = document.createElement('button')
+      del.className = 'secondary'
+      del.textContent = 'x'
+      del.style.padding = '4px 6px'
+      del.onclick = (e)=>{
+        e.stopPropagation()
+        delete editorScenes[id]
+        const nextId = Object.keys(editorScenes)[0] || 'custom'
+        loadSceneToForm(nextId)
+      }
+      tab.appendChild(del)
+    }
+    editorTabs.appendChild(tab)
+  })
+}
+
+if(editorNewSceneBtn){
+  editorNewSceneBtn.onclick = ()=>{
+    const name = (prompt('New scene id?','scene_'+(Object.keys(editorScenes).length+1)) || '').trim()
+    if(!name) return
+    if(editorScenes[name]){ loadSceneToForm(name); return }
+    ensureScene(name)
+    loadSceneToForm(name)
+  }
+}
+renderEditorTabs()
 hydrateEditorFromStorage()
 renderEditorPreview()
 renderEditorSteps()
