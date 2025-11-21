@@ -2083,7 +2083,7 @@ function renderEditorTabs(){
     tab.style.gap = '4px'
     const btn = document.createElement('button')
     btn.className = 'secondary'
-    btn.textContent = id === activeSceneId ? `● ${id}` : id
+    btn.textContent = id === activeSceneId ? `[${id}]` : id
     btn.style.fontWeight = id === activeSceneId ? '700' : '400'
     btn.onclick = ()=> loadSceneToForm(id)
     tab.appendChild(btn)
