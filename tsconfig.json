@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "./",
     "declaration": true,
     "declarationMap": false,
     "strict": true,
@@ -14,6 +14,6 @@
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["src"],
+  "include": ["src", "templates/minimal/src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

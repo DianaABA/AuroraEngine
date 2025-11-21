@@ -149,7 +149,7 @@ let codexSelectedEntry: CodexEntry | null = null
 type LocalAsset = { name: string; type: string; size: number; url: string }
 let localAssets: LocalAsset[] = []
 type MoveStep = { x?: number; y?: number; ms?: number; ease?: string }
-type EditorScene = { id: string; bg?: string; music?: string; steps: any[] }
+type EditorScene = { id: string; bg?: string; music?: string; steps: any[]; roles?: Record<string, any> }
 let editorSteps: any[] = []
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
@@ -835,7 +835,7 @@ on('vn:step', ({ step, state }) => {
   } else if(step.type === 'choice'){
     nextBtn.style.display = 'none'
     const hint = autoChoiceHint && autoChoiceHint.key === stepKey ? autoChoiceHint : null
-    step.options.forEach((opt, idx) => {
+    step.options.forEach((opt: { label: string }, idx: number) => {
       const b = document.createElement('button')
       b.textContent = ''
       const label = document.createElement('span')
@@ -1672,9 +1672,9 @@ function oneTimeHint(id: string, message: string){
     div.textContent = message
     div.style.position = notifications? 'relative' : 'fixed'
     if(!notifications){ div.style.right = '12px'; div.style.bottom = '12px' }
-    div.style.background = '#0b1020'
-    div.style.border = '1px solid #27304a'
-    div.style.color = '#a8b0ff'
+    div.style.background = '#0b172a'
+    div.style.border = '1px solid #1e293b'
+    div.style.color = '#a0e7ff'
     div.style.padding = '6px 8px'
     div.style.marginTop = '6px'
     div.style.borderRadius = '6px'
