@@ -109,6 +109,7 @@ const editorAddStep = document.getElementById('editorAddStep') as HTMLButtonElem
 const editorReset = document.getElementById('editorReset') as HTMLButtonElement | null
 const editorLoad = document.getElementById('editorLoad') as HTMLButtonElement | null
 const editorDownload = document.getElementById('editorDownload') as HTMLButtonElement | null
+const editorImport = document.getElementById('editorImport') as HTMLButtonElement | null
 const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
@@ -1810,8 +1811,14 @@ function renderEditorPreview(){
   }
   try{
     const rolesRaw = editorSceneRoles?.value?.trim()
-    if(rolesRaw){ primary['roles'] = JSON.parse(rolesRaw) }
-  }catch{}
+    if(rolesRaw){
+      const parsed = JSON.parse(rolesRaw)
+      if(typeof parsed === 'object' && parsed) primary['roles'] = parsed
+      if(editorErrors) editorErrors.textContent = ''
+    }
+  }catch(e:any){
+    if(editorErrors) editorErrors.textContent = 'Roles JSON parse error: '+ (e?.message||e)
+  }
   scenes.push(primary as any)
   // stub additional ids as empty scenes for bundle wiring
   for(const extra of bundleIds){
@@ -1875,6 +1882,10 @@ function editorAdd(){
     const src = editorText?.value?.trim() || ''
     if(!id || !src){ editorErrors!.textContent = 'Sprite needs id and src'; return }
     const move = parseMove(editorMove?.value||'')
+    if(move === null && (editorMove?.value||'').trim()){
+      if(editorErrors) editorErrors.textContent = 'Move format: x=40,y=-10,ms=400,ease=easeOutBack'
+      return
+    }
     const step:any = { type:'spriteShow', id, src }
     if(move) step.moves = [move]
     editorSteps.push(step)
@@ -1883,6 +1894,10 @@ function editorAdd(){
     const src = editorText?.value?.trim() || ''
     if(!id || !src){ editorErrors!.textContent = 'Sprite swap needs id and src'; return }
     const move = parseMove(editorMove?.value||'')
+    if(move === null && (editorMove?.value||'').trim()){
+      if(editorErrors) editorErrors.textContent = 'Move format: x=40,y=-10,ms=400,ease=easeOutBack'
+      return
+    }
     const step:any = { type:'spriteSwap', id, src }
     if(move) step.moves = [move]
     editorSteps.push(step)
@@ -1960,6 +1975,39 @@ if(editorDownload){
     a.download = `${sceneId || 'scene'}.json`
     a.click()
     setTimeout(()=> URL.revokeObjectURL(url), 500)
+  }
+}
+if(editorImport){
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'application/json'
+  editorImport.onclick = ()=> fileInput.click()
+  fileInput.onchange = async ()=>{
+    const f = fileInput.files?.[0]
+    if(!f) return
+    try{
+      const txt = await f.text()
+      const parsed = JSON.parse(txt)
+      if(!Array.isArray(parsed) || !parsed.length) throw new Error('JSON must be an array of scenes')
+      const first: any = parsed[0]
+      editorSceneId!.value = first.id || 'custom'
+      editorBg!.value = first.bg || ''
+      editorMusic!.value = first.music || ''
+      editorSceneRoles!.value = first.roles ? JSON.stringify(first.roles) : ''
+      const extras = parsed.slice(1).map((s:any)=> s.id).filter(Boolean)
+      editorBundleIds!.value = extras.join(', ')
+      // If multiple scenes have steps, merge them into the editor list for quick tweaking
+      const allSteps: any[] = []
+      for(const s of parsed as any[]){
+        if(Array.isArray(s.steps)) allSteps.push(...s.steps)
+      }
+      editorSteps = allSteps.length ? allSteps : (Array.isArray(first.steps) ? first.steps : [])
+      renderEditorSteps()
+      renderEditorPreview()
+      if(editorErrors) editorErrors.textContent = `Imported ${parsed.length} scene(s) from ${f.name}`
+    }catch(e:any){
+      if(editorErrors) editorErrors.textContent = 'Import failed: '+ (e?.message||e)
+    }
   }
 }
 renderEditorPreview()

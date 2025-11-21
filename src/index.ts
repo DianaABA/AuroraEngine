@@ -24,3 +24,11 @@ export * from './utils/metrics'
 export * from './utils/corruptionRecovery'
 export { Jukebox } from './utils/jukebox'
 export * from './utils/expressions'
+
+// Optional UI kit export (guarded to avoid failing when dist is absent)
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Object.assign(exports, require('../packages/ui/dist/index.js'))
+} catch {
+  // UI kit not built; ignore
+}

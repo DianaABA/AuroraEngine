@@ -27,3 +27,9 @@ on('vn:step', ({ step }) => ui.render(step))
 Default class names: `.ae-line`, `.ae-name`, `.ae-text`, `.ae-choices`, `.ae-next`. Override via `classes` in `createVanillaRenderer({ classes: { /* ... */ }})` and supply your own CSS.
 
 Status: prototype, API may change. Publish-ready once the package is wired into root build/exports.
+
+Build locally:
+```bash
+npm run build:ui
+```
+Then import from `packages/ui/dist` or via `@aurora-engine/ui` if you publish manually.

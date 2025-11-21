@@ -4,17 +4,70 @@
     "bg": "lab.png",
     "music": "calm.mp3",
     "steps": [
-      { "type": "dialogue", "char": "Guide", "text": "Welcome to Aurora’s Engine." },
+      { "type": "dialogue", "char": "Guide", "text": "Welcome to Aurora's Engine." },
       { "type": "dialogue", "char": "Guide", "text": "Let me show you how scenes work." },
       {
         "type": "choice",
         "options": [
-          { "label": "I’m ready.", "goto": "lesson_start" },
+          { "label": "I'm ready.", "goto": "lesson_start" },
           { "label": "Explain again.", "goto": "intro_repeat" }
         ]
       }
     ]
   },
-  { "id": "lesson_start", "steps": [ { "type": "dialogue", "text": "Great! Let’s begin." } ] },
-  { "id": "intro_repeat", "steps": [ { "type": "dialogue", "text": "Scenes are JSON. Choices branch with goto." } ] }
+  {
+    "id": "intro_repeat",
+    "steps": [
+      { "type": "dialogue", "text": "Scenes are JSON. Choices branch with goto." },
+      { "type": "choice", "options": [ { "label": "Got it", "goto": "lesson_start" } ] }
+    ]
+  },
+  {
+    "id": "lesson_start",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "Great! Let's build four endings together." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Path of the Scholar", "goto": "ending_scholar" },
+          { "label": "Speedrunner's Exit", "goto": "ending_speedrun" },
+          { "label": "Artist's Curtain", "goto": "ending_artist" },
+          { "label": "Bughunter Debug Log", "goto": "ending_bughunter" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ending_scholar",
+    "bg": "library.png",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "You poured over docs, learned every flag, and shipped stable builds." },
+      { "type": "dialogue", "text": "Ending: Scholar — knowledge unlocked, future contributors thank you." }
+    ]
+  },
+  {
+    "id": "ending_speedrun",
+    "bg": "city.png",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "You skipped cutscenes, auto-advanced through every line, and hit credits fast." },
+      { "type": "dialogue", "text": "Ending: Speedrunner — time saved, glitches embraced." }
+    ]
+  },
+  {
+    "id": "ending_artist",
+    "bg": "stage.png",
+    "music": "gentle.mp3",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "You staged sprites, tuned easing presets, and painted the scene." },
+      { "type": "dialogue", "text": "Ending: Artist — every frame a brush stroke." }
+    ]
+  },
+  {
+    "id": "ending_bughunter",
+    "bg": "terminal.png",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "You validated links, fixed roles, and caught every stray goto before shipping." },
+      { "type": "dialogue", "text": "Ending: Bughunter — QA legend unlocked." }
+    ]
+  }
 ]

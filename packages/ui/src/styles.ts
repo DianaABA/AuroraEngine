@@ -1,3 +1,4 @@
+export const styles = `
 .ae-line {
   min-height: 40px;
   display: flex;
@@ -36,3 +37,4 @@
   color: #a0e7ff;
   cursor: pointer;
 }
+`

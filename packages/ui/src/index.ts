@@ -1,3 +1,3 @@
 export { createVanillaRenderer } from './renderer'
-export { default as styles } from './styles.css?inline'
+export { styles } from './styles'
 export type { VanillaRendererOptions } from './renderer'
