@@ -153,6 +153,7 @@ type EditorScene = { id: string; bg?: string; music?: string; steps: any[]; role
 let editorSteps: any[] = []
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
+const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
 
 function parseMove(input: string): MoveStep | null {
   if(!input) return null
@@ -1827,6 +1828,17 @@ function renderEditorPreview(){
     }
   }
   editorPreview.textContent = JSON.stringify(scenes, null, 2)
+  try{
+    const state = {
+      sceneId: editorSceneId?.value || '',
+      bg: editorBg?.value || '',
+      music: editorMusic?.value || '',
+      roles: editorSceneRoles?.value || '',
+      bundle: editorBundleIds?.value || '',
+      steps: editorSteps
+    }
+    localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
+  }catch{}
 }
 
 function renderEditorSteps(){
@@ -2010,6 +2022,22 @@ if(editorImport){
     }
   }
 }
+function hydrateEditorFromStorage(){
+  try{
+    const raw = localStorage.getItem(EDITOR_STATE_KEY)
+    if(!raw) return
+    const st = JSON.parse(raw)
+    if(editorSceneId) editorSceneId.value = st.sceneId || 'custom'
+    if(editorBg) editorBg.value = st.bg || ''
+    if(editorMusic) editorMusic.value = st.music || ''
+    if(editorSceneRoles) editorSceneRoles.value = st.roles || ''
+    if(editorBundleIds) editorBundleIds.value = st.bundle || ''
+    if(Array.isArray(st.steps)) editorSteps = st.steps
+    renderEditorSteps()
+    renderEditorPreview()
+  }catch{}
+}
+hydrateEditorFromStorage()
 renderEditorPreview()
 renderEditorSteps()
 
@@ -2063,4 +2091,3 @@ function updateDebugHud(){
     debugHud.innerHTML = `<pre style="margin:0; font-family:monospace; font-size:11px; line-height:1.4; white-space:pre-wrap;">${lines.join('\n')}</pre>`
   }catch{ /* ignore */ }
 }
-
