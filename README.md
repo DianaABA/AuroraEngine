@@ -275,6 +275,62 @@ Build something you’re proud of.
 Bring your world to life.
 
 
+---
+
+## Recent updates
+
+- Updated the UI package (`packages/ui`) with styling and renderer improvements.
+- Added generated JavaScript and type declaration files for the `src/vn` and `src/utils` bundles (committed to the repo for convenience).
+- Improved scene loading and types in `src/vn/sceneLoader.ts` and `src/vn/sceneTypes.ts`.
+- Updated templates and minimal demo files under `templates/minimal`.
+- Added/updated several tests related to sprite motion and scene loading.
+
+If you pull the latest changes, please run the developer build steps below to regenerate or validate local artifacts.
+
+---
+
+## Developer build notes
+
+Use these steps to set up and build the project locally. These are the commands that worked for the repository structure in this workspace.
+
+1. Install root dependencies (optional but recommended):
+
+```powershell
+npm install
+```
+
+2. Build the UI package (from the repository root):
+
+```powershell
+cd packages/ui
+npm install
+npm run build
+cd ../..
+```
+
+3. Build the minimal template (local demo):
+
+```powershell
+cd templates/minimal
+npm install
+npm run build
+cd ../..
+```
+
+4. Run the minimal demo locally for development (hot reload):
+
+```powershell
+cd templates/minimal
+npm run dev
+```
+
+Troubleshooting:
+- If `npm run build:ui` or `npm start` in the root fails, try running the install/build commands directly inside `packages/ui` and `templates/minimal` as shown above.
+- Some generated `.js`/.d.ts files are committed for convenience; if you regenerate them locally, ensure they match before committing.
+
+---
+
+
 ## Quick Start for Developers
 
 See the 5-minute code sample below if you want to use Aurora’s Engine in your own TypeScript/JS project:

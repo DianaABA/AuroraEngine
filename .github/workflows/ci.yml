@@ -39,6 +39,9 @@ jobs:
       - name: Build (root)
         run: npm run build
 
+      - name: Build UI package
+        run: npm run build:ui
+
       - name: Build template (templates/minimal)
         run: |
           cd templates/minimal
