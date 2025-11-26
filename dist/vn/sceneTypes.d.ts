@@ -7,6 +7,7 @@ export type SpritePlacement = {
     pos?: 'left' | 'center' | 'right';
     x?: number;
     y?: number;
+    yPct?: number;
     z?: number;
     scale?: number;
 };
@@ -16,6 +17,7 @@ export type SpriteMotion = {
     moveTo?: {
         x?: number;
         y?: number;
+        yPct?: number;
         ms?: number;
         ease?: string;
     };
@@ -24,6 +26,7 @@ export type SpriteMove = {
     type: 'move';
     x?: number;
     y?: number;
+    yPct?: number;
     ms?: number;
     ease?: string;
 };

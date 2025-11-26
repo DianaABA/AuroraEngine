@@ -7,6 +7,8 @@ export type ValidationIssue = {
     path: string;
     code: string;
     message: string;
+    segments?: (string | number)[];
+    sceneId?: string | null;
 };
 export declare function validateSceneDefStrict(raw: any): {
     def?: SceneDef;

@@ -174,8 +174,9 @@ Phase 0: Stabilize Core (v0.9 -> v1.0)
 - DONE: JSON Schema export + scene lint in CI; dev-start-here/API surface doc shipped.
 
 Phase 1: Creator Comfort (v1.1)
-- Error overlay in browser demo with friendly messages; example packs (branching/CG/achievements).
-- Docs: writer vs developer start pages; non-coder flow (Docs -> JSON via AI -> lint -> run).
+- DONE: Error overlay in browser demo with friendly messages; example packs (branching/expressions/CG/achievements).
+- DONE: Docs: writer vs developer start pages; non-coder flow (Docs -> JSON via AI -> lint -> run).
+- Next: Smooth polish pass on overlay copy/contrast and add an inline “Example pack” chooser description.
 
 Phase 2: Scene Editor (v1.2)
 - Minimal web editor (load/save JSON, reorder steps, inline edit, schema + lint).
