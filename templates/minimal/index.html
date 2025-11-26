@@ -135,10 +135,10 @@
                 <option value="byok">BYOK (API key)</option>
               </select>
               <select id="aiProvider" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff">
-                <option value="openai">OpenAI-compatible</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="groq">Groq</option>
-                <option value="deepseek">DeepSeek</option>
+                <option value="openai" data-model="gpt-4o-mini" data-base="">OpenAI-compatible</option>
+                <option value="anthropic" data-model="claude-3-haiku-20240307" data-base="https://api.anthropic.com/v1">Anthropic (Claude)</option>
+                <option value="groq" data-model="llama-3.1-70b-versatile" data-base="https://api.groq.com/openai/v1">Groq</option>
+                <option value="deepseek" data-model="deepseek-chat" data-base="https://api.deepseek.com/v1">DeepSeek</option>
               </select>
               <input id="aiModel" placeholder="Model (e.g., gpt-4o-mini)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
               <input id="aiBaseUrl" placeholder="Base URL (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:180px" />

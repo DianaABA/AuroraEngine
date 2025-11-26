@@ -1490,7 +1490,17 @@ if(aiModeSelect){
   }
 }
 if(aiProviderSelect){
-  aiProviderSelect.onchange = ()=>{ prefs.aiProvider = aiProviderSelect.value || 'openai'; savePrefs(); ensureAIAdapters(true) }
+  aiProviderSelect.onchange = ()=>{
+    prefs.aiProvider = aiProviderSelect.value || 'openai'
+    const opt = aiProviderSelect.selectedOptions[0]
+    const presetModel = opt?.getAttribute('data-model') || ''
+    const presetBase = opt?.getAttribute('data-base') || ''
+    if(presetModel && (!prefs.aiModel || prefs.aiModel === 'gpt-4o-mini')) prefs.aiModel = presetModel
+    if(presetBase && (!prefs.aiBaseUrl || prefs.aiBaseUrl === '')) prefs.aiBaseUrl = presetBase
+    if(aiModelInput) aiModelInput.value = prefs.aiModel || ''
+    if(aiBaseUrlInput) aiBaseUrlInput.value = prefs.aiBaseUrl || ''
+    savePrefs(); ensureAIAdapters(true)
+  }
 }
 if(aiModelInput){
   aiModelInput.onchange = ()=>{ prefs.aiModel = aiModelInput.value || ''; savePrefs(); ensureAIAdapters(true) }
@@ -2167,12 +2177,19 @@ async function streamOpenAI(apiKey: string, messages: {role:string; content:stri
       'Content-Type':'application/json',
       'Authorization':`Bearer ${apiKey}`
     },
-    body: JSON.stringify({ model:'gpt-4o-mini', stream:true, temperature:0.2, messages })
+    body: JSON.stringify({
+      model: prefs.aiModel || 'gpt-4o-mini',
+      stream:true,
+      temperature:0.2,
+      messages,
+      base_url: prefs.aiBaseUrl || undefined
+    })
   })
   if(!resp.body) throw new Error('No response body')
   const reader = resp.body.getReader()
   const decoder = new TextDecoder()
   let acc = ''
+  let buffer = ''
   while(true){
     const { value, done } = await reader.read()
     if(done) break
@@ -2187,6 +2204,14 @@ async function streamOpenAI(apiKey: string, messages: {role:string; content:stri
         const delta = parsed?.choices?.[0]?.delta?.content
         if(delta){
           acc += delta
+          buffer += delta
+          // try incremental validation if buffer looks like JSON array start
+          if(buffer.trim().startsWith('[') && buffer.trim().length > 20){
+            const partial = incrementalValidate(buffer)
+            if(partial.ok && partial.partial){
+              onChunk('\n') // visual separator
+            }
+          }
           onChunk(delta)
         }
       }catch{
@@ -2195,6 +2220,20 @@ async function streamOpenAI(apiKey: string, messages: {role:string; content:stri
     }
   }
   return acc
+}
+
+function incrementalValidate(text: string){
+  try{
+    const cleaned = text.trim()
+    if(!cleaned.endsWith(']')) return { ok:false, partial:true }
+    const { scenes, errors } = loadScenesFromJsonStrict(cleaned)
+    const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+    const issues = [...(errors||[]), ...(linkIssues||[])]
+    if(issues.length) return { ok:false, partial:false, issues }
+    return { ok:true, partial:false, scenes }
+  }catch{
+    return { ok:false, partial:true }
+  }
 }
 
 async function aiGenerate(toEditor: boolean){
@@ -2229,6 +2268,7 @@ async function aiGenerate(toEditor: boolean){
       throw new Error('No AI adapter available')
     }
     if(customJsonInput) customJsonInput.value = text
+    // Incremental parse attempt to salvage partial JSON
     const res = validateSceneJsonText(text)
     customErrors!.textContent = res.message
     if(res.ok){
@@ -2237,7 +2277,17 @@ async function aiGenerate(toEditor: boolean){
         applyScenesToEditor(res.scenes as any)
       }
     } else {
-      showErrorOverlay('AI generation errors', res.message)
+      const trimmed = text.trim()
+      const attempt = incrementalValidate(trimmed)
+      if(attempt.ok && attempt.scenes){
+        const msg = `Valid after trim (${attempt.scenes.length} scenes)`
+        customErrors!.textContent = msg
+        showErrorOverlay('AI generation (fixed)', msg)
+        if(toEditor) applyScenesToEditor(attempt.scenes as any)
+        return
+      }
+      const actions = 'Click Lint JSON to revalidate, or adjust the prompt.'
+      showErrorOverlay('AI generation errors', `${res.message}\n${actions}`)
     }
   }catch(e:any){
     const msg = e?.message || String(e)
@@ -2279,6 +2329,19 @@ async function aiFixGrammar(){
 if(aiGenerateBtn){ aiGenerateBtn.onclick = ()=> aiGenerate(false) }
 if(aiGenerateToEditorBtn){ aiGenerateToEditorBtn.onclick = ()=> aiGenerate(true) }
 if(aiFixBtn){ aiFixBtn.onclick = ()=> aiFixGrammar() }
+
+// Prompt presets for AI helpers
+const presetButtons = [
+  { id:'aiPresetScript', prompt:'Convert this script to Aurora scene JSON:\n[write script here]' },
+  { id:'aiPresetBranch', prompt:'Generate branching choices for a scene about a mysterious lab accident.' },
+  { id:'aiPresetCoach', prompt:'Act as a story coach. Suggest tension increase and character beats for the next scene.' }
+]
+presetButtons.forEach(pb => {
+  const btn = document.getElementById(pb.id) as HTMLButtonElement | null
+  if(btn && aiPromptInput){
+    btn.onclick = ()=>{ aiPromptInput.value = pb.prompt }
+  }
+})
 
 // Lightweight scene editor (browser-only helper)
 function renderEditorPreview(){
