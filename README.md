@@ -46,6 +46,7 @@ See the `/docs` folder for:
 - Sprite motion timelines (draft): `docs/timelines.md`
 - Lightweight Scene Editor (template): `docs/scene-editor.md`
 - Packaging/Export: `docs/packaging-export.md`
+- AI helper modes (planned): `docs/ai-modes.md`
 - UI kit (prototype): `packages/ui/README.md`
 
 - Changelog: `CHANGELOG.md`

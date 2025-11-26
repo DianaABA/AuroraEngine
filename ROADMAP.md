@@ -192,5 +192,10 @@ Phase 5: Packaging & Export (v1.5+)
 - Guides for Netlify/Vercel/GitHub Pages; reference Electron/Tauri repo.
 - Optional CLI to copy template, install deps, set project name.
 
+## AI Helper Modes (planned rollout)
+- 🟩 Mode 1 — Local AI (free & offline): browser-only inference via WebLLM/Transformers.js (small quantized models). Features: script→scene JSON, grammar/typo fix, missing-field detection. No keys, no cost, no data leaves device. Ideal for beginners/school/light editing.
+- 🟦 Mode 2 — BYOK (OpenAI/Anthropic/Groq/DeepSeek/any OpenAI-compatible): premium dialogue/branching/emotion tagging/scene polish; fast if provider allows. Keys stored only in localStorage. Functions: generateScene, extendDialogue, suggestBranches, generateAssets (future).
+- Rationale: free instant helper for newcomers, zero infra cost, no key storage risk, high-quality path for advanced users.
+
 
 
