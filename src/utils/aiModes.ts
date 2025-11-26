@@ -1,40 +1,99 @@
+import type { ChatCompletionMessageParam } from 'openai/resources/chat'
+
 export type AIMode = 'local' | 'byok'
 
 export type LocalAI = {
-  convertScriptToJSON: (script: string) => Promise<any>
+  convertScriptToJSON: (script: string) => Promise<string>
   fixGrammar: (text: string) => Promise<string>
-  detectSceneErrors: (json: string) => Promise<any[]>
+  detectSceneErrors: (json: string) => Promise<string>
 }
 
 export type RemoteAI = {
-  generateScene: (prompt: string) => Promise<any>
-  extendDialogue: (scene: any, prompt: string) => Promise<any>
-  suggestBranches: (scene: any) => Promise<any>
-  generateAssets?: (prompt: string) => Promise<any>
+  generateScene: (prompt: string) => Promise<string>
+  extendDialogue: (scene: any, prompt: string) => Promise<string>
+  suggestBranches: (scene: any) => Promise<string>
+  generateAssets?: (prompt: string) => Promise<string>
 }
 
-/**
- * Adapter entry point so the template/UI can remain provider-agnostic.
- * Current implementation is a scaffold; replace with real hooks to WebLLM/Transformers.js or BYOK providers.
- */
-export function getAIAdapters(mode: AIMode, apiKey?: string): { mode: AIMode; local?: LocalAI; remote?: RemoteAI } {
+async function loadLocalLLM() {
+  // Lazy load WebLLM to avoid bundling cost until needed
+  const { CreateMLCEngine } = await import('@mlc-ai/web-llm')
+  // Use a tiny model for demo; can be made configurable
+  const engine = await CreateMLCEngine('Qwen2-0.5B-Instruct-q4f16_1-MLC')
+  return engine
+}
+
+async function localChat(messages: { role:'user'|'assistant'|'system'; content:string }[]) {
+  const engine = await loadLocalLLM()
+  const reply = await engine.chat.completions.create({ messages, temperature: 0.2 })
+  const text = reply.choices?.[0]?.message?.content
+  if (!text) throw new Error('Local model returned empty response')
+  return text
+}
+
+async function openAIChat(apiKey: string, messages: ChatCompletionMessageParam[]) {
+  const { OpenAI } = await import('openai')
+  const client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+  const res = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.2,
+    messages,
+    response_format: { type: 'json_object' }
+  })
+  const txt = res.choices?.[0]?.message?.content
+  if (!txt) throw new Error('Empty response from provider')
+  return txt
+}
+
+const SYSTEM_SCRIPT_TO_JSON = `You are an AuroraEngine scene builder. Convert simple script text into Aurora scene JSON array. Use ids, steps with dialogue, choice (label/goto), background, spriteShow/spriteSwap, music, transition. Return JSON only.`
+const SYSTEM_FIX_GRAMMAR = `You are a copy editor. Fix grammar and typos. Return plain text.`
+const SYSTEM_DETECT_ERRORS = `You are a scene validator. Given scene JSON, list structural errors/missing fields. Return JSON array of {code,path,message}.`
+
+const SYSTEM_SCENE_GEN = `You are an AuroraEngine authoring assistant. Given a prompt, produce Aurora scene JSON. Use ids, dialogue, choice with goto, transitions where helpful. Return JSON only.`
+const SYSTEM_EXTEND = `Extend/continue the given scene JSON with more dialogue/branching. Keep structure valid. Return JSON only.`
+const SYSTEM_BRANCH = `Suggest additional branches for the given scene JSON. Return JSON scenes or choice steps.`
+
+export async function getAIAdapters(mode: AIMode, apiKey?: string): Promise<{ mode: AIMode; local?: LocalAI; remote?: RemoteAI }> {
   if (mode === 'local') {
-    return {
-      mode,
-      local: {
-        async convertScriptToJSON() { throw new Error('localAI not wired yet') },
-        async fixGrammar() { throw new Error('localAI not wired yet') },
-        async detectSceneErrors() { throw new Error('localAI not wired yet') },
+    const local: LocalAI = {
+      async convertScriptToJSON(script: string) {
+        return localChat([{ role:'system', content: SYSTEM_SCRIPT_TO_JSON }, { role:'user', content: script }])
+      },
+      async fixGrammar(text: string) {
+        return localChat([{ role:'system', content: SYSTEM_FIX_GRAMMAR }, { role:'user', content: text }])
+      },
+      async detectSceneErrors(json: string) {
+        return localChat([{ role:'system', content: SYSTEM_DETECT_ERRORS }, { role:'user', content: json }])
       }
     }
+    return { mode, local }
   }
-  return {
-    mode,
-    remote: {
-      async generateScene() { throw new Error('BYOK provider not wired yet') },
-      async extendDialogue() { throw new Error('BYOK provider not wired yet') },
-      async suggestBranches() { throw new Error('BYOK provider not wired yet') },
-      async generateAssets() { throw new Error('BYOK provider not wired yet') },
+  if (!apiKey) throw new Error('API key required for BYOK mode')
+  const remote: RemoteAI = {
+    async generateScene(prompt: string) {
+      return openAIChat(apiKey, [
+        { role:'system', content: SYSTEM_SCENE_GEN },
+        { role:'user', content: prompt }
+      ])
+    },
+    async extendDialogue(scene: any, prompt: string) {
+      return openAIChat(apiKey, [
+        { role:'system', content: SYSTEM_EXTEND },
+        { role:'user', content: `Scene JSON:\n${JSON.stringify(scene, null, 2)}\n\nPrompt:\n${prompt}` }
+      ])
+    },
+    async suggestBranches(scene: any) {
+      return openAIChat(apiKey, [
+        { role:'system', content: SYSTEM_BRANCH },
+        { role:'user', content: JSON.stringify(scene, null, 2) }
+      ])
+    },
+    async generateAssets(prompt: string) {
+      return openAIChat(apiKey, [
+        { role:'system', content: 'Generate asset descriptions (no images), return JSON array of {id,type,desc}.' },
+        { role:'user', content: prompt }
+      ])
     }
   }
+  return { mode, remote }
 }

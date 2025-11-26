@@ -1,4 +1,5 @@
 ﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+import { getAIAdapters } from '../../src/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
 import { resolveYPercent } from './helpers'
 
@@ -162,6 +163,27 @@ type Locale = 'en' | 'es' | 'ar'
 type ThemeName = 'night' | 'sand'
 type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName; aiMode?: 'local' | 'byok'; aiApiKey?: string }
 let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night', aiMode: 'local', aiApiKey: '' }
+// AI adapter cache & helpers (initialized on demand)
+let _aiAdapters: Awaited<ReturnType<typeof getAIAdapters>> | null = null
+let _aiModeCached: string | undefined
+let _aiKeyCached: string | undefined
+async function ensureAIAdapters(force = false) {
+  const mode = prefs.aiMode || 'local'
+  const key = prefs.aiApiKey || ''
+  if(!_aiAdapters || force || mode !== _aiModeCached || key !== _aiKeyCached){
+    try {
+      _aiAdapters = await getAIAdapters(mode, key || undefined)
+      _aiModeCached = mode; _aiKeyCached = key
+    } catch(e){ console.warn('AI adapters init failed', e) }
+  }
+  return _aiAdapters
+}
+async function aiConvertScriptToJSON(script: string){ const ad = await ensureAIAdapters(); if(ad?.local) return ad.local.convertScriptToJSON(script); throw new Error('Local adapter unavailable') }
+async function aiFixGrammar(text: string){ const ad = await ensureAIAdapters(); if(ad?.local) return ad.local.fixGrammar(text); throw new Error('Local adapter unavailable') }
+async function aiDetectSceneErrors(json: string){ const ad = await ensureAIAdapters(); if(ad?.local) return ad.local.detectSceneErrors(json); throw new Error('Local adapter unavailable') }
+async function aiGenerateScene(prompt: string){ const ad = await ensureAIAdapters(); if(ad?.remote) return ad.remote.generateScene(prompt); throw new Error('Remote adapter unavailable') }
+async function aiExtendDialogue(scene: any, prompt: string){ const ad = await ensureAIAdapters(); if(ad?.remote) return ad.remote.extendDialogue(scene, prompt); throw new Error('Remote adapter unavailable') }
+async function aiSuggestBranches(scene: any){ const ad = await ensureAIAdapters(); if(ad?.remote) return ad.remote.suggestBranches(scene); throw new Error('Remote adapter unavailable') }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
@@ -1443,12 +1465,14 @@ if(aiModeSelect){
     prefs.aiMode = aiModeSelect.value === 'byok' ? 'byok' : 'local'
     savePrefs()
     refreshSettingsUI()
+    ensureAIAdapters(true)
   }
 }
 if(aiApiKeyInput){
   aiApiKeyInput.onchange = () => {
     prefs.aiApiKey = aiApiKeyInput.value || ''
     savePrefs()
+    if(prefs.aiMode === 'byok') ensureAIAdapters(true)
   }
 }
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
