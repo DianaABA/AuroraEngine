@@ -1,7 +1,7 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 
 export type AIMode = 'local' | 'byok'
-export type AIProvider = 'openai'
+export type AIProvider = 'openai' | 'anthropic' | 'groq' | 'deepseek'
 
 export type LocalAI = {
   convertScriptToJSON: (script: string) => Promise<string>
@@ -70,12 +70,20 @@ export async function getAIAdapters(mode: AIMode, apiKey?: string, opts?: { prov
     return { mode, local }
   }
   if (!apiKey) throw new Error('API key required for BYOK mode')
+  const provider = opts?.provider || 'openai'
+  const baseURL =
+    opts?.baseURL ||
+    (provider === 'anthropic' ? 'https://api.anthropic.com/v1' :
+     provider === 'groq' ? 'https://api.groq.com/openai/v1' :
+     provider === 'deepseek' ? 'https://api.deepseek.com/v1' :
+     undefined)
+
   const remote: RemoteAI = {
     async generateScene(prompt: string) {
       return openAIChat(apiKey, [
         { role:'system', content: SYSTEM_SCENE_GEN },
         { role:'user', content: prompt }
-      ], { baseURL: opts?.baseURL, model: opts?.model })
+      ], { baseURL, model: opts?.model })
     },
     async extendDialogue(scene: any, prompt: string) {
       return openAIChat(apiKey, [
