@@ -61,3 +61,11 @@ All notable changes to this project are documented here.
 - CI: updated workflow and minor fixes to `scripts/scene-lint.js`.
 - Package: updated `package.json`/`package-lock.json` to reflect toolchain and package changes.
 
+## v6 — 2025-11-27
+
+- Release: tag `v6` created; repository roadmap advanced through Phases 1–4.
+- Roadmap: Phase 1 (Essentials), Phase 2 (Scene Editor v1.2), Phase 3 (Achievements/Gallery/Jukebox v1.3), and Phase 4 (Localization & Theming v1.4) are marked DONE in `ROADMAP.md` and `README.md`.
+- Docs: added `docs/packaging-export.md`, `docs/scene-editor.md` updates and release checklist items; new tests for `textId` helpers.
+- Housekeeping: refreshed lockfiles and formatting; removed tracked `node_modules` from the index.
+
+
