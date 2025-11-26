@@ -111,36 +111,94 @@
       }
     },
     "SpriteShowStep": {
-      "allOf": [
-        { "$ref": "#/definitions/SpritePlacement" },
-        {
+      "type": "object",
+      "required": ["type", "id", "src"],
+      "properties": {
+        "type": { "const": "spriteShow" },
+        "id": { "type": "string" },
+        "src": { "type": "string" },
+        "role": { "type": "string" },
+        "pos": { "enum": ["left", "center", "right"] },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "yPct": { "type": "number" },
+        "z": { "type": "number" },
+        "scale": { "type": "number" },
+        "moveMs": { "type": "number" },
+        "moveEase": { "type": "string" },
+        "moveTo": {
           "type": "object",
-          "required": ["type", "id", "src"],
           "properties": {
-            "type": { "const": "spriteShow" },
-            "id": { "type": "string" },
-            "src": { "type": "string" },
-            "role": { "type": "string" }
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "yPct": { "type": "number" },
+            "ms": { "type": "number" },
+            "ease": { "type": "string" }
           },
           "additionalProperties": false
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "const": "move" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "yPct": { "type": "number" },
+              "ms": { "type": "number" },
+              "ease": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
         }
-      ]
+      },
+      "additionalProperties": false
     },
     "SpriteSwapStep": {
-      "allOf": [
-        { "$ref": "#/definitions/SpritePlacement" },
-        {
+      "type": "object",
+      "required": ["type", "id", "src"],
+      "properties": {
+        "type": { "const": "spriteSwap" },
+        "id": { "type": "string" },
+        "src": { "type": "string" },
+        "role": { "type": "string" },
+        "pos": { "enum": ["left", "center", "right"] },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "yPct": { "type": "number" },
+        "z": { "type": "number" },
+        "scale": { "type": "number" },
+        "moveMs": { "type": "number" },
+        "moveEase": { "type": "string" },
+        "moveTo": {
           "type": "object",
-          "required": ["type", "id", "src"],
           "properties": {
-            "type": { "const": "spriteSwap" },
-            "id": { "type": "string" },
-            "src": { "type": "string" },
-            "role": { "type": "string" }
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "yPct": { "type": "number" },
+            "ms": { "type": "number" },
+            "ease": { "type": "string" }
           },
           "additionalProperties": false
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "const": "move" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "yPct": { "type": "number" },
+              "ms": { "type": "number" },
+              "ease": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
         }
-      ]
+      },
+      "additionalProperties": false
     },
     "SpriteHideStep": {
       "type": "object",

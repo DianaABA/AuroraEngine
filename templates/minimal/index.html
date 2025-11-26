@@ -140,7 +140,13 @@
             <button id="continueBtn">Continue</button>
             <button id="startExample">Start Example</button>
             <button id="startExpressions">Start Expressions</button>
-    <button id="startAch">Start Achievements</button>
+            <button id="startAch">Start Achievements</button>
+            <select id="packSelect" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff;">
+              <option value="example">Example</option>
+              <option value="expressions">Expressions</option>
+              <option value="achievements">Achievements</option>
+            </select>
+            <button id="loadPack" class="secondary">Load Pack</button>
             <button id="autoBtn" class="secondary">Auto: Off</button>
             <button id="autoChooseBtn" class="secondary">Auto-Choose: Off</button>
             <button id="skipFx" class="secondary">Skip FX: Off</button>
@@ -285,6 +291,15 @@
         </div>
       </div>
       <div id="notifications" aria-live="polite"></div>
+    </div>
+    <div id="errorOverlay" role="alertdialog" aria-modal="true">
+      <div id="errorCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3 style="margin:0">Validation / Load Error</h3>
+          <button id="errorOverlayClose" class="secondary">Close</button>
+        </div>
+        <div id="errorOverlayBody"></div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

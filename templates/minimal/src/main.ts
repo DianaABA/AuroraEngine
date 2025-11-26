@@ -8,6 +8,8 @@ const continueBtn = document.getElementById('continueBtn') as HTMLButtonElement
 const startExampleBtn = document.getElementById('startExample') as HTMLButtonElement
 const startExpressionsBtn = document.getElementById('startExpressions') as HTMLButtonElement
 const startAchBtn = document.getElementById('startAch') as HTMLButtonElement | null
+const packSelect = document.getElementById('packSelect') as HTMLSelectElement | null
+const packLoadBtn = document.getElementById('loadPack') as HTMLButtonElement | null
 const autoBtn = document.getElementById('autoBtn') as HTMLButtonElement
 const autoChooseBtn = document.getElementById('autoChooseBtn') as HTMLButtonElement
 const skipFxBtn = document.getElementById('skipFx') as HTMLButtonElement
@@ -120,6 +122,7 @@ const editorErrors = document.getElementById('editorErrors') as HTMLDivElement |
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
+let errorOverlayOpen = false
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -524,12 +527,23 @@ function refreshCodexDetailActions(){
 function showErrorOverlay(title: string, details: string){
   if(!errorOverlay || !errorOverlayBody) return
   errorOverlay.style.display = 'flex'
+  errorOverlayOpen = true
   errorOverlayBody.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div><pre style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:12px;">${details}</pre>`
+  errorOverlay?.focus?.()
 }
 function hideErrorOverlay(){
   if(errorOverlay) errorOverlay.style.display = 'none'
+  errorOverlayOpen = false
 }
 if(errorOverlayClose){ errorOverlayClose.onclick = hideErrorOverlay }
+if(errorOverlay){
+  errorOverlay.addEventListener('click', (e)=>{
+    if(e.target === errorOverlay) hideErrorOverlay()
+  })
+  document.addEventListener('keydown', (e)=>{
+    if(errorOverlayOpen && e.key === 'Escape'){ hideErrorOverlay() }
+  })
+}
 
 async function boot(scenePath: string, startSceneId: string = 'intro'){
   console.log('Boot called with:', scenePath, startSceneId)
@@ -1321,6 +1335,18 @@ boot('/scenes/example.json', 'intro')
 startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 startAchBtn && (startAchBtn.onclick = () => boot('/scenes/achievements.json', 'ach_intro'))
+if(packLoadBtn && packSelect){
+  packLoadBtn.onclick = () => {
+    const opt = packSelect.value
+    const map: Record<string, { path: string; start: string }> = {
+      example: { path: '/scenes/example.json', start: 'intro' },
+      expressions: { path: '/scenes/expressions.json', start: 'intro' },
+      achievements: { path: '/scenes/achievements.json', start: 'ach_intro' }
+    }
+    const cfg = map[opt] || map.example
+    boot(cfg.path, cfg.start)
+  }
+}
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(galleryPanel) }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
