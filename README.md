@@ -365,6 +365,7 @@ See the full phased plan in `ROADMAP.md`.
 - Lint scenes: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (schema + strict loader + cross-scene goto/choice checks).
 - UI kit (optional): `@aurora-engine/ui` vanilla renderer (build with `npm run build:ui`).
 - API surface: see `docs/api-surface.md` for stable exports vs internals.
+- Writer start here: see `docs/writer-start.md` for the AI + lint + run flow.
 
 ## Packages and docs shipped
 - Engine: `aurora-engine` (exports: engine core, schema at `./scene-schema.json`).

@@ -15,6 +15,11 @@ Audience: developers embedding AuroraEngine or contributing to core.
 - JSON Schema: `docs/scene-schema.json` (strict loader alignment; yPct/moveTo/moves supported).
 - Lint: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (structure + cross-scene goto/choice).
 
+### Quick start for developers
+- Read `docs/api-surface.md` for stable exports vs internals.
+- Examples: see `docs/examples.md` and `templates/minimal/public/scenes/*`.
+- Writer onboarding: `docs/writer-start.md` (pair with your dev help).
+
 ### Build/test
 Use these steps to set up and build locally (matches CI):
 

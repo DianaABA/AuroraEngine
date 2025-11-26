@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -25,6 +25,12 @@
       button:focus-visible{outline:2px solid #a0e7ff; outline-offset:2px}
       button.secondary{background:#2b2f43}
       #notifications{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:60vw;}
+      /* Error overlay */
+      #errorOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:20;}
+      #errorCard{background:#0b1020;border:1px solid #3e59ff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.6);max-width:540px;width:90%;padding:14px;display:flex;flex-direction:column;gap:10px;color:#a8b0ff;}
+      #errorCard h3{margin:0;color:#fca5a5;font-size:15px;}
+      #errorOverlayBody{max-height:320px;overflow:auto;border:1px solid #27304a;border-radius:8px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;background:#0f172a;color:#e5e7ff;white-space:pre-wrap;}
+      #errorOverlayClose{align-self:flex-end;background:#2b2f43;color:#a0e7ff;border:1px solid #3e59ff;}
 
       /* Transition effects */
       @keyframes fadeOverlay { 0%{background:rgba(0,0,0,0)} 50%{background:rgba(0,0,0,1)} 100%{background:rgba(0,0,0,0)} }
@@ -151,7 +157,7 @@
             <span id="saveStatus" style="font-size:12px; color:#a8b0ff"></span>
           </div>
           <div id="shortcutHint" style="margin-top:6px; font-size:12px; color:#a8b0ff; opacity:.85">
-            Tip: Press <strong>?</strong> for shortcuts — Space/Enter: Next, A: Auto, Ctrl+S: Save
+            Tip: Press <strong>?</strong> for shortcuts â€” Space/Enter: Next, A: Auto, Ctrl+S: Save
           </div>
           <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
             <strong style="color:#a0e7ff; font-size:12px">Music:</strong>
@@ -283,3 +289,4 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
