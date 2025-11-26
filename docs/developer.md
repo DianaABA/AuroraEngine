@@ -19,6 +19,7 @@ Audience: developers embedding AuroraEngine or contributing to core.
 - Read `docs/api-surface.md` for stable exports vs internals.
 - Examples: see `docs/examples.md` and `templates/minimal/public/scenes/*`.
 - Writer onboarding: `docs/writer-start.md` (pair with your dev help).
+- Release checklist: `docs/release-checklist.md` for the build/test/lint/template steps before publishing.
 
 ### Build/test
 Use these steps to set up and build locally (matches CI):
