@@ -203,6 +203,7 @@
               <input id="customStartId" placeholder="Start scene id (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
               <button id="customFileBtn" class="secondary">Pick JSON</button>
               <button id="customLoadBtn">Run</button>
+              <button id="customLint" class="secondary">Lint JSON</button>
             </div>
             <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
             <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
@@ -217,6 +218,8 @@
               <input id="editorBundleIds" placeholder="bundle (comma ids)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:180px" />
               <div id="editorTabs" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
               <button id="editorNewScene" class="secondary">+ Scene</button>
+              <button id="editorSave" class="secondary" title="Save editor state to localStorage">Save</button>
+              <button id="editorLoadSaved" class="secondary" title="Load saved editor state">Load</button>
             </div>
             <div style="margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px; align-items:flex-start;">
               <div>

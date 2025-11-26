@@ -98,6 +98,7 @@ const assetPick = document.getElementById('assetPick') as HTMLButtonElement | nu
 const customJsonInput = document.getElementById('customJson') as HTMLTextAreaElement | null
 const customLoadBtn = document.getElementById('customLoadBtn') as HTMLButtonElement | null
 const customFileBtn = document.getElementById('customFileBtn') as HTMLButtonElement | null
+const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
@@ -107,6 +108,8 @@ const editorSceneRoles = document.getElementById('editorSceneRoles') as HTMLInpu
 const editorBundleIds = document.getElementById('editorBundleIds') as HTMLInputElement | null
 const editorTabs = document.getElementById('editorTabs') as HTMLDivElement | null
 const editorNewSceneBtn = document.getElementById('editorNewScene') as HTMLButtonElement | null
+const editorSaveBtn = document.getElementById('editorSave') as HTMLButtonElement | null
+const editorLoadSavedBtn = document.getElementById('editorLoadSaved') as HTMLButtonElement | null
 const editorStepType = document.getElementById('editorStepType') as HTMLSelectElement | null
 const editorChar = document.getElementById('editorChar') as HTMLInputElement | null
 const editorText = document.getElementById('editorText') as HTMLInputElement | null
@@ -121,6 +124,7 @@ const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement |
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
+const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
@@ -1900,6 +1904,24 @@ if(customLoadBtn && customJsonInput){
     showErrorOverlay('Custom scene load failed', msg)
   }
   }
+  if(customLintBtn){
+    customLintBtn.onclick = ()=>{
+      const json = customJsonInput?.value || ''
+      if(!json.trim()){ customErrors!.textContent = 'Paste scene JSON first.'; return }
+      try{
+        const { scenes, errors } = loadScenesFromJsonStrict(json)
+        const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+        const issues = [...(errors||[]), ...(linkIssues||[])]
+        const details = issues.length ? issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n') : 'Lint OK'
+        customErrors!.textContent = details
+        showErrorOverlay('Custom JSON lint', details)
+      }catch(e:any){
+        const msg = 'Lint failed: '+ (e?.message||e)
+        customErrors!.textContent = msg
+        showErrorOverlay('Custom JSON lint failed', msg)
+      }
+    }
+  }
 }
 
 // Lightweight scene editor (browser-only helper)
@@ -2054,7 +2076,8 @@ function renderBranchMap(scenes: EditorScene[]){
     row.style.gap = '6px'
     const targets = edges.filter(e=> e.from === id)
     const hasUnknown = targets.some(t=> !ids.has(t.to))
-    row.innerHTML = `<strong style="color:#a0e7ff">${id}</strong> → ${targets.length ? targets.map(t=> `${t.to} (${t.via})`).join(', ') : '—'}${hasUnknown ? ' (unknown target!)':''}`
+    const badge = hasUnknown ? `<span style="color:#fca5a5; font-weight:600;">(broken link)</span>` : ''
+    row.innerHTML = `<strong style="color:#a0e7ff">${id}</strong> → ${targets.length ? targets.map(t=> `${t.to} (${t.via})`).join(', ') : '—'} ${badge}`
     branchMap.appendChild(row)
   })
 }
@@ -2274,6 +2297,29 @@ if(editorNewSceneBtn){
     if(editorScenes[name]){ loadSceneToForm(name); return }
     ensureScene(name)
     loadSceneToForm(name)
+  }
+}
+
+if(editorSaveBtn){
+  editorSaveBtn.onclick = ()=>{
+    try{
+      const state = {
+        active: activeSceneId,
+        scenes: editorScenes,
+        bundle: editorBundleIds?.value || ''
+      }
+      localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
+      if(editorErrors) editorErrors.textContent = 'Editor state saved locally.'
+    }catch(e:any){
+      if(editorErrors) editorErrors.textContent = 'Save failed: '+ (e?.message||e)
+    }
+  }
+}
+
+if(editorLoadSavedBtn){
+  editorLoadSavedBtn.onclick = ()=>{
+    hydrateEditorFromStorage()
+    if(editorErrors) editorErrors.textContent = 'Loaded saved editor state (if present).'
   }
 }
 renderEditorTabs()

@@ -69,6 +69,11 @@ Example packs (try without editing JSON):
 - Dropdown + Load Pack: choose `example`, `expressions`, or `achievements`.
 - Shows branching, sprite expressions/CG unlocks, and achievements/gallery unlocks.
 
+Scene Editor (template helper):
+- Inline add/edit/delete/reorder steps, live preview, strict validation + link checks.
+- Branch map panel shows scene nodes and goto/choice targets; unknown targets are flagged.
+- Download/import scenes as JSON for a quick non-coder friendly edit loop.
+
 Deploy to Netlify: create a new site from your fork and set publish dir to `templates/minimal/dist`.
 
 ---
