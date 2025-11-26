@@ -1,5 +1,6 @@
 ﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
 import { getAIAdapters } from '../../src/utils/aiModes'
+import { getAIAdapters } from '../../src/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
 import { resolveYPercent } from './helpers'
 
