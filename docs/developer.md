@@ -59,6 +59,6 @@ Optional: regenerate type declarations
 
 
 ### Exports / Packages
-- Engine core: urora-engine (npm). Public exports: see exports in package.json; schema available at urora-engine/scene-schema.json.
-- UI kit: @aurora-engine/ui (prototype; builds via 
-pm run build:ui).
+- Engine core: `aurora-engine` (npm). Public exports: see `exports` in package.json; schema at `aurora-engine/scene-schema.json`.
+- UI kit: `@aurora-engine/ui` (prototype; builds via `npm run build:ui`).
+- API surface (stable vs internal): see `docs/api-surface.md`.

@@ -87,4 +87,10 @@ describe('sceneLoader strict validation', () => {
     expect(miss.segments).toEqual(['scene','intro','step',0,'text'])
     expect(miss.sceneId).toBe('intro')
   })
+
+  it('emits schema-friendly errors when required fields are missing', () => {
+    const { scenes, errors } = loadScenesFromJsonStrict(JSON.stringify([{ steps: [] }]))
+    expect(scenes).toHaveLength(0)
+    expect(errors.some(e => e.code === 'scene_missing_id')).toBe(true)
+  })
 })

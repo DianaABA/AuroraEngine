@@ -364,6 +364,12 @@ See the full phased plan in `ROADMAP.md`.
 - JSON Schema export: `aurora-engine/scene-schema.json` (strict loader-aligned; supports `yPct`/`moveTo`/`moves`).
 - Lint scenes: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (schema + strict loader + cross-scene goto/choice checks).
 - UI kit (optional): `@aurora-engine/ui` vanilla renderer (build with `npm run build:ui`).
+- API surface: see `docs/api-surface.md` for stable exports vs internals.
+
+## Packages and docs shipped
+- Engine: `aurora-engine` (exports: engine core, schema at `./scene-schema.json`).
+- UI kit: `@aurora-engine/ui` (vanilla renderer prototype).
+- Docs: `docs/` includes schema, API surface, scene format, developer start-here.
 
 ## License
 Inherit the root project license (see repository). Do not include copyrighted episode content here.
