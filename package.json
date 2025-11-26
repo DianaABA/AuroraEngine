@@ -40,9 +40,10 @@
     "scenes:lint": "node scripts/scene-lint.js"
   },
   "devDependencies": {
-    "ajv": "^8.17.1",
     "@types/node": "^20.11.30",
+    "ajv": "^8.17.1",
     "execa": "^8.0.1",
+    "husky": "^9.1.7",
     "rimraf": "^5.0.5",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
