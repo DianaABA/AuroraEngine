@@ -13,7 +13,12 @@
     "types": ["node"],
     "resolveJsonModule": true,
     "esModuleInterop": true
+    ,"baseUrl": ".",
+    "paths": {
+      "aurora-engine": ["src/index.ts"],
+      "aurora-engine/*": ["src/*"]
+    }
   },
-  "include": ["src", "templates/minimal/src"],
+  "include": ["src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
