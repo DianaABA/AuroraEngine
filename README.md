@@ -64,6 +64,11 @@ npm install
 npm run dev
 ```
 
+Example packs (try without editing JSON):
+- Buttons: Start Example, Start Expressions, Start Achievements.
+- Dropdown + Load Pack: choose `example`, `expressions`, or `achievements`.
+- Shows branching, sprite expressions/CG unlocks, and achievements/gallery unlocks.
+
 Deploy to Netlify: create a new site from your fork and set publish dir to `templates/minimal/dist`.
 
 ---

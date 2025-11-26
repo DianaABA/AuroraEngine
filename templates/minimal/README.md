@@ -17,6 +17,11 @@ Now includes:
 - Codex pins/favorites with filters and badges
 - In-browser “Load Custom Scenes” (paste JSON, strict-validated)
 
+## Example Packs
+- Start buttons: Example (branching), Expressions (sprite expressions + CG unlock), Achievements (achievement + CG unlock path).
+- Or pick a pack in the dropdown and press Load Pack.
+- Use these to see features without editing JSON.
+
 ## One-click Starts
 - **StackBlitz:** `https://stackblitz.com/github/DianaABA/AuroraEngine?file=templates/minimal/src/main.ts&terminal=dev`
 - **Netlify Deploy:** From your fork, set publish directory to `templates/minimal/dist` (after `npm run build`).
