@@ -7,6 +7,7 @@ const choicesEl = document.getElementById('choices')!
 const continueBtn = document.getElementById('continueBtn') as HTMLButtonElement
 const startExampleBtn = document.getElementById('startExample') as HTMLButtonElement
 const startExpressionsBtn = document.getElementById('startExpressions') as HTMLButtonElement
+const startAchBtn = document.getElementById('startAch') as HTMLButtonElement | null
 const autoBtn = document.getElementById('autoBtn') as HTMLButtonElement
 const autoChooseBtn = document.getElementById('autoChooseBtn') as HTMLButtonElement
 const skipFxBtn = document.getElementById('skipFx') as HTMLButtonElement
@@ -116,6 +117,9 @@ const editorImport = document.getElementById('editorImport') as HTMLButtonElemen
 const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
+const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
+const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
+const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -517,12 +521,24 @@ function refreshCodexDetailActions(){
   codexPinBtn.textContent = codexSelectedEntry.pinned ? 'Unpin' : 'Pin'
 }
 
+function showErrorOverlay(title: string, details: string){
+  if(!errorOverlay || !errorOverlayBody) return
+  errorOverlay.style.display = 'flex'
+  errorOverlayBody.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div><pre style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:12px;">${details}</pre>`
+}
+function hideErrorOverlay(){
+  if(errorOverlay) errorOverlay.style.display = 'none'
+}
+if(errorOverlayClose){ errorOverlayClose.onclick = hideErrorOverlay }
+
 async function boot(scenePath: string, startSceneId: string = 'intro'){
   console.log('Boot called with:', scenePath, startSceneId)
   const { scenes, errors } = await loadScenesFromUrl(scenePath)
   console.log('Loaded scenes:', scenes, 'errors:', errors)
   if(errors.length){
-    textEl.textContent = 'Failed to load scenes: '+errors.join(', ')
+    const msg = errors.map((e:any)=> typeof e === 'string' ? e : `${e.code||'error'} :: ${e.path||''} ${e.message||''}`).join('\n')
+    textEl.textContent = 'Failed to load scenes.'
+    showErrorOverlay('Scene validation failed', msg)
     return
   }
   // Preload assets with simple progress UI
@@ -536,7 +552,8 @@ async function boot(scenePath: string, startSceneId: string = 'intro'){
     engine.loadScenes(remappedScenes as any)
   }catch(e:any){
     console.error('Scene load failed', e)
-    textEl.textContent = 'Scene validation failed: '+ (e?.message||e)
+    showErrorOverlay('Scene validation failed', e?.message||String(e))
+    textEl.textContent = 'Scene validation failed.'
     return
   }
   // Extract per-scene sprite defaults (optional authoring ergonomics)
@@ -1303,6 +1320,7 @@ boot('/scenes/example.json', 'intro')
 // Allow switching demos on demand
 startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
+startAchBtn && (startAchBtn.onclick = () => boot('/scenes/achievements.json', 'ach_intro'))
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(galleryPanel) }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
@@ -1834,20 +1852,24 @@ if(customLoadBtn && customJsonInput){
     if(!json.trim()){ customErrors!.textContent = 'Paste scene JSON first.'; return }
     let parsed: any
     try{ parsed = JSON.parse(json) }catch(e:any){ customErrors!.textContent = 'JSON parse error: '+ (e?.message||e); return }
-    try{
-      const { scenes, errors } = loadScenesFromJsonStrict(json)
-      const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
-      const issues = [...(errors||[]), ...(linkIssues||[])]
-      if(issues.length){
-        customErrors!.textContent = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
-        return
-      }
-      const startId = (customStartIdInput?.value?.trim()) || (scenes[0]?.id || 'intro')
-      customErrors!.textContent = `Loaded ${scenes.length} scene(s). Starting at ${startId}.`
-      bootFromScenes(scenes as any, startId)
-    }catch(e:any){
-      customErrors!.textContent = 'Validation failed: '+ (e?.message||e)
+  try{
+    const { scenes, errors } = loadScenesFromJsonStrict(json)
+    const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+    const issues = [...(errors||[]), ...(linkIssues||[])]
+    if(issues.length){
+      const details = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      customErrors!.textContent = details
+      showErrorOverlay('Custom scene validation failed', details)
+      return
     }
+    const startId = (customStartIdInput?.value?.trim()) || (scenes[0]?.id || 'intro')
+    customErrors!.textContent = `Loaded ${scenes.length} scene(s). Starting at ${startId}.`
+    bootFromScenes(scenes as any, startId)
+  }catch(e:any){
+    const msg = 'Validation failed: '+ (e?.message||e)
+    customErrors!.textContent = msg
+    showErrorOverlay('Custom scene load failed', msg)
+  }
   }
 }
 
@@ -2009,7 +2031,9 @@ if(editorLoad){
     const { scenes: parsed, errors } = loadScenesFromJsonStrict(json)
     const issues = [...(errors||[]), ...validateSceneLinksStrict(parsed)]
     if(issues.length){
-      if(editorErrors) editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      const msg = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      if(editorErrors) editorErrors.textContent = msg
+      showErrorOverlay('Editor scene validation failed', msg)
       return
     }
     if(editorErrors) editorErrors.textContent = ''

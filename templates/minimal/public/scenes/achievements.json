@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ach_intro",
+    "bg": "room.svg",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "Achievements + CG demo." },
+      { "type": "flag", "flag": "cg_intro" },
+      { "type": "flag", "flag": "ach_first_cg" },
+      { "type": "dialogue", "char": "Guide", "text": "CG unlocked and achievement awarded." }
+    ]
+  }
+]
