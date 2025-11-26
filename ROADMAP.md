@@ -73,30 +73,30 @@ Docs:
 Goal: Make the engine usable by Udemy students, writers, yoga teachers, and the occasional confused accountant.
 
 Tools:
-- Drag-and-drop asset folder
-- Template project
-- “Write scene” AI prompt examples
-- “Fix my error” AI prompt guide
-- GitHub Codespaces or StackBlitz starter
-- One-click Netlify deploy button
+- Drag-and-drop asset folder (DONE in minimal template)
+- Template project (DONE: minimal template)
+- “Write scene” AI prompt examples (DONE: docs/ai-prompts.md)
+- “Fix my error” AI prompt guide (DONE: docs/ai-prompts.md, docs/prompt-fix-errors.md)
+- GitHub Codespaces or StackBlitz starter (DONE: StackBlitz link in template README)
+- One-click Netlify deploy button (DONE in template README)
 
 ## PHASE 4 — Bonus Systems
 
 Goal: Close the gap to Ren’Py-lite.
 
 Add:
-- Character expression switching
-- CG gallery unlocks
-- Achievement/badge system
-- Audio jukebox
-- Simple transitions (zoom, shake, flash)
-- Auto-mode / skip
-- Quick-save & quick-load
-- Backlog panel and seen-line tracking
-- Settings: Skip Seen Text, Skip Transitions
-- Codex / Logbook with categories and search
-- i18n for core UI (en/es)
-- Sprite positioning (pos/x/scale/z) and depth/opacity transitions
+- Character expression switching (DONE via spriteSwap/expressions)
+- CG gallery unlocks (DONE in minimal template)
+- Achievement/badge system (DONE in minimal template)
+- Audio jukebox (DONE via Jukebox utility)
+- Simple transitions (zoom, shake, flash) (DONE)
+- Auto-mode / skip (DONE: autoAdvance/autoDecide + Skip Seen Text)
+- Quick-save & quick-load (DONE: quicksave + slots)
+- Backlog panel and seen-line tracking (DONE)
+- Settings: Skip Seen Text, Skip Transitions (DONE)
+- Codex / Logbook with categories and search (DONE: codex with filters/pins/favs)
+- i18n for core UI (en/es) (DONE)
+- Sprite positioning (pos/x/scale/z) and depth/opacity transitions (DONE)
 
 Docs:
 - docs/achievements.md
@@ -131,16 +131,20 @@ Planned upgrades:
 1) Choice UX polish
 - Keyboard navigation for options; visible default/auto indicator
 - Emit/UI hint when auto-decide would pick an option
+- DONE
 
 2) Saves UX
 - Slot rename and delete with confirm; surface last scene/line meta
+- DONE
 
 3) Sprite motion v2
 - Add vertical `y%` and easing presets (e.g., `easeOutBack`)
 - Optional per-step `moveTo: { x?, y?, ms?, ease? }` authoring alias
+- DONE
 
 4) Validation strict mode
 - Zod/schema option returning structured errors; author-friendly messages
+- DONE: strict validator now emits structured errors (path segments + sceneId) for tooling
 
 5) Codex polish
 - Favorites pinning and per-category counts; simple filter chips

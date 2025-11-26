@@ -74,4 +74,17 @@ describe('sceneLoader strict validation', () => {
     expect(codes).toContain('sprite.moveTo.yPct_not_number')
     expect(codes).toContain('sprite.moves.yPct_not_number')
   })
+
+  it('returns Zod-like segments for path navigation', () => {
+    const bad = {
+      id: 'intro',
+      steps: [
+        { type: 'dialogue' }, // missing text
+      ]
+    }
+    const { errors } = validateSceneDefStrict(bad as any)
+    const miss = errors.find(e => e.code === 'dialogue.missing_text')!
+    expect(miss.segments).toEqual(['scene','intro','step',0,'text'])
+    expect(miss.sceneId).toBe('intro')
+  })
 })

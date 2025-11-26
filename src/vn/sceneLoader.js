@@ -1,92 +1,108 @@
 const SPRITE_POS = new Set(['left', 'center', 'right']);
 const TRANSITIONS = new Set(['fade', 'slide', 'zoom', 'shake', 'flash']);
+const toSegments = (path) => {
+    const flat = path.replace(/:/g, '.');
+    const parts = [];
+    const re = /([^[\].]+)|\[(\d+)\]/g;
+    let m;
+    while ((m = re.exec(flat))) {
+        if (m[1])
+            parts.push(m[1]);
+        else if (m[2])
+            parts.push(Number(m[2]));
+    }
+    return parts;
+};
 function validateChoiceOption(raw, path, push) {
     if (!raw || typeof raw !== 'object') {
-        push({ path, code: 'choice.option.invalid_object', message: 'Choice option must be an object' });
+        push(path, 'choice.option.invalid_object', 'Choice option must be an object');
         return null;
     }
     if (typeof raw.label !== 'string')
-        push({ path, code: 'choice.option.missing_label', message: 'Choice option needs a label' });
+        push(path, 'choice.option.missing_label', 'Choice option needs a label');
     if (raw.goto !== undefined && typeof raw.goto !== 'string')
-        push({ path, code: 'choice.option.goto_not_string', message: 'Choice option goto must be a string' });
+        push(`${path}.goto`, 'choice.option.goto_not_string', 'Choice option goto must be a string');
     if (raw.setFlag !== undefined && typeof raw.setFlag !== 'string')
-        push({ path, code: 'choice.option.setFlag_not_string', message: 'Choice option setFlag must be a string' });
+        push(`${path}.setFlag`, 'choice.option.setFlag_not_string', 'Choice option setFlag must be a string');
     if (raw.condition !== undefined && typeof raw.condition !== 'string')
-        push({ path, code: 'choice.option.condition_not_string', message: 'Choice option condition must be a string' });
+        push(`${path}.condition`, 'choice.option.condition_not_string', 'Choice option condition must be a string');
     if (raw.weight !== undefined && typeof raw.weight !== 'number')
-        push({ path, code: 'choice.option.weight_not_number', message: 'Choice option weight must be a number' });
+        push(`${path}.weight`, 'choice.option.weight_not_number', 'Choice option weight must be a number');
     return raw;
 }
 function validateSpriteMotion(raw, path, push) {
     const placement = {};
     if (raw.pos !== undefined && !SPRITE_POS.has(raw.pos))
-        push({ path: `${path}.pos`, code: 'sprite.pos_invalid', message: 'Sprite pos must be left/center/right' });
+        push(`${path}.pos`, 'sprite.pos_invalid', 'Sprite pos must be left/center/right');
     if (raw.x !== undefined && typeof raw.x !== 'number')
-        push({ path: `${path}.x`, code: 'sprite.x_not_number', message: 'Sprite x must be a number (percentage)' });
+        push(`${path}.x`, 'sprite.x_not_number', 'Sprite x must be a number (percentage)');
     if (raw.y !== undefined && typeof raw.y !== 'number')
-        push({ path: `${path}.y`, code: 'sprite.y_not_number', message: 'Sprite y must be a number (percentage offset)' });
+        push(`${path}.y`, 'sprite.y_not_number', 'Sprite y must be a number (percentage offset)');
     if (raw.yPct !== undefined && typeof raw.yPct !== 'number')
-        push({ path: `${path}.yPct`, code: 'sprite.yPct_not_number', message: 'Sprite yPct must be a number (percentage offset)' });
+        push(`${path}.yPct`, 'sprite.yPct_not_number', 'Sprite yPct must be a number (percentage offset)');
     if (raw.z !== undefined && typeof raw.z !== 'number')
-        push({ path: `${path}.z`, code: 'sprite.z_not_number', message: 'Sprite z must be a number' });
+        push(`${path}.z`, 'sprite.z_not_number', 'Sprite z must be a number');
     if (raw.scale !== undefined && typeof raw.scale !== 'number')
-        push({ path: `${path}.scale`, code: 'sprite.scale_not_number', message: 'Sprite scale must be a number' });
+        push(`${path}.scale`, 'sprite.scale_not_number', 'Sprite scale must be a number');
     if (raw.moveMs !== undefined && typeof raw.moveMs !== 'number')
-        push({ path: `${path}.moveMs`, code: 'sprite.moveMs_not_number', message: 'moveMs must be a number' });
+        push(`${path}.moveMs`, 'sprite.moveMs_not_number', 'moveMs must be a number');
     if (raw.moveEase !== undefined && typeof raw.moveEase !== 'string')
-        push({ path: `${path}.moveEase`, code: 'sprite.moveEase_not_string', message: 'moveEase must be a string' });
+        push(`${path}.moveEase`, 'sprite.moveEase_not_string', 'moveEase must be a string');
     if (raw.moveTo !== undefined) {
         if (typeof raw.moveTo !== 'object') {
-            push({ path: `${path}.moveTo`, code: 'sprite.moveTo_not_object', message: 'moveTo must be an object' });
+            push(`${path}.moveTo`, 'sprite.moveTo_not_object', 'moveTo must be an object');
         }
         else {
             if (raw.moveTo.x !== undefined && typeof raw.moveTo.x !== 'number')
-                push({ path: `${path}.moveTo.x`, code: 'sprite.moveTo.x_not_number', message: 'moveTo.x must be a number' });
+                push(`${path}.moveTo.x`, 'sprite.moveTo.x_not_number', 'moveTo.x must be a number');
             if (raw.moveTo.y !== undefined && typeof raw.moveTo.y !== 'number')
-                push({ path: `${path}.moveTo.y`, code: 'sprite.moveTo.y_not_number', message: 'moveTo.y must be a number' });
+                push(`${path}.moveTo.y`, 'sprite.moveTo.y_not_number', 'moveTo.y must be a number');
             if (raw.moveTo.yPct !== undefined && typeof raw.moveTo.yPct !== 'number')
-                push({ path: `${path}.moveTo.yPct`, code: 'sprite.moveTo.yPct_not_number', message: 'moveTo.yPct must be a number' });
+                push(`${path}.moveTo.yPct`, 'sprite.moveTo.yPct_not_number', 'moveTo.yPct must be a number');
             if (raw.moveTo.ms !== undefined && typeof raw.moveTo.ms !== 'number')
-                push({ path: `${path}.moveTo.ms`, code: 'sprite.moveTo.ms_not_number', message: 'moveTo.ms must be a number' });
+                push(`${path}.moveTo.ms`, 'sprite.moveTo.ms_not_number', 'moveTo.ms must be a number');
             if (raw.moveTo.ease !== undefined && typeof raw.moveTo.ease !== 'string')
-                push({ path: `${path}.moveTo.ease`, code: 'sprite.moveTo.ease_not_string', message: 'moveTo.ease must be a string' });
+                push(`${path}.moveTo.ease`, 'sprite.moveTo.ease_not_string', 'moveTo.ease must be a string');
         }
     }
     if (raw.moves !== undefined && Array.isArray(raw.moves)) {
         raw.moves.forEach((mv, mi) => {
             const mp = `${path}.moves[${mi}]`;
             if (!mv || typeof mv !== 'object') {
-                push({ path: mp, code: 'sprite.moves.invalid_object', message: 'move must be an object' });
+                push(mp, 'sprite.moves.invalid_object', 'move must be an object');
                 return;
             }
             if (mv.type && mv.type !== 'move')
-                push({ path: mp, code: 'sprite.moves.invalid_type', message: 'move type must be "move"' });
+                push(mp, 'sprite.moves.invalid_type', 'move type must be "move"');
             if (mv.x !== undefined && typeof mv.x !== 'number')
-                push({ path: `${mp}.x`, code: 'sprite.moves.x_not_number', message: 'move.x must be number' });
+                push(`${mp}.x`, 'sprite.moves.x_not_number', 'move.x must be number');
             if (mv.y !== undefined && typeof mv.y !== 'number')
-                push({ path: `${mp}.y`, code: 'sprite.moves.y_not_number', message: 'move.y must be number' });
+                push(`${mp}.y`, 'sprite.moves.y_not_number', 'move.y must be number');
             if (mv.yPct !== undefined && typeof mv.yPct !== 'number')
-                push({ path: `${mp}.yPct`, code: 'sprite.moves.yPct_not_number', message: 'move.yPct must be number' });
+                push(`${mp}.yPct`, 'sprite.moves.yPct_not_number', 'move.yPct must be number');
             if (mv.ms !== undefined && typeof mv.ms !== 'number')
-                push({ path: `${mp}.ms`, code: 'sprite.moves.ms_not_number', message: 'move.ms must be number' });
+                push(`${mp}.ms`, 'sprite.moves.ms_not_number', 'move.ms must be number');
             if (mv.ease !== undefined && typeof mv.ease !== 'string')
-                push({ path: `${mp}.ease`, code: 'sprite.moves.ease_not_string', message: 'move.ease must be string' });
+                push(`${mp}.ease`, 'sprite.moves.ease_not_string', 'move.ease must be string');
         });
     }
     else if (raw.moves !== undefined && !Array.isArray(raw.moves)) {
-        push({ path: `${path}.moves`, code: 'sprite.moves_not_array', message: 'moves must be an array' });
+        push(`${path}.moves`, 'sprite.moves_not_array', 'moves must be an array');
     }
     return raw;
 }
 export function validateSceneDefStrict(raw) {
     const issues = [];
     const ctx = (k) => `scene:${raw?.id ?? '?'}:${k}`;
+    const pushIssue = (path, code, message) => {
+        issues.push({ path, code, message, segments: toSegments(path), sceneId: raw?.id ?? null });
+    };
     if (!raw || typeof raw !== 'object')
-        return { errors: [{ path: 'scene', code: 'invalid_scene_object', message: 'Scene must be an object' }] };
+        return { errors: [{ path: 'scene', code: 'invalid_scene_object', message: 'Scene must be an object', segments: toSegments('scene'), sceneId: raw?.id ?? null }] };
     if (typeof raw.id !== 'string' || !raw.id.trim())
-        issues.push({ path: 'scene:id', code: 'scene_missing_id', message: 'Scene id is required' });
+        pushIssue('scene:id', 'scene_missing_id', 'Scene id is required');
     if (!Array.isArray(raw.steps))
-        issues.push({ path: ctx('steps'), code: 'missing_steps', message: 'Scene is missing steps[]' });
+        pushIssue(ctx('steps'), 'missing_steps', 'Scene is missing steps[]');
     const steps = [];
     if (Array.isArray(raw.steps)) {
         raw.steps.forEach((s, i) => {
@@ -103,63 +119,63 @@ export function validateSceneDefStrict(raw) {
             switch (s.type) {
                 case 'dialogue':
                     if (typeof s.text !== 'string')
-                        issues.push({ path: `${stepPath}.text`, code: 'dialogue.missing_text', message: 'Dialogue needs text' });
+                        pushIssue(`${stepPath}.text`, 'dialogue.missing_text', 'Dialogue needs text');
                     if (s.char !== undefined && typeof s.char !== 'string')
-                        issues.push({ path: `${stepPath}.char`, code: 'dialogue.char_not_string', message: 'Dialogue char must be string' });
+                        pushIssue(`${stepPath}.char`, 'dialogue.char_not_string', 'Dialogue char must be string');
                     break;
                 case 'choice':
                     if (!Array.isArray(s.options) || s.options.length === 0) {
-                        issues.push({ path: `${stepPath}.options`, code: 'choice.missing_options', message: 'Choice needs options' });
+                        pushIssue(`${stepPath}.options`, 'choice.missing_options', 'Choice needs options');
                         break;
                     }
-                    s.options.forEach((o, oi) => validateChoiceOption(o, `${stepPath}.options[${oi}]`, (iss) => issues.push(iss)));
+                    s.options.forEach((o, oi) => validateChoiceOption(o, `${stepPath}.options[${oi}]`, (p, c, m) => pushIssue(p, c, m)));
                     if (s.autoStrategy !== undefined && s.autoStrategy !== 'firstValid' && s.autoStrategy !== 'random' && s.autoStrategy !== 'highestWeight')
-                        issues.push({ path: `${stepPath}.autoStrategy`, code: 'choice.autoStrategy_invalid', message: 'autoStrategy must be firstValid|random|highestWeight' });
+                        pushIssue(`${stepPath}.autoStrategy`, 'choice.autoStrategy_invalid', 'autoStrategy must be firstValid|random|highestWeight');
                     if (s.autoSingle !== undefined && typeof s.autoSingle !== 'boolean')
-                        issues.push({ path: `${stepPath}.autoSingle`, code: 'choice.autoSingle_not_boolean', message: 'autoSingle must be boolean' });
+                        pushIssue(`${stepPath}.autoSingle`, 'choice.autoSingle_not_boolean', 'autoSingle must be boolean');
                     break;
                 case 'background':
                     if (typeof s.src !== 'string')
-                        issues.push({ path: `${stepPath}.src`, code: 'background.missing_src', message: 'Background needs src' });
+                        pushIssue(`${stepPath}.src`, 'background.missing_src', 'Background needs src');
                     break;
                 case 'music':
                     if (typeof s.track !== 'string')
-                        issues.push({ path: `${stepPath}.track`, code: 'music.missing_track', message: 'Music needs track' });
+                        pushIssue(`${stepPath}.track`, 'music.missing_track', 'Music needs track');
                     break;
                 case 'sfx':
                     if (typeof s.track !== 'string')
-                        issues.push({ path: `${stepPath}.track`, code: 'sfx.missing_track', message: 'SFX needs track' });
+                        pushIssue(`${stepPath}.track`, 'sfx.missing_track', 'SFX needs track');
                     break;
                 case 'spriteShow':
                 case 'spriteSwap':
                     if (typeof s.id !== 'string' || typeof s.src !== 'string')
-                        issues.push({ path: stepPath, code: 'spriteShow.missing_id_or_src', message: 'Sprite show/swap needs id and src' });
+                        pushIssue(stepPath, 'spriteShow.missing_id_or_src', 'Sprite show/swap needs id and src');
                     if (s.role !== undefined && typeof s.role !== 'string')
-                        issues.push({ path: `${stepPath}.role`, code: 'sprite.role_not_string', message: 'Sprite role must be string' });
-                    validateSpriteMotion(s, stepPath, (iss) => issues.push(iss));
+                        pushIssue(`${stepPath}.role`, 'sprite.role_not_string', 'Sprite role must be string');
+                    validateSpriteMotion(s, stepPath, (p, c, m) => pushIssue(p, c, m));
                     break;
                 case 'spriteHide':
                     if (typeof s.id !== 'string')
-                        issues.push({ path: `${stepPath}.id`, code: 'spriteHide.missing_id', message: 'Sprite hide needs id' });
+                        pushIssue(`${stepPath}.id`, 'spriteHide.missing_id', 'Sprite hide needs id');
                     break;
                 case 'flag':
                     if (typeof s.flag !== 'string')
-                        issues.push({ path: `${stepPath}.flag`, code: 'flag.missing_flag', message: 'Flag step needs flag' });
+                        pushIssue(`${stepPath}.flag`, 'flag.missing_flag', 'Flag step needs flag');
                     if (s.value !== undefined && typeof s.value !== 'boolean')
-                        issues.push({ path: `${stepPath}.value`, code: 'flag.value_not_boolean', message: 'Flag value must be boolean' });
+                        pushIssue(`${stepPath}.value`, 'flag.value_not_boolean', 'Flag value must be boolean');
                     break;
                 case 'goto':
                     if (typeof s.scene !== 'string')
-                        issues.push({ path: `${stepPath}.scene`, code: 'goto.missing_scene', message: 'Goto needs target scene id' });
+                        pushIssue(`${stepPath}.scene`, 'goto.missing_scene', 'Goto needs target scene id');
                     break;
                 case 'transition':
                     if (!TRANSITIONS.has(s.kind))
-                        issues.push({ path: `${stepPath}.kind`, code: 'transition.invalid_kind', message: 'Transition kind must be fade|slide|zoom|shake|flash' });
+                        pushIssue(`${stepPath}.kind`, 'transition.invalid_kind', 'Transition kind must be fade|slide|zoom|shake|flash');
                     if (s.duration !== undefined && typeof s.duration !== 'number')
-                        issues.push({ path: `${stepPath}.duration`, code: 'transition.duration_not_number', message: 'Transition duration must be number' });
+                        pushIssue(`${stepPath}.duration`, 'transition.duration_not_number', 'Transition duration must be number');
                     break;
                 default:
-                    issues.push({ path: stepPath, code: 'unknown_type', message: `Unknown step type: ${s.type}` });
+                    pushIssue(stepPath, 'unknown_type', `Unknown step type: ${s.type}`);
             }
             steps.push(s);
         });
@@ -269,12 +285,14 @@ export function validateSceneLinksStrict(scenes) {
         s.steps.forEach((step, i) => {
             const base = `scene:${s.id}:step[${i}]`;
             if (step.type === 'goto' && step.scene && !ids.has(step.scene)) {
-                issues.push({ path: `${base}.scene`, code: 'goto.unknown_scene', message: `Unknown scene "${step.scene}"` });
+                const path = `${base}.scene`;
+                issues.push({ path, code: 'goto.unknown_scene', message: `Unknown scene "${step.scene}"`, segments: toSegments(path), sceneId: s.id });
             }
             if (step.type === 'choice') {
                 step.options.forEach((o, oi) => {
                     if (o.goto && !ids.has(o.goto)) {
-                        issues.push({ path: `${base}.options[${oi}].goto`, code: 'choice.goto.unknown_scene', message: `Unknown scene "${o.goto}"` });
+                        const path = `${base}.options[${oi}].goto`;
+                        issues.push({ path, code: 'choice.goto.unknown_scene', message: `Unknown scene "${o.goto}"`, segments: toSegments(path), sceneId: s.id });
                     }
                 });
             }

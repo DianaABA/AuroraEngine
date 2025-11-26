@@ -1,17 +1,20 @@
 # "Fix My Error" Guide
 
-When the loader returns errors like:
+When the strict loader returns errors, paths include segments you can map directly:
 ```
-scene:intro:step[2].choice.missing_options;scene:intro:step[3].dialogue.missing_text
+[
+  { path: "scene:intro:step[2].options", code: "choice.missing_options", segments:["scene","intro","step",2,"options"] },
+  { path: "scene:intro:step[3].text", code: "dialogue.missing_text", segments:["scene","intro","step",3,"text"] }
+]
 ```
-Use this checklist:
 
-- scene_missing_id: Add an `id` string to the scene
-- missing_steps: Ensure `steps` is an array
-- dialogue.missing_text: Add `text` to a dialogue step
-- choice.missing_options: Add `options: [{ label, goto }]`
-- goto.missing_scene: Set `goto` to an existing scene id
-- background.missing_src: Set `src` for background steps
-- music.missing_track: Set `track` for music steps
+Quick fixes:
+- scene_missing_id: Add an `id` string to the scene.
+- missing_steps: Ensure `steps` is an array.
+- dialogue.missing_text: Add `text` to a dialogue step.
+- choice.missing_options: Add `options: [{ label, goto }]`.
+- choice.goto.unknown_scene / goto.unknown_scene: point `goto` to an existing scene id.
+- background.missing_src / music.missing_track / sfx.missing_track: add required `src`/`track`.
+- sprite.*_not_number / not_string: fix the offending field types (x/y/yPct/scale/move*).
 
-Then re-run the loader. If errors persist, copy your scene JSON and the error output into an issue or ask an AI with the prompt in `docs/ai-prompts.md`.
+Then re-run the loader. If errors persist, paste the JSON and error objects into an AI using the “Fix My Error” prompt from `docs/ai-prompts.md` (include assets/ids you expect to exist).

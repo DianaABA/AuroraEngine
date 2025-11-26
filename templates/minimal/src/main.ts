@@ -146,8 +146,8 @@ let choiceFocusIndex = 0
 type StepMeta = { sceneId: string; index: number; label: string }
 let lastStepMeta: StepMeta | null = null
 type CodexEntry = { id: string; title: string; body: string; category: string; unlockedAt: string; favorite?: boolean; pinned?: boolean }
-type CodexFilters = { category: string; favoritesOnly: boolean }
-let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false }
+type CodexFilters = { category: string; favoritesOnly: boolean; pinnedOnly: boolean }
+let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false, pinnedOnly: false }
 let codexSelectedEntry: CodexEntry | null = null
 type LocalAsset = { name: string; type: string; size: number; url: string }
 let localAssets: LocalAsset[] = []
@@ -391,12 +391,11 @@ function codexTogglePinned(id: string){
 function renderCodexFilters(allItems: CodexEntry[]){
   if(!codexFilters) return
   codexFilters.innerHTML = ''
+  const favCount = allItems.filter(it=> it.favorite).length
+  const pinCount = allItems.filter(it=> it.pinned).length
+  const base = allItems.filter(it => (!codexFiltersState.favoritesOnly || it.favorite) && (!codexFiltersState.pinnedOnly || it.pinned))
   const categories: Record<string, number> = {}
-  let favCount = 0
-  allItems.forEach(it => {
-    categories[it.category] = (categories[it.category]||0)+1
-    if(it.favorite) favCount++
-  })
+  base.forEach(it => { categories[it.category] = (categories[it.category]||0)+1 })
   const addChip = (label: string, active: boolean, onClick: ()=>void) => {
     const btn = document.createElement('button')
     btn.className = active ? '' : 'secondary'
@@ -409,13 +408,14 @@ function renderCodexFilters(allItems: CodexEntry[]){
     btn.onclick = onClick
     codexFilters.appendChild(btn)
   }
-  addChip(`All (${allItems.length})`, !codexFiltersState.favoritesOnly && !codexFiltersState.category, ()=>{ codexFiltersState = { favoritesOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex() })
+  addChip(`All (${base.length})`, !codexFiltersState.favoritesOnly && !codexFiltersState.pinnedOnly && !codexFiltersState.category, ()=>{ codexFiltersState = { favoritesOnly:false, pinnedOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex() })
   addChip(`Favorites (${favCount})`, codexFiltersState.favoritesOnly, ()=>{ codexFiltersState = { ...codexFiltersState, favoritesOnly: !codexFiltersState.favoritesOnly }; renderCodex() })
+  addChip(`Pinned (${pinCount})`, codexFiltersState.pinnedOnly, ()=>{ codexFiltersState = { ...codexFiltersState, pinnedOnly: !codexFiltersState.pinnedOnly }; renderCodex() })
   Object.keys(categories).sort().forEach(cat=>{
     const count = categories[cat]
     const label = `${cat} (${count})`
-    addChip(label, !codexFiltersState.favoritesOnly && codexFiltersState.category.toLowerCase() === cat.toLowerCase(), ()=>{
-      codexFiltersState = { favoritesOnly:false, category: cat }
+    addChip(label, !codexFiltersState.favoritesOnly && !codexFiltersState.pinnedOnly && codexFiltersState.category.toLowerCase() === cat.toLowerCase(), ()=>{
+      codexFiltersState = { ...codexFiltersState, category: cat, favoritesOnly:false, pinnedOnly:false }
       if(codexCategory) codexCategory.value = cat
       renderCodex()
     })
@@ -432,16 +432,16 @@ function renderCodex(){
     for(const c of cats){ const opt = document.createElement('option'); opt.value = c; opt.textContent = c; codexCategory.appendChild(opt) }
   }
   renderCodexFilters(allItems)
-  let items = allItems.filter(it =>
-    (!q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)) &&
-    (!selectedCat || it.category.toLowerCase() === selectedCat)
-  )
-  if(codexFiltersState.favoritesOnly){
-    items = items.filter(it => !!it.favorite)
-  }
+  let items = allItems
+    .filter(it => (!codexFiltersState.favoritesOnly || it.favorite))
+    .filter(it => (!codexFiltersState.pinnedOnly || it.pinned))
+    .filter(it =>
+      (!q || it.title.toLowerCase().includes(q) || it.body.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)) &&
+      (!selectedCat || it.category.toLowerCase() === selectedCat)
+    )
   if(items.length===0){
     const p = document.createElement('div')
-    p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries yet.'
+    p.style.color = '#a8b0ff'; p.style.fontSize = '12px'; p.textContent = 'No codex entries match filters.'
     codexList.appendChild(p)
     return
   }
@@ -1308,7 +1308,7 @@ openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = '
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
 openAchBtn.onclick = () => { renderAchievements(); achPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(achPanel) }
 closeAchBtn.onclick = () => { achPanel.style.display = 'none'; updateBackdrop() }
-openCodexBtn.onclick = () => { codexFiltersState = { favoritesOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex(); codexPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(codexPanel) }
+openCodexBtn.onclick = () => { codexFiltersState = { favoritesOnly:false, pinnedOnly:false, category:'' }; if(codexCategory) codexCategory.value=''; renderCodex(); codexPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(codexPanel) }
 closeCodexBtn.onclick = () => { codexPanel.style.display = 'none'; updateBackdrop() }
 codexDetailClose.onclick = ()=> { codexSelectedEntry = null; codexDetail.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(backlogPanel) }
@@ -2168,7 +2168,7 @@ renderEditorSteps()
 
 if(codexCategory){
   codexCategory.addEventListener('change', ()=>{
-    codexFiltersState = { favoritesOnly:false, category: codexCategory.value }
+    codexFiltersState = { ...codexFiltersState, category: codexCategory.value, favoritesOnly:false, pinnedOnly:false }
     renderCodex()
   })
 }
