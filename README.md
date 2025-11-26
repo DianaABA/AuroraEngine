@@ -196,13 +196,16 @@ Beginner-friendly, open-source, and structured so creators can learn gently, not
 
 ---
 
-## Roadmap
-See `ROADMAP.md` for planned features like:
-- Achievements  
-- Scene editor  
-- Drag-and-drop timeline  
-- Localization  
-- Desktop export  
+## Roadmap (summary)
+
+This repository has advanced through several roadmap milestones. We're publishing these completed items as part of the v6 release.
+
+- **Phase 1 — The Essentials**: DONE (core engine, dialogue, saves, choices, basic animations)
+- **Phase 2 — Scene Editor (v1.2)**: DONE (minimal web editor, load/save JSON, inline edit, schema + lint, timeline/branch map)
+- **Phase 3 — Achievements/Gallery/Jukebox (v1.3)**: DONE (data shapes, query APIs, demo integrations, data-driven unlocks)
+- **Phase 4 — Localization & Theming (v1.4)**: DONE (string tables/textId maps with fallback, RTL support, theme toggle via CSS variables)
+
+See `ROADMAP.md` for full details and remaining items (Phase 5+).
 
 ---
 
