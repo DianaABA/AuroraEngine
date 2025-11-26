@@ -37,7 +37,8 @@
     "template:minimal:dev": "npm run build && cd templates/minimal && npm install && npm run dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "release:notes": "node scripts/gen-release-notes.js",
-    "scenes:lint": "node scripts/scene-lint.js"
+    "scenes:lint": "node scripts/scene-lint.js",
+    "release:check": "node scripts/release-check.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
