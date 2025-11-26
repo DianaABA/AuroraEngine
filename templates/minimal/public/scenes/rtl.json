@@ -1,0 +1,37 @@
+[
+  {
+    "id": "rtl_intro",
+    "bg": "bg_lab.png",
+    "steps": [
+      { "type": "dialogue", "textId": "rtl_welcome", "char": "Guide" },
+      { "type": "dialogue", "textId": "rtl_hint", "char": "Guide" },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "English next", "goto": "rtl_en" },
+          { "label": "Arabic next", "goto": "rtl_ar" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rtl_en",
+    "steps": [
+      { "type": "dialogue", "text": "You picked English. Toggle language to Arabic in Settings to see RTL." },
+      { "type": "goto", "scene": "rtl_end" }
+    ]
+  },
+  {
+    "id": "rtl_ar",
+    "steps": [
+      { "type": "dialogue", "textId": "rtl_ar_text", "char": "Guide" },
+      { "type": "goto", "scene": "rtl_end" }
+    ]
+  },
+  {
+    "id": "rtl_end",
+    "steps": [
+      { "type": "dialogue", "textId": "rtl_done" }
+    ]
+  }
+]

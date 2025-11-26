@@ -2474,14 +2474,24 @@ const TEXT_TABLE: Record<Locale, Record<string, string>> = {
   en: {
     intro_greeting: 'Welcome to AuroraEngine.',
     intro_hint: 'Tap or press space to advance.',
+    rtl_welcome: 'RTL/TextId demo: switch language to Arabic and see right-to-left rendering.',
+    rtl_hint: 'TextId entries use the locale table. Choices remain LTR for clarity.',
+    rtl_done: 'Done. You can switch back to English anytime.'
   },
   es: {
     intro_greeting: 'Bienvenido a AuroraEngine.',
     intro_hint: 'Toque o presione espacio para avanzar.',
+    rtl_welcome: 'Demostración RTL/TextId: cambie a árabe y vea la lectura de derecha a izquierda.',
+    rtl_hint: 'Las entradas textId usan la tabla de idioma. Las opciones se mantienen LTR por claridad.',
+    rtl_done: 'Listo. Puedes volver a inglés cuando quieras.'
   },
   ar: {
     intro_greeting: 'مرحبًا بك في AuroraEngine.',
     intro_hint: 'اضغط للمضي قدمًا.',
+    rtl_welcome: 'عرض RTL/معرّفات النص: بدّل للغة العربية وشاهد العرض من اليمين إلى اليسار.',
+    rtl_hint: 'تستخدم إدخالات textId جدول اللغة. تظل الاختيارات من اليسار إلى اليمين للوضوح.',
+    rtl_done: 'انتهى. يمكنك العودة إلى الإنجليزية في أي وقت.',
+    rtl_ar_text: 'لقد اخترت العربية. تم تفعيل الاتجاه RTL.'
   }
 }
 
