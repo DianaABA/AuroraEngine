@@ -290,6 +290,34 @@
               <div id="branchMapGraph" style="margin-top:8px; background:#0b1020; border:1px solid #27304a; border-radius:8px; padding:6px;"></div>
             </div>
           </div>
+          <div id="aiPanel" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border-radius:8px; border:1px solid #27304a;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="color:#a0e7ff; font-size:13px">Authoring AI Helpers</strong>
+              <span style="font-size:12px; color:#a8b0ff">Local tools (offline) & BYOK (JSON responses)</span>
+            </div>
+            <div style="margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:8px;">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="aiScript" style="color:#a8b0ff; font-size:12px">Script to convert ➜ JSON (local)</label>
+                <textarea id="aiScript" style="min-height:100px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:6px; padding:8px; font-size:12px"></textarea>
+                <button id="aiConvert" class="secondary">Convert Script ➜ JSON</button>
+                <button id="aiFixGrammar" class="secondary">Fix Grammar (local)</button>
+                <button id="aiDetectErrors" class="secondary">Detect Scene Errors (local)</button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="aiPrompt" style="color:#a8b0ff; font-size:12px">Prompt ➜ Scene JSON (BYOK)</label>
+                <textarea id="aiPrompt" style="min-height:100px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:6px; padding:8px; font-size:12px"></textarea>
+                <button id="aiGenerateScene" class="secondary">Generate Scene (remote)</button>
+                <button id="aiExtendDialogue" class="secondary">Extend Current Scene (remote)</button>
+                <button id="aiSuggestBranches" class="secondary">Suggest Branches (remote)</button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="aiOutput" style="color:#a8b0ff; font-size:12px">AI Output / JSON</label>
+                <textarea id="aiOutput" style="min-height:180px; background:#0b1020; color:#a0e7ff; border:1px solid #27304a; border-radius:6px; padding:8px; font-size:12px; white-space:pre"></textarea>
+                <button id="aiLoadOutput" class="secondary" title="Load JSON from output into engine">Load Output JSON</button>
+              </div>
+            </div>
+            <div id="aiStatus" style="margin-top:6px; font-size:12px; color:#a8b0ff"></div>
+          </div>
           <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:#a0e7ff">Saves</strong>

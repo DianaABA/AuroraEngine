@@ -1918,6 +1918,88 @@ function isProbablyMobile(){ return (window.matchMedia && window.matchMedia('(po
 if(isProbablyMobile()) oneTimeHint('tap', 'Tip: Tap anywhere on the scene to advance')
 
 // -----------------------------
+// AI Panel wiring
+// -----------------------------
+const aiScriptEl = document.getElementById('aiScript') as HTMLTextAreaElement | null
+const aiPromptEl = document.getElementById('aiPrompt') as HTMLTextAreaElement | null
+const aiOutputEl = document.getElementById('aiOutput') as HTMLTextAreaElement | null
+const aiStatusEl = document.getElementById('aiStatus') as HTMLDivElement | null
+const btnAiConvert = document.getElementById('aiConvert') as HTMLButtonElement | null
+const btnAiFixGrammar = document.getElementById('aiFixGrammar') as HTMLButtonElement | null
+const btnAiDetectErrors = document.getElementById('aiDetectErrors') as HTMLButtonElement | null
+const btnAiGenerateScene = document.getElementById('aiGenerateScene') as HTMLButtonElement | null
+const btnAiExtendDialogue = document.getElementById('aiExtendDialogue') as HTMLButtonElement | null
+const btnAiSuggestBranches = document.getElementById('aiSuggestBranches') as HTMLButtonElement | null
+const btnAiLoadOutput = document.getElementById('aiLoadOutput') as HTMLButtonElement | null
+
+function setAIStatus(msg: string, kind: 'info'|'error'='info'){
+  if(!aiStatusEl) return
+  aiStatusEl.textContent = msg
+  aiStatusEl.style.color = kind === 'error' ? '#ffb4b4' : '#a8b0ff'
+}
+async function runLocal(fn: ()=>Promise<string>){
+  try{ setAIStatus('Running local model...'); const out = await fn(); if(aiOutputEl) aiOutputEl.value = out; setAIStatus('Done (local)'); showToast('[AI] local completed') }catch(e:any){ setAIStatus('Local error: '+(e?.message||e), 'error'); showErrorOverlay('Local AI error', e?.message||String(e)) }
+}
+async function runRemote(fn: ()=>Promise<string>){
+  try{ setAIStatus('Calling remote API...'); const out = await fn(); if(aiOutputEl) aiOutputEl.value = out; setAIStatus('Done (remote)'); showToast('[AI] remote completed') }catch(e:any){ setAIStatus('Remote error: '+(e?.message||e), 'error'); showErrorOverlay('Remote AI error', e?.message||String(e)) }
+}
+btnAiConvert && (btnAiConvert.onclick = ()=>{
+  if(prefs.aiMode !== 'local'){ setAIStatus('Switch AI Mode to Local first','error'); return }
+  const script = aiScriptEl?.value || ''
+  if(!script.trim()){ setAIStatus('Enter script text','error'); return }
+  runLocal(()=> aiConvertScriptToJSON(script))
+})
+btnAiFixGrammar && (btnAiFixGrammar.onclick = ()=>{
+  if(prefs.aiMode !== 'local'){ setAIStatus('Switch AI Mode to Local first','error'); return }
+  const text = aiScriptEl?.value || ''
+  if(!text.trim()){ setAIStatus('Enter text to fix','error'); return }
+  runLocal(()=> aiFixGrammar(text))
+})
+btnAiDetectErrors && (btnAiDetectErrors.onclick = ()=>{
+  if(prefs.aiMode !== 'local'){ setAIStatus('Switch AI Mode to Local first','error'); return }
+  const json = aiScriptEl?.value || ''
+  if(!json.trim()){ setAIStatus('Paste scene JSON to lint','error'); return }
+  runLocal(()=> aiDetectSceneErrors(json))
+})
+btnAiGenerateScene && (btnAiGenerateScene.onclick = ()=>{
+  if(prefs.aiMode !== 'byok'){ setAIStatus('Switch AI Mode to BYOK and set key','error'); return }
+  if(!prefs.aiApiKey){ setAIStatus('Enter API key','error'); return }
+  const prompt = aiPromptEl?.value || ''
+  if(!prompt.trim()){ setAIStatus('Enter prompt','error'); return }
+  runRemote(()=> aiGenerateScene(prompt))
+})
+btnAiExtendDialogue && (btnAiExtendDialogue.onclick = ()=>{
+  if(prefs.aiMode !== 'byok'){ setAIStatus('Switch AI Mode to BYOK and set key','error'); return }
+  if(!prefs.aiApiKey){ setAIStatus('Enter API key','error'); return }
+  const prompt = aiPromptEl?.value || ''
+  if(!prompt.trim()){ setAIStatus('Enter prompt','error'); return }
+  const scene = engine.getPublicState()?.sceneId ? engine.exportScenes()?.find((s:any)=> s.id === engine.getPublicState().sceneId) : null
+  runRemote(()=> aiExtendDialogue(scene, prompt))
+})
+btnAiSuggestBranches && (btnAiSuggestBranches.onclick = ()=>{
+  if(prefs.aiMode !== 'byok'){ setAIStatus('Switch AI Mode to BYOK and set key','error'); return }
+  if(!prefs.aiApiKey){ setAIStatus('Enter API key','error'); return }
+  const scene = engine.getPublicState()?.sceneId ? engine.exportScenes()?.find((s:any)=> s.id === engine.getPublicState().sceneId) : null
+  runRemote(()=> aiSuggestBranches(scene))
+})
+btnAiLoadOutput && (btnAiLoadOutput.onclick = ()=>{
+  const raw = aiOutputEl?.value || ''
+  if(!raw.trim()){ setAIStatus('Output empty','error'); return }
+  try{
+    const parsed = JSON.parse(raw)
+    if(Array.isArray(parsed)){
+      bootFromScenes(parsed as any)
+      setAIStatus('Loaded output JSON into engine')
+    } else if(parsed && parsed.scenes){
+      bootFromScenes(parsed.scenes as any)
+      setAIStatus('Loaded output JSON (wrapped)')
+    } else {
+      setAIStatus('JSON is not an array of scenes','error')
+    }
+  }catch(e:any){ setAIStatus('Parse error: '+(e?.message||e),'error') }
+})
+
+// -----------------------------
 // Onboarding modal ÔÇö show once on first run
 // -----------------------------
 function showOnboarding(){ if(onboardingEl){ onboardingEl.style.display = 'flex'; trapFocusIn(onboardingEl) } }
