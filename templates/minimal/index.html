@@ -26,11 +26,11 @@
       button.secondary{background:#2b2f43}
       #notifications{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:60vw;}
       /* Error overlay */
-      #errorOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:20;}
-      #errorCard{background:#0b1020;border:1px solid #3e59ff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.6);max-width:540px;width:90%;padding:14px;display:flex;flex-direction:column;gap:10px;color:#a8b0ff;}
+      #errorOverlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;}
+      #errorCard{background:#0b1020;border:1px solid #4f6bff;border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.65);max-width:560px;width:92%;padding:16px;display:flex;flex-direction:column;gap:10px;color:#dbe4ff;}
       #errorCard h3{margin:0;color:#fca5a5;font-size:15px;}
-      #errorOverlayBody{max-height:320px;overflow:auto;border:1px solid #27304a;border-radius:8px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;background:#0f172a;color:#e5e7ff;white-space:pre-wrap;}
-      #errorOverlayClose{align-self:flex-end;background:#2b2f43;color:#a0e7ff;border:1px solid #3e59ff;}
+      #errorOverlayBody{max-height:320px;overflow:auto;border:1px solid #27304a;border-radius:8px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;background:#0f172a;color:#f8fafc;white-space:pre-wrap;}
+      #errorOverlayClose{align-self:flex-end;background:#252a42;color:#bcd4ff;border:1px solid #4f6bff;}
 
       /* Transition effects */
       @keyframes fadeOverlay { 0%{background:rgba(0,0,0,0)} 50%{background:rgba(0,0,0,1)} 100%{background:rgba(0,0,0,0)} }
@@ -141,6 +141,7 @@
             <button id="startExample">Start Example</button>
             <button id="startExpressions">Start Expressions</button>
             <button id="startAch">Start Achievements</button>
+            <span style="color:#a8b0ff; font-size:12px;">Pick a pack, then load it:</span>
             <select id="packSelect" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff;">
               <option value="example">Example</option>
               <option value="expressions">Expressions</option>
@@ -298,6 +299,9 @@
           <h3 style="margin:0">Validation / Load Error</h3>
           <button id="errorOverlayClose" class="secondary">Close</button>
         </div>
+        <p id="errorOverlayHint" style="margin:0; color:#cbd5ff; font-size:12px">
+          The scene data didn’t validate. Fix the issues below, then reload.
+        </p>
         <div id="errorOverlayBody"></div>
       </div>
     </div>
