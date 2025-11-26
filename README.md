@@ -221,47 +221,19 @@ Bring your world to life.
 
 ---
 
-## Recent updates
+## FAQ & Troubleshooting
 
-- Updated the UI package (`packages/ui`) with styling and renderer improvements.
-- Added generated JavaScript and type declaration files for the `src/vn` and `src/utils` bundles (committed to the repo for convenience).
-- Improved scene loading and types in `src/vn/sceneLoader.ts` and `src/vn/sceneTypes.ts`.
-- Updated templates and minimal demo files under `templates/minimal`.
-- Added/updated several tests related to sprite motion and scene loading.
+- Q: `npm run build:ui` or `npm start` fails — what should I do?
+  - A: Try running the build/install steps inside the specific packages: `packages/ui` and `templates/minimal`. See full instructions in `docs/developer.md`.
 
-If you pull the latest changes, please run the developer build steps below to regenerate or validate local artifacts.
+- Q: Why are there committed `.js` and `.d.ts` files?
+  - A: Some generated artifacts were committed for convenience. If you regenerate them locally, confirm they match before committing or opening a PR.
 
----
+- Q: Windows/npm lockfile or permission errors?
+  - A: Remove `node_modules`, ensure your Node/npm versions are compatible, and run `npm install` (or `npm ci` with a lockfile).
 
-## Developer build notes
+For step-by-step developer build instructions and troubleshooting, see `docs/developer.md`.
 
-Use these steps to set up and build the project locally. These are the commands that worked for the repository structure in this workspace.
-
-1. Install root dependencies (optional but recommended):
-
-```powershell
-npm install
-```
-
-2. Build the UI package (from the repository root):
-
-```powershell
-cd packages/ui
-npm install
-npm run build
-cd ../..
-```
-
-3. Build the minimal template (local demo):
-
-```powershell
-cd templates/minimal
-npm install
-npm run build
-cd ../..
-```
-
-4. Run the minimal demo locally for development (hot reload):
 
 ```powershell
 cd templates/minimal

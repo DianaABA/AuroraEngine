@@ -148,9 +148,11 @@ Planned upgrades:
 
 5) Codex polish
 - Favorites pinning and per-category counts; simple filter chips
+- DONE
 
 6) Release/CI
 - Automated release notes from CHANGELOG; basic canary tag
+- DONE: CI builds UI + template; release builds UI and generates notes/canary tag
 
 ## TL;DR — Creator-Friendly Checklist
 
