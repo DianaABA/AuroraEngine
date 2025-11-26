@@ -1,4 +1,5 @@
-import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+import { resolveYPercent } from './helpers'
 
 const nameEl = document.getElementById('name')!
 const textEl = document.getElementById('text')!
@@ -122,7 +123,7 @@ const achievements = new Achievements('aurora:minimal:ach')
 let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
-type SpriteCfg = { pos?: 'left'|'center'|'right'; x?: number; y?: number; z?: number; scale?: number }
+type SpriteCfg = { pos?: 'left'|'center'|'right'; x?: number; y?: number; yPct?: number; z?: number; scale?: number }
 const spriteMeta: Record<string, SpriteCfg> = {}
 const sceneSpriteDefaults: Record<string, Record<string, SpriteCfg>> = {}
 const BACKLOG_KEY = 'aurora:minimal:backlog'
@@ -150,7 +151,7 @@ let codexFiltersState: CodexFilters = { category: '', favoritesOnly: false }
 let codexSelectedEntry: CodexEntry | null = null
 type LocalAsset = { name: string; type: string; size: number; url: string }
 let localAssets: LocalAsset[] = []
-type MoveStep = { x?: number; y?: number; ms?: number; ease?: string }
+type MoveStep = { x?: number; y?: number; yPct?: number; ms?: number; ease?: string }
 type EditorScene = { id: string; bg?: string; music?: string; steps: any[]; roles?: Record<string, any> }
 let editorSteps: any[] = []
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
@@ -168,11 +169,14 @@ function parseMove(input: string): MoveStep | null {
     const [k,v] = p.split('=').map(s=> (s||'').trim())
     if(k === 'x') mv.x = Number(v)
     if(k === 'y') mv.y = Number(v)
+    if(k === 'y%' || k === 'yPct' || k === 'ypct') mv.yPct = Number(v)
     if(k === 'ms') mv.ms = Number(v)
     if(k === 'ease') mv.ease = v
   }
   return mv
 }
+
+
 
 // i18n strings
 const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
@@ -202,20 +206,20 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     settings: ()=> 'Ajustes',
     close: ()=> 'Cerrar',
     backlog: ()=> 'Historial',
-    gallery: ()=> 'Galería',
+    gallery: ()=> 'Galer├¡a',
     achievements: ()=> 'Logros',
-    auto: (c:{on:boolean})=> `Auto: ${c.on? 'Sí':'No'}`,
-    autoChoose: (c:{on:boolean})=> `Auto-Elegir: ${c.on? 'Sí':'No'}`,
-    skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'Sí':'No'}`,
-    skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'Sí':'No'}`,
-    skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'Sí':'No'}`,
-    debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'Sí':'No'}`,
-    debugHud: (c:{on:boolean})=> `HUD debug: ${c.on? 'Sí':'No'}`,
-    hotkeys: (c:{on:boolean})=> `Atajos: ${c.on? 'Sí':'No'}`,
+    auto: (c:{on:boolean})=> `Auto: ${c.on? 'S├¡':'No'}`,
+    autoChoose: (c:{on:boolean})=> `Auto-Elegir: ${c.on? 'S├¡':'No'}`,
+    skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'S├¡':'No'}`,
+    skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'S├¡':'No'}`,
+    skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'S├¡':'No'}`,
+    debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'S├¡':'No'}`,
+    debugHud: (c:{on:boolean})=> `HUD debug: ${c.on? 'S├¡':'No'}`,
+    hotkeys: (c:{on:boolean})=> `Atajos: ${c.on? 'S├¡':'No'}`,
     clearSeen: ()=> 'Limpiar vistos',
     language: ()=> 'Idioma',
-    english: ()=> 'Inglés',
-    spanish: ()=> 'Español',
+    english: ()=> 'Ingl├®s',
+    spanish: ()=> 'Espa├▒ol',
     slots: ()=> 'Ranuras:',
     saveN: (c:{n:number})=> `Guardar ${c.n}`,
     loadN: (c:{n:number})=> `Cargar ${c.n}`,
@@ -478,7 +482,7 @@ function renderCodex(){
       if(it.favorite) badges.appendChild(badge('FAV'))
       top.appendChild(title); top.appendChild(badges)
       const body = document.createElement('div')
-      body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body.length>120 ? (it.body.slice(0,120)+'…') : it.body
+      body.style.color = '#a8b0ff'; body.style.fontSize = '12px'; body.textContent = it.body.length>120 ? (it.body.slice(0,120)+'ÔÇª') : it.body
       const time = document.createElement('div')
       time.style.color = '#7082c1'; time.style.fontSize = '11px'; time.textContent = new Date(it.unlockedAt).toLocaleString()
       const actions = document.createElement('div')
@@ -667,6 +671,7 @@ on('vn:step', ({ step, state }) => {
         const z = typeof (step as any).z === 'number' ? (step as any).z as number : undefined
         const x = typeof (step as any).x === 'number' ? (step as any).x as number : undefined
         const y = typeof (step as any).y === 'number' ? (step as any).y as number : undefined
+        const yPct = typeof (step as any).yPct === 'number' ? (step as any).yPct as number : undefined
         const scale = typeof (step as any).scale === 'number' ? (step as any).scale as number : undefined
         const moveTo = (step as any).moveTo as any
         const cur = spriteMeta[id] || {}
@@ -674,10 +679,12 @@ on('vn:step', ({ step, state }) => {
         if(z !== undefined) cur.z = z
         if(x !== undefined) cur.x = x
         if(y !== undefined) cur.y = y
+        if(yPct !== undefined) cur.yPct = yPct
         if(scale !== undefined) cur.scale = scale
         if(moveTo && typeof moveTo === 'object'){
           if(typeof moveTo.x === 'number') cur.x = moveTo.x
           if(typeof moveTo.y === 'number') cur.y = moveTo.y
+          if(typeof moveTo.yPct === 'number') cur.yPct = moveTo.yPct
         }
         spriteMeta[id] = cur
       }
@@ -755,6 +762,7 @@ on('vn:step', ({ step, state }) => {
           if(typeof moveTo.ease === 'string') moveEase = resolveEase(String(moveTo.ease))
           if(typeof moveTo.x === 'number') meta.x = moveTo.x
           if(typeof moveTo.y === 'number') meta.y = moveTo.y
+          if(typeof moveTo.yPct === 'number') meta.yPct = moveTo.yPct
         }
         const movesArr = Array.isArray((step as any).moves) ? (step as any).moves as MoveStep[] : []
         if(movesArr.length){
@@ -762,12 +770,13 @@ on('vn:step', ({ step, state }) => {
           for(const mv of movesArr){
             if(typeof mv.x === 'number') meta.x = mv.x
             if(typeof mv.y === 'number') meta.y = mv.y
+            if(typeof mv.yPct === 'number') meta.yPct = mv.yPct
           }
         }
       }
     }catch{}
     const leftPct = typeof meta.x === 'number' ? Math.max(0, Math.min(100, meta.x)) : (pos === 'left' ? 20 : pos === 'right' ? 80 : 50)
-    const yPct = typeof meta.y === 'number' ? Math.max(-200, Math.min(200, meta.y)) : 0
+    const yPct = resolveYPercent(meta)
     const moveDur = skipFx ? 0 : moveMs
     const fadeDur = skipFx ? 0 : (prefs.spriteFadeMs||220)
     img.style.transition = `opacity ${fadeDur}ms ease, transform ${moveDur}ms ${moveEase}, left ${moveDur}ms ${moveEase}`
@@ -791,7 +800,7 @@ on('vn:step', ({ step, state }) => {
       let delay = 0
       for(const mv of moveChain){
         const targetX = typeof mv.x === 'number' ? Math.max(0, Math.min(100, mv.x)) : currentX
-        const targetY = typeof mv.y === 'number' ? Math.max(-200, Math.min(200, mv.y)) : currentY
+        const targetY = resolveYPercent({ y: mv.y, yPct: mv.yPct })
         const dur = mv.ms != null ? Math.max(0, mv.ms) : moveMs
         const ease = resolveEase(mv.ease, moveEase)
         setTimeout(()=> {
@@ -840,6 +849,16 @@ on('vn:step', ({ step, state }) => {
   } else if(step.type === 'choice'){
     nextBtn.style.display = 'none'
     const hint = autoChoiceHint && autoChoiceHint.key === stepKey ? autoChoiceHint : null
+    const hintRow = document.createElement('div')
+    hintRow.style.width = '100%'
+    hintRow.style.color = '#8aa0e0'
+    hintRow.style.fontSize = '12px'
+    hintRow.style.marginBottom = '6px'
+    hintRow.setAttribute('aria-live','polite')
+    hintRow.textContent = hint
+      ? (hint.willAutoDecide ? `Auto-choose will pick "${hint.chosenLabel}"` : `Default option: "${hint.chosenLabel}"`)
+      : 'Use arrow keys/Home/End or Tab + Enter to pick an option.'
+    choicesEl.appendChild(hintRow)
     step.options.forEach((opt: { label: string }, idx: number) => {
       const b = document.createElement('button')
       b.textContent = ''
@@ -1001,14 +1020,14 @@ function describeStep(state: any, step: any): string{
 function truncateLabel(s: string, max = 60): string{
   if(!s) return ''
   const clean = s.replace(/\s+/g, ' ').trim()
-  return clean.length > max ? clean.slice(0, max-1)+'…' : clean
+  return clean.length > max ? clean.slice(0, max-1)+'ÔÇª' : clean
 }
 
 function formatStepMeta(meta: StepMeta | null): string{
   if(!meta) return ''
   const scene = meta.sceneId || 'scene'
   const idx = typeof meta.index === 'number' ? meta.index : 0
-  const label = meta.label ? ` · ${meta.label}` : ''
+  const label = meta.label ? ` - ${meta.label}` : ''
   return `${scene}#${idx}${label}`
 }
 
@@ -1033,6 +1052,24 @@ function metaFromState(): StepMeta{
     sceneId: st.sceneId || '',
     index: typeof (st as any).index === 'number' ? (st as any).index : 0,
     label: lastStepMeta?.label || ''
+  }
+}
+
+function readSlotInfo(n: number){
+  const key = slotKey(n)
+  try{
+    const raw = localStorage.getItem(key)
+    const has = !!raw
+    const tsRaw = localStorage.getItem(`${key}:ts`)
+    const ts = tsRaw ? parseInt(tsRaw, 10) : null
+    const when = ts ? new Date(ts).toLocaleString() : null
+    const label = localStorage.getItem(`${key}:label`) || ''
+    const meta = readStepMeta(`${key}:meta`)
+    const desc = formatStepMeta(meta)
+    const thumb = localStorage.getItem(`${key}:thumb`) || ''
+    return { key, has, ts, when, label, desc, thumb }
+  }catch{
+    return { key, has:false, ts:null, when:null as string|null, label:'', desc:'', thumb:'' }
   }
 }
 
@@ -1069,7 +1106,7 @@ function renderAssets(){
     meta.style.flex = '1'
     meta.style.color = '#a8b0ff'
     meta.style.fontSize = '12px'
-    meta.innerHTML = `<strong style="color:#a0e7ff">${asset.name}</strong> · ${asset.type || 'file'} · ${formatBytes(asset.size)}`
+    meta.innerHTML = `<strong style="color:#a0e7ff">${asset.name}</strong> ┬À ${asset.type || 'file'} ┬À ${formatBytes(asset.size)}`
 
     const actions = document.createElement('div')
     actions.style.display = 'flex'
@@ -1116,6 +1153,7 @@ function addLocalAssets(files: FileList | File[]){
 nextBtn.onclick = () => engine.next()
 
 const SAVE_KEY = 'aurora:minimal:quicksave'
+const slotKey = (n:number)=> `aurora:minimal:slot${n}`
 saveBtn.onclick = () => {
   const snap = engine.snapshot()
   const meta = lastStepMeta || metaFromState()
@@ -1152,7 +1190,7 @@ continueBtn.onclick = () => {
 }
 
 function saveToSlot(n: number){
-  const key = `aurora:minimal:slot${n}`
+  const key = slotKey(n)
   try{
     // Confirm overwrite if an existing save is present
     try{
@@ -1167,14 +1205,16 @@ function saveToSlot(n: number){
     const snap = engine.snapshot()
     localStorage.setItem(key, JSON.stringify(snap))
     localStorage.setItem(`${key}:ts`, String(Date.now()))
-    writeStepMeta(`${key}:meta`, lastStepMeta || metaFromState())
+    const meta = lastStepMeta || metaFromState()
+    writeStepMeta(`${key}:meta`, meta)
     // Generate and store a thumbnail
     captureThumbnail(engine.getPublicState()).then(url=>{ try { if(url) localStorage.setItem(`${key}:thumb`, url); refreshSlotThumb(n) } catch {} })
-    slotStatus.textContent = `Saved to ${n}`
+    const desc = formatStepMeta(meta)
+    slotStatus.textContent = desc ? `Saved ${n} (${desc})` : `Saved to ${n}`
   }catch{ slotStatus.textContent = `Save ${n} failed` }
 }
 function loadFromSlot(n: number){
-  const key = `aurora:minimal:slot${n}`
+  const key = slotKey(n)
   try{
     const raw = localStorage.getItem(key)
     if(!raw){ slotStatus.textContent = `No save ${n}`; return }
@@ -1252,7 +1292,7 @@ function loadImage(src: string): Promise<HTMLImageElement>{
 }
 
 function refreshSlotThumb(n: number){
-  const key = `aurora:minimal:slot${n}:thumb`
+  const key = `${slotKey(n)}:thumb`
   const img = n===1 ? slot1thumb : n===2 ? slot2thumb : slot3thumb
   try{ const url = localStorage.getItem(key); img.src = url || '' }catch{ img.src = '' }
 }
@@ -1317,19 +1357,17 @@ function renderSaves(){
     row.style.padding = '6px 8px'
     const img = document.createElement('img')
     img.style.width = '96px'; img.style.height = '54px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.border = '1px solid #27304a'
-    const key = `aurora:minimal:slot${n}`
-    try { img.src = localStorage.getItem(`${key}:thumb`) || '' } catch { img.src = '' }
+    const info = readSlotInfo(n)
+    img.src = info.thumb || ''
     const meta = document.createElement('div')
     meta.style.flex = '1'
     meta.style.color = '#a8b0ff'
     meta.style.fontSize = '12px'
-    const ts = localStorage.getItem(`${key}:ts`)
-    const label = localStorage.getItem(`${key}:label`) || ''
-    const when = ts ? new Date(parseInt(ts)).toLocaleString() : '—'
-    const metaObj = readStepMeta(`${key}:meta`)
-    const desc = formatStepMeta(metaObj)
-    meta.textContent = label ? `${label} — ${when}` : when
-    if(desc){
+    const when = info.when || 'Empty slot'
+    const label = info.label
+    const desc = info.desc
+    meta.textContent = info.has ? (label ? `${label} — ${when}` : when) : 'Empty slot'
+    if(info.has && desc){
       const sub = document.createElement('div')
       sub.style.color = '#7082c1'
       sub.style.fontSize = '11px'
@@ -1350,27 +1388,37 @@ function renderSaves(){
     renameB.className = 'secondary'
     renameB.textContent = 'Rename'
     renameB.onclick = ()=>{
-      const cur = localStorage.getItem(`${key}:label`) || ''
+      if(!info.has){ slotStatus.textContent = `No save ${n} to rename`; return }
+      const cur = info.label || info.desc || ''
       const name = window.prompt('Slot name:', cur)
-      if(name!=null){ try{ localStorage.setItem(`${key}:label`, name.trim()) }catch{}; renderSaves() }
-    }
-      const delB = document.createElement('button')
-      delB.className = 'secondary'
-      delB.textContent = 'Delete'
-      delB.onclick = ()=>{
-        const has = !!localStorage.getItem(key)
-      if(!has){ slotStatus.textContent = `No save ${n}`; return }
-      const ok = window.confirm(`Delete slot ${n}?`)
+      if(name==null) return
+      const trimmed = name.trim()
+      if(trimmed === cur.trim()) return
+      const ok = window.confirm(`Rename slot ${n} to "${trimmed || 'Untitled'}"?`)
       if(!ok) return
-        try{
-          localStorage.removeItem(key)
-          localStorage.removeItem(`${key}:ts`)
-          localStorage.removeItem(`${key}:thumb`)
-          localStorage.removeItem(`${key}:label`)
-          localStorage.removeItem(`${key}:meta`)
-        }catch{}
-        renderSaves()
-      }
+      try{ localStorage.setItem(`${info.key}:label`, trimmed) }catch{}
+      renderSaves()
+      slotStatus.textContent = `Renamed slot ${n}`
+    }
+    const delB = document.createElement('button')
+    delB.className = 'secondary'
+    delB.textContent = 'Delete'
+    delB.onclick = ()=>{
+      const fresh = readSlotInfo(n)
+      if(!fresh.has){ slotStatus.textContent = `No save ${n}`; return }
+      const summary = fresh.desc || fresh.when || ''
+      const ok = window.confirm(`Delete slot ${n}? ${summary ? `(${summary})` : ''}`.trim())
+      if(!ok) return
+      try{
+        localStorage.removeItem(fresh.key)
+        localStorage.removeItem(`${fresh.key}:ts`)
+        localStorage.removeItem(`${fresh.key}:thumb`)
+        localStorage.removeItem(`${fresh.key}:label`)
+        localStorage.removeItem(`${fresh.key}:meta`)
+      }catch{}
+      renderSaves()
+      slotStatus.textContent = `Deleted slot ${n}`
+    }
     actions.appendChild(saveB)
     actions.appendChild(loadB)
     actions.appendChild(renameB)
@@ -1399,7 +1447,7 @@ function updateMusicStatus(){
   const track = engine.getPublicState().music
   const volPct = Math.round((prefs.volume || 0) * 100)
   const volLabel = prefs.muted ? 'Muted' : `Vol ${volPct}%`
-  musicStatus.textContent = track ? `${track} — ${isPlaying? 'Playing':'Paused'} — ${volLabel}` : `No track — ${volLabel}`
+  musicStatus.textContent = track ? `${track} ÔÇö ${isPlaying? 'Playing':'Paused'} ÔÇö ${volLabel}` : `No track ÔÇö ${volLabel}`
 }
 on('music:track-change', ()=> { /* engine updates track */ updateMusicStatus() })
 on('music:play', ()=> { isPlaying = true; updateMusicStatus() })
@@ -1478,7 +1526,7 @@ function toggleHotkeyHelp(){
     </div>
     <div style="display:grid; grid-template-columns: auto 1fr; gap:6px 12px">
       <div>Space/Enter</div><div>Next</div>
-      <div>→</div><div>Next</div>
+      <div>ÔåÆ</div><div>Next</div>
       <div>A</div><div>Toggle Auto</div>
       <div>C</div><div>Toggle Auto-Choose</div>
       <div>F</div><div>Toggle Skip Transitions</div>
@@ -1692,7 +1740,7 @@ function oneTimeHint(id: string, message: string){
   }catch{}
 }
 
-oneTimeHint('hotkeys', 'Tip: Press ? for shortcuts — Space/Enter: Next, A: Auto, Ctrl+S: Save')
+oneTimeHint('hotkeys', 'Tip: Press ? for shortcuts ÔÇö Space/Enter: Next, A: Auto, Ctrl+S: Save')
 
 // Shortcuts button opens overlay
 openShortcutsBtn.onclick = () => toggleHotkeyHelp()
@@ -1712,7 +1760,7 @@ function setControlTitles(){
   openBacklogBtn.title = 'Open Backlog (B)'
   openSavesBtn.title = 'Open Saves (S)'
   openShortcutsBtn.title = 'Show Shortcuts (?)'
-  nextBtn.title = 'Next (Space / Enter / →)'
+  nextBtn.title = 'Next (Space / Enter / ÔåÆ)'
   saveBtn.title = 'Quick Save (Ctrl+S)'
   loadBtn.title = 'Quick Load (Ctrl+L)'
   musicPlayBtn.title = 'Play music (M)'
@@ -1731,7 +1779,7 @@ function isProbablyMobile(){ return (window.matchMedia && window.matchMedia('(po
 if(isProbablyMobile()) oneTimeHint('tap', 'Tip: Tap anywhere on the scene to advance')
 
 // -----------------------------
-// Onboarding modal — show once on first run
+// Onboarding modal ÔÇö show once on first run
 // -----------------------------
 function showOnboarding(){ if(onboardingEl){ onboardingEl.style.display = 'flex'; trapFocusIn(onboardingEl) } }
 function hideOnboarding(){ if(onboardingEl){ onboardingEl.style.display = 'none'; releaseFocusTrap() } }
@@ -2154,13 +2202,13 @@ function updateDebugHud(){
     const flags = (st.flags||[]) as string[]
     const spriteIds = Object.keys(st.sprites||{})
     const lines: string[] = []
-    lines.push(`Scene: ${st.sceneId || '—'} (#${st.index ?? 0})`)
-    lines.push(`Background: ${st.bg || '—'}`)
-    lines.push(`Music: ${st.music || '—'} ${isPlaying? '(playing)':'(paused)'}`)
+    lines.push(`Scene: ${st.sceneId || 'ÔÇö'} (#${st.index ?? 0})`)
+    lines.push(`Background: ${st.bg || 'ÔÇö'}`)
+    lines.push(`Music: ${st.music || 'ÔÇö'} ${isPlaying? '(playing)':'(paused)'}`)
     lines.push(`AutoAdvance: ${engine.isAutoAdvance()}`)
     lines.push(`AutoDecide: ${engine.isAutoDecide()}`)
-    lines.push(`Sprites (${spriteIds.length}): ${spriteIds.join(', ') || '—'}`)
-    lines.push(`Flags (${flags.length}): ${flags.join(', ') || '—'}`)
+    lines.push(`Sprites (${spriteIds.length}): ${spriteIds.join(', ') || 'ÔÇö'}`)
+    lines.push(`Flags (${flags.length}): ${flags.join(', ') || 'ÔÇö'}`)
     lines.push(`SkipTransitions: ${prefs.skipTransitions}`)
     lines.push(`Hotkeys: ${prefs.hotkeysEnabled}`)
     lines.push(`Volume: ${prefs.muted? 'Muted' : Math.round(prefs.volume*100)+'%'}`)
@@ -2168,3 +2216,8 @@ function updateDebugHud(){
     debugHud.innerHTML = `<pre style="margin:0; font-family:monospace; font-size:11px; line-height:1.4; white-space:pre-wrap;">${lines.join('\n')}</pre>`
   }catch{ /* ignore */ }
 }
+
+
+
+
+

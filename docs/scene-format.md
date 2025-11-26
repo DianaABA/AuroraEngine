@@ -65,6 +65,20 @@ The engine emits `vn:transition` when a transition step occurs and then pauses a
 - Show: `{ type:'spriteShow', id, src }`
 - Swap (expression change): `{ type:'spriteSwap', id, src }`
 - Hide: `{ type:'spriteHide', id }`
+- Motion (per step):
+  - `x`/`y` in percents, or `yPct` for clearer intent (e.g., `yPct: -10` lifts the sprite)
+  - `moveTo` alias for a single hop: `{ moveTo: { x, yPct, ms, ease } }`
+  - `moveMs` / `moveEase` set defaults; per-step `moves` array supports chained hops:
+```jsonc
+{ "type":"spriteShow", "id":"hero", "src":"hero.png", "x":50, "yPct":-4,
+  "moveTo": { "x": 60, "yPct": -12, "ms": 400, "ease": "easeOutBack" },
+  "moves": [
+    { "x": 70, "yPct": -8, "ms": 280, "ease": "easeOutQuad" },
+    { "x": 55, "yPct": -6, "ms": 220 }
+  ]
+}
+```
+  - Easing presets: `easeOutBack`, `easeInOutCubic`, `easeOutQuad`, `easeOutExpo`, `easeInOutSine` (or provide a custom CSS easing string).
 
 Helper utilities can build these from a character-expression map:
 ```ts

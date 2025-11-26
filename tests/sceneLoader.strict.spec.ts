@@ -36,4 +36,42 @@ describe('sceneLoader strict validation', () => {
     expect(scenes.length).toBe(1)
     expect(scenes[0].id).toBe('ok')
   })
+
+  it('accepts sprite yPct on placement, moveTo, and moves', () => {
+    const scene = {
+      id: 'intro',
+      steps: [{
+        type: 'spriteShow',
+        id: 'hero',
+        src: 'hero.png',
+        yPct: -10,
+        moveTo: { x: 60, yPct: -12, ms: 400, ease: 'easeOutBack' },
+        moves: [
+          { x: 70, yPct: -8, ms: 280 },
+          { x: 55, yPct: -6, ms: 200, ease: 'easeInOutSine' }
+        ]
+      }]
+    }
+    const { errors } = validateSceneDefStrict(scene as any)
+    expect(errors).toHaveLength(0)
+  })
+
+  it('surfaces validation errors for invalid yPct values', () => {
+    const scene = {
+      id: 'intro',
+      steps: [{
+        type: 'spriteShow',
+        id: 'hero',
+        src: 'hero.png',
+        yPct: 'up' as any,
+        moveTo: { yPct: 'down' as any },
+        moves: [ { yPct: 'nope' as any } ]
+      }]
+    }
+    const { errors } = validateSceneDefStrict(scene as any)
+    const codes = errors.map(e => e.code)
+    expect(codes).toContain('sprite.yPct_not_number')
+    expect(codes).toContain('sprite.moveTo.yPct_not_number')
+    expect(codes).toContain('sprite.moves.yPct_not_number')
+  })
 })

@@ -29,6 +29,10 @@ on('vn:step', ({ step }) => ui.render(step))
 
 The vanilla renderer is intentionally minimal: dialogue line, choices, and a Next button that calls `engine.next()`. Style it with your own classes; default markup uses `.ae-line`, `.ae-name`, `.ae-text`, `.ae-choices`, `.ae-next`.
 
+Quality-of-life extras:
+- Keyboard navigation for choices (arrow keys/Home/End, Enter/Space to select)
+- Auto/default hint badges when `vn:auto-choice-hint` events are emitted (enable `autoEmit` on the engine)
+
 ## Status
 
-Prototype; API may change. Not published to npm yet.*** End Patch
+Prototype; API may change. Not published to npm yet.

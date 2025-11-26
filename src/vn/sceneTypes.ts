@@ -1,7 +1,7 @@
 export type DialogueStep = { type:'dialogue'; char?: string; text: string }
-export type SpritePlacement = { pos?: 'left'|'center'|'right'; x?: number; y?: number; z?: number; scale?: number }
-export type SpriteMotion = { moveMs?: number; moveEase?: string; moveTo?: { x?: number; y?: number; ms?: number; ease?: string } }
-export type SpriteMove = { type: 'move'; x?: number; y?: number; ms?: number; ease?: string }
+export type SpritePlacement = { pos?: 'left'|'center'|'right'; x?: number; y?: number; yPct?: number; z?: number; scale?: number }
+export type SpriteMotion = { moveMs?: number; moveEase?: string; moveTo?: { x?: number; y?: number; yPct?: number; ms?: number; ease?: string } }
+export type SpriteMove = { type: 'move'; x?: number; y?: number; yPct?: number; ms?: number; ease?: string }
 export type SpriteTimeline = { moves?: SpriteMove[] }
 export type SpriteShowStep = { type:'spriteShow'; id: string; src: string; role?: string } & SpritePlacement & SpriteMotion & SpriteTimeline
 export type SpriteHideStep = { type:'spriteHide'; id: string }

@@ -21,6 +21,7 @@ function validateSpriteMotion(raw: any, path: string, push: (issue: ValidationIs
   if(raw.pos!==undefined && !SPRITE_POS.has(raw.pos)) push({ path: `${path}.pos`, code:'sprite.pos_invalid', message:'Sprite pos must be left/center/right' })
   if(raw.x!==undefined && typeof raw.x!=='number') push({ path: `${path}.x`, code:'sprite.x_not_number', message:'Sprite x must be a number (percentage)' })
   if(raw.y!==undefined && typeof raw.y!=='number') push({ path: `${path}.y`, code:'sprite.y_not_number', message:'Sprite y must be a number (percentage offset)' })
+  if(raw.yPct!==undefined && typeof raw.yPct!=='number') push({ path: `${path}.yPct`, code:'sprite.yPct_not_number', message:'Sprite yPct must be a number (percentage offset)' })
   if(raw.z!==undefined && typeof raw.z!=='number') push({ path: `${path}.z`, code:'sprite.z_not_number', message:'Sprite z must be a number' })
   if(raw.scale!==undefined && typeof raw.scale!=='number') push({ path: `${path}.scale`, code:'sprite.scale_not_number', message:'Sprite scale must be a number' })
   if(raw.moveMs!==undefined && typeof raw.moveMs!=='number') push({ path: `${path}.moveMs`, code:'sprite.moveMs_not_number', message:'moveMs must be a number' })
@@ -30,6 +31,7 @@ function validateSpriteMotion(raw: any, path: string, push: (issue: ValidationIs
     else {
       if(raw.moveTo.x!==undefined && typeof raw.moveTo.x!=='number') push({ path:`${path}.moveTo.x`, code:'sprite.moveTo.x_not_number', message:'moveTo.x must be a number' })
       if(raw.moveTo.y!==undefined && typeof raw.moveTo.y!=='number') push({ path:`${path}.moveTo.y`, code:'sprite.moveTo.y_not_number', message:'moveTo.y must be a number' })
+      if(raw.moveTo.yPct!==undefined && typeof raw.moveTo.yPct!=='number') push({ path:`${path}.moveTo.yPct`, code:'sprite.moveTo.yPct_not_number', message:'moveTo.yPct must be a number' })
       if(raw.moveTo.ms!==undefined && typeof raw.moveTo.ms!=='number') push({ path:`${path}.moveTo.ms`, code:'sprite.moveTo.ms_not_number', message:'moveTo.ms must be a number' })
       if(raw.moveTo.ease!==undefined && typeof raw.moveTo.ease!=='string') push({ path:`${path}.moveTo.ease`, code:'sprite.moveTo.ease_not_string', message:'moveTo.ease must be a string' })
     }
@@ -41,6 +43,7 @@ function validateSpriteMotion(raw: any, path: string, push: (issue: ValidationIs
       if(mv.type && mv.type !== 'move') push({ path: mp, code:'sprite.moves.invalid_type', message:'move type must be "move"' })
       if(mv.x!==undefined && typeof mv.x !== 'number') push({ path:`${mp}.x`, code:'sprite.moves.x_not_number', message:'move.x must be number' })
       if(mv.y!==undefined && typeof mv.y !== 'number') push({ path:`${mp}.y`, code:'sprite.moves.y_not_number', message:'move.y must be number' })
+      if(mv.yPct!==undefined && typeof mv.yPct !== 'number') push({ path:`${mp}.yPct`, code:'sprite.moves.yPct_not_number', message:'move.yPct must be number' })
       if(mv.ms!==undefined && typeof mv.ms !== 'number') push({ path:`${mp}.ms`, code:'sprite.moves.ms_not_number', message:'move.ms must be number' })
       if(mv.ease!==undefined && typeof mv.ease !== 'string') push({ path:`${mp}.ease`, code:'sprite.moves.ease_not_string', message:'move.ease must be string' })
     })
