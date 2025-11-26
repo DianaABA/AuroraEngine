@@ -65,6 +65,8 @@ const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTM
 const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButtonElement
 const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonElement
 const toggleThemeBtn = document.getElementById('toggleTheme') as HTMLButtonElement | null
+const aiModeSelect = document.getElementById('aiModeSelect') as HTMLSelectElement | null
+const aiApiKeyInput = document.getElementById('aiApiKey') as HTMLInputElement | null
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
@@ -158,8 +160,8 @@ const THEMES: Record<ThemeName, { bgTop: string; bgBottom: string; panelBg: stri
 type Locale = 'en' | 'es'
 type Locale = 'en' | 'es' | 'ar'
 type ThemeName = 'night' | 'sand'
-type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName }
-let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night' }
+type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName; aiMode?: 'local' | 'byok'; aiApiKey?: string }
+let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night', aiMode: 'local', aiApiKey: '' }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
@@ -1422,6 +1424,8 @@ function refreshSettingsUI(){
   langEsBtn.textContent = t('spanish')
   langArBtn.textContent = 'Arabic'
   if(toggleThemeBtn) toggleThemeBtn.textContent = `Theme: ${prefs.theme === 'night' ? 'Night' : 'Sand'}`
+   if(aiModeSelect) aiModeSelect.value = prefs.aiMode || 'local'
+   if(aiApiKeyInput) aiApiKeyInput.value = prefs.aiApiKey || ''
   try{
     if(bgFadeMsInput){ bgFadeMsInput.value = String(prefs.bgFadeMs); bgFadeMsVal.textContent = `${prefs.bgFadeMs}ms` }
     if(spriteFadeMsInput){ spriteFadeMsInput.value = String(prefs.spriteFadeMs); spriteFadeMsVal.textContent = `${prefs.spriteFadeMs}ms` }
@@ -1434,6 +1438,19 @@ if(toggleDebugHudBtn){ toggleDebugHudBtn.onclick = () => { prefs.showDebugHud = 
 toggleHotkeysBtn.onclick = () => { prefs.hotkeysEnabled = !prefs.hotkeysEnabled; savePrefs(); refreshSettingsUI() }
 if(toggleThemeBtn){ toggleThemeBtn.onclick = () => { prefs.theme = prefs.theme === 'night' ? 'sand' : 'night'; applyTheme(prefs.theme); savePrefs(); refreshSettingsUI() } }
 clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
+if(aiModeSelect){
+  aiModeSelect.onchange = () => {
+    prefs.aiMode = aiModeSelect.value === 'byok' ? 'byok' : 'local'
+    savePrefs()
+    refreshSettingsUI()
+  }
+}
+if(aiApiKeyInput){
+  aiApiKeyInput.onchange = () => {
+    prefs.aiApiKey = aiApiKeyInput.value || ''
+    savePrefs()
+  }
+}
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langArBtn.onclick = () => { prefs.locale = 'ar'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
