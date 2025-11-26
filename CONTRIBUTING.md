@@ -1,99 +1,290 @@
+🛠️ Contributing to Aurora Engine
 
-# Contributing to AuroraEngine
+Thank you for your interest in contributing to Aurora Engine!
+Aurora is built for creators — writers, educators, developers — and your contribution helps make storytelling more accessible for everyone.
 
-Thank you for your interest in making AuroraEngine better! We welcome everyone—beginners, writers, artists, testers, and coders. You don’t need to be a developer to help out.
+This guide explains how to contribute, coding standards, workflow, and ways non-technical contributors can help.
 
----
+If anything is unclear or you need support, please open a Discussion.
+We’re friendly. 😊
 
-## 🚩 Your First Issue
+🌟 Ways You Can Contribute
 
-Want to get started? Look for issues labeled **"good first issue"** or **"help wanted"** in the Issues tab. These are perfect for beginners and non-coders!
+Aurora welcomes all kinds of contributions:
 
-You can also:
-- Suggest a new feature or improvement
-- Report a bug or typo
-- Help test new features
-- Improve documentation or tutorials
-- Share feedback on usability
+💻 Code Contributions
 
----
+- Engine improvements
+- Fixing bugs
+- Improving error messages
+- Adding new step types
+- Performance optimizations
+- AI Mode integrations (Local + BYOK)
 
-## 🐞 How to Submit a Bug
+🎨 Design & UX
 
-1. Go to the Issues tab and click **New Issue**
-2. Choose **Bug report**
-3. Fill in:
-  - What you expected to happen
-  - What actually happened
-  - Steps to reproduce (if possible)
-  - Screenshots or error messages (if any)
-4. Add the **type:bug** label if you can, or mention "bug" in your title/description
+- UI templates
+- Character art packs
+- Background packs
+- Themes for visual novels
+- Icons & logos
+- UX improvements for editors
 
----
+📚 Documentation
 
-## 💡 How to Suggest a Feature
+- Tutorials
+- Examples
+- Clarifications
+- Guides for writers or teachers
+- Explaining best practices
+- Fixing typos or adding missing details
 
-1. Go to the Issues tab and click **New Issue**
-2. Choose **Feature request**
-3. Describe your idea and why it would help
-4. Add the **type:feat** label if you can
+🎭 Story & Creator Contributions
 
----
+- Sample visual novels
+- Script examples (script mode)
+- Scene templates
+- AI prompt packs
+- Gamified education examples
+- Learning flows & branching structures
 
-## 🏷️ Issue Labels
+🧪 Testing
 
-We use labels like **good first issue**, **help wanted**, **type:bug**, and **type:feat** to organize issues. See `ISSUE_LABELS.md` for the full list and what they mean.
+- Reporting bugs
+- Testing on various browsers
+- Mobile/React Native compatibility
+- Stress testing editor or AI tools
 
-If you’re not sure which label to use, don’t worry—a maintainer will help!
+🧱 Project Structure (Quick Overview)
+```
+/packages
+  engine-core/        → Core engine logic
+  ui/                 → UI components for projects
+  ai/                 → AI Mode (Local + BYOK client)
+  utils/              → Shared helpers
 
----
+/templates
+  minimal/            → Starter template (React)
+  rn-template/        → React Native template (planned)
 
-## 🛠️ Getting Started (for Coders)
+/docs                → Documentation & guides
+```
 
-1. Fork the repo and clone your fork
-2. Node.js LTS recommended (v18+)
-3. Install dependencies:
-  ```bash
-  npm ci
-  ```
-4. Build (if needed):
-  ```bash
-  npm run build
-  ```
-5. Run tests (if available):
-  ```bash
-  npm test
-  ```
+🧭 Development Workflow
 
----
+1. Fork the Repository
 
-## 🗂️ Project Structure (high-level)
-- `src/` — core engine (VN runtime, state, utils)
-- `docs/` — documentation
-- `tests/` — unit tests
+Click Fork and create your copy.
 
----
+2. Clone Your Fork
+```bash
+git clone https://github.com/YOUR_USERNAME/AuroraEngine
+cd AuroraEngine
+```
 
-## 📝 Workflow (for Pull Requests)
-1. Create a branch: `feat/your-idea` or `fix/issue-123`
-2. Make focused changes with clear commits
-3. Ensure `npm test` passes
-4. Open a Pull Request (PR) with a clear description, screenshots or logs if relevant
+3. Install Dependencies
+```bash
+npm install
+```
 
----
+4. Run the Engine Template
+```bash
+cd templates/minimal
+npm run dev
+```
 
-## ✍️ Commit Messages
-Use a clear, conventional style:
-- `feat: add transition fade` — new feature
-- `fix: handle empty scene steps` — bug fix
-- `docs: update README tutorial` — docs only
-- `refactor: simplify expression parser` — refactor, no behavior change
+5. Create a Feature Branch
+```bash
+git checkout -b feature/my-improvement
+```
 
----
+6. Make Your Changes
 
-## 🧑‍🤝‍🧑 Community
-- Be kind and constructive
-- Assume good intent
-- We welcome first-time contributors and non-coders
+Follow the coding guidelines below.
 
-Thank you for making AuroraEngine better!
+7. Test Your Work
+
+- Run the minimal template
+- Test scenes
+- Ensure no breaking changes
+- Validate editor behavior (if relevant)
+
+8. Commit with Clear Messages
+```bash
+git commit -m "feat(engine): add new step handler"
+git commit -m "fix: scene validation error"
+```
+
+9. Push to Your Fork
+```bash
+git push origin feature/my-improvement
+```
+
+10. Open a Pull Request
+
+Please include:
+
+- What you changed
+- Why you changed it
+- Screenshots or code snippets (if UI/AI-related)
+- Any breaking changes
+
+We’ll review it as quickly as possible.
+
+🧩 Coding Guidelines
+
+**TypeScript Only**
+
+Aurora uses TypeScript for core engine modules.
+
+**Follow the Public API Contract**
+
+Avoid exposing new top-level APIs without discussion.
+
+**Document New Features**
+
+Anything added should include:
+
+- JSDoc comments
+- A quick usage example
+- Updated docs if needed
+
+**Keep Engine Core Minimal**
+
+If you add:
+
+- custom effects
+- editor UI
+- extra utilities
+
+Please put them in appropriate packages, not engine-core.
+
+**Prefer Composition Over Special Cases**
+
+Example:
+✔ Add a generic “step handler registry”
+✘ Hardcode a new step type inside core
+
+🌐 AI Mode Contribution Guidelines
+
+Aurora supports two modes:
+
+- Local AI Mode (browser-based LLM)
+- BYOK Mode (OpenAI/Anthropic/Groq)
+
+If contributing to AI Mode:
+
+✔ Keep abstraction unified
+
+- Use the shared AIClient interface.
+
+✔ No API keys in repo
+
+- Users provide keys in their local project.
+
+✔ Consider resource usage
+
+Local models should be:
+
+- lightweight
+- quantized
+- browser-friendly
+
+✔ Provide test prompts
+
+Any new prompt should include examples.
+
+🖼 Asset Contribution Guidelines
+
+If adding art (optional):
+
+- Must be licensed CC0 / MIT / your own
+- No copyrighted characters or logos
+- Prefer PNG/WebP
+- Optimize images under 2–3MB each
+
+Please add assets to `/examples` or `/docs/static`.
+
+🐞 Reporting Issues
+
+Please include:
+
+- Steps to reproduce
+- Engine version
+- Browser or device info
+- Scene JSON or script snippet
+- Expected vs actual behavior
+
+Template:
+
+**Describe the bug**
+A clear and concise description...
+
+**To Reproduce**
+1. Run...
+2. Load scene...
+3. Click...
+
+**Expected behavior**
+I expected…
+
+**Screenshots**
+If applicable…
+
+**Environment**
+- Browser:
+- OS:
+- Engine version:
+
+🔧 Feature Suggestions
+
+We love ideas, especially:
+
+- New step types
+- Editor UX improvements
+- AI-assisted writing tools
+- Scene visualization tools
+- Deployment helpers
+- React Native expansions
+
+Please open a feature request with:
+
+**Problem**
+What problem does this solve?
+
+**Proposal**
+How would this work?
+
+**Examples**
+Scene examples, screenshots, or flow diagrams.
+
+**Advantages**
+What creators get out of it?
+
+💬 Setup Help & Discussions
+
+If you're unsure where to start:
+
+👉 Open a Discussion
+👉 Ask for guidance
+👉 Share your VN ideas
+👉 Contribute story examples
+👉 Show your work-in-progress
+
+We welcome both technical & non-technical help.
+
+🤝 Code of Conduct
+
+- Be kind.
+- Be respectful.
+- Help others learn.
+
+Aurora is for creators of all skill levels — beginners, writers, teachers, devs.
+Keep the community inclusive and positive.
+
+⭐ Final Notes
+
+Thank you for helping shape Aurora Engine.
+Every improvement — code, art, docs, story examples — helps someone build their first game, publish their first story, or create a new learning experience.
+
+Let’s build something beautiful together. ✨
