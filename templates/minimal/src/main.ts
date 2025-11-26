@@ -1,4 +1,5 @@
 ﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+import { computeBranchEdges } from './editorHelpers'
 import { resolveYPercent } from './helpers'
 
 const nameEl = document.getElementById('name')!
@@ -119,10 +120,12 @@ const editorImport = document.getElementById('editorImport') as HTMLButtonElemen
 const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
+const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
 let errorOverlayOpen = false
+import { computeBranchEdges } from './editorHelpers'
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -1921,17 +1924,16 @@ function renderEditorPreview(){
     })()
   }
   const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
-  const scenes: EditorScene[] = []
-  for(const [id, scene] of Object.entries(editorScenes)){
-    const stored = { ...scene, steps: scene.steps || [] }
-    scenes.push(stored)
+  const { scenes, issues } = buildEditorScenesBundle()
+  editorPreview.textContent = JSON.stringify(scenes || [], null, 2)
+  if(issues.length && editorErrors){
+    editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
   }
-  for(const extra of bundleIds){
-    if(extra && !scenes.find(s=> s.id === extra)){
-      scenes.push({ id: extra, steps: [] })
-    }
+  if(!issues.length){
+    renderBranchMap(scenes || [])
+  } else {
+    renderBranchMap([])
   }
-  editorPreview.textContent = JSON.stringify(scenes, null, 2)
   try{
     const state = {
       active: activeSceneId,
@@ -1962,13 +1964,98 @@ function renderEditorSteps(){
     row.style.color = '#a8b0ff'
     row.style.fontSize = '12px'
     row.textContent = `#${idx} ${st.type} ${st.text||st.src||''} ${st.goto? '-> '+st.goto:''}`
+    const actions = document.createElement('div')
+    actions.style.display = 'inline-flex'
+    actions.style.gap = '6px'
+    actions.style.marginLeft = '8px'
+    const up = document.createElement('button')
+    up.className = 'secondary'
+    up.textContent = '↑'
+    up.disabled = idx === 0
+    up.onclick = ()=>{ [editorSteps[idx-1], editorSteps[idx]] = [editorSteps[idx], editorSteps[idx-1]]; renderEditorSteps(); renderEditorPreview() }
+    const down = document.createElement('button')
+    down.className = 'secondary'
+    down.textContent = '↓'
+    down.disabled = idx === editorSteps.length-1
+    down.onclick = ()=>{ [editorSteps[idx+1], editorSteps[idx]] = [editorSteps[idx], editorSteps[idx+1]]; renderEditorSteps(); renderEditorPreview() }
+    const edit = document.createElement('button')
+    edit.className = 'secondary'
+    edit.textContent = 'Edit'
+    edit.onclick = ()=>{
+      const current = JSON.stringify(st, null, 2)
+      const next = prompt('Edit step JSON', current)
+      if(!next) return
+      try{
+        const parsed = JSON.parse(next)
+        editorSteps[idx] = parsed
+        renderEditorSteps()
+        renderEditorPreview()
+      }catch(e:any){
+        if(editorErrors) editorErrors.textContent = 'Edit failed: '+ (e?.message||e)
+      }
+    }
     const del = document.createElement('button')
     del.className = 'secondary'
-    del.style.marginLeft = '8px'
     del.textContent = 'Delete'
     del.onclick = ()=>{ editorSteps.splice(idx,1); renderEditorSteps(); renderEditorPreview() }
-    row.appendChild(del)
+    actions.appendChild(up)
+    actions.appendChild(down)
+    actions.appendChild(edit)
+    actions.appendChild(del)
+    row.appendChild(actions)
     editorStepsEl.appendChild(row)
+  })
+}
+
+function buildEditorScenesBundle(){
+  const sceneId = editorSceneId?.value?.trim() || 'custom'
+  const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
+  const scenes: EditorScene[] = []
+  const base: any = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
+  try{
+    const rolesRaw = editorSceneRoles?.value?.trim()
+    if(rolesRaw) base.roles = JSON.parse(rolesRaw)
+  }catch(e:any){
+    return { scenes: [], issues: [{ code:'roles.invalid_json', path:'roles', message: e?.message||'Invalid roles JSON' } as any] }
+  }
+  scenes.push(base)
+  for(const extra of bundleIds){
+    if(extra && extra !== sceneId){
+      scenes.push({ id: extra, steps: [] })
+    }
+  }
+  const json = JSON.stringify(scenes)
+  const { scenes: parsed, errors } = loadScenesFromJsonStrict(json)
+  const issues = [...(errors||[]), ...validateSceneLinksStrict(parsed)]
+  return { scenes: parsed as any[], issues, sceneId }
+}
+
+function renderBranchMap(scenes: EditorScene[]){
+  if(!branchMap){
+    return
+  }
+  branchMap.innerHTML = ''
+  if(!scenes || scenes.length === 0){
+    const p = document.createElement('div')
+    p.textContent = 'Add scenes to visualize branching.'
+    p.style.color = '#a8b0ff'
+    branchMap.appendChild(p)
+    return
+  }
+  const { edges, sceneIds: ids } = computeBranchEdges(scenes)
+  const list = document.createElement('div')
+  list.style.display = 'flex'
+  list.style.flexDirection = 'column'
+  list.style.gap = '6px'
+  ids.forEach(id=>{
+    const row = document.createElement('div')
+    row.style.display = 'flex'
+    row.style.flexWrap = 'wrap'
+    row.style.gap = '6px'
+    const targets = edges.filter(e=> e.from === id)
+    const hasUnknown = targets.some(t=> !ids.has(t.to))
+    row.innerHTML = `<strong style="color:#a0e7ff">${id}</strong> → ${targets.length ? targets.map(t=> `${t.to} (${t.via})`).join(', ') : '—'}${hasUnknown ? ' (unknown target!)':''}`
+    branchMap.appendChild(row)
   })
 }
 
@@ -2039,23 +2126,7 @@ if(editorAddStep){ editorAddStep.onclick = editorAdd }
 if(editorReset){ editorReset.onclick = ()=>{ editorSteps = []; if(editorErrors) editorErrors.textContent = ''; renderEditorSteps(); renderEditorPreview() } }
 if(editorLoad){
   editorLoad.onclick = ()=>{
-    const sceneId = editorSceneId?.value?.trim() || 'custom'
-    const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
-    const scenes: EditorScene[] = []
-    const base: any = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
-    try{
-      const rolesRaw = editorSceneRoles?.value?.trim()
-      if(rolesRaw) base.roles = JSON.parse(rolesRaw)
-    }catch{}
-    scenes.push(base)
-    for(const extra of bundleIds){
-      if(extra && extra !== sceneId){
-        scenes.push({ id: extra, steps: [] })
-      }
-    }
-    const json = JSON.stringify(scenes)
-    const { scenes: parsed, errors } = loadScenesFromJsonStrict(json)
-    const issues = [...(errors||[]), ...validateSceneLinksStrict(parsed)]
+    const { scenes, issues, sceneId } = buildEditorScenesBundle()
     if(issues.length){
       const msg = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
       if(editorErrors) editorErrors.textContent = msg
@@ -2063,26 +2134,20 @@ if(editorLoad){
       return
     }
     if(editorErrors) editorErrors.textContent = ''
-    editorPreview!.textContent = JSON.stringify(parsed, null, 2)
-    bootFromScenes(parsed as any, sceneId)
+    editorPreview!.textContent = JSON.stringify(scenes, null, 2)
+    bootFromScenes(scenes as any, sceneId || 'custom')
   }
 }
 if(editorDownload){
   editorDownload.onclick = ()=>{
-    const sceneId = editorSceneId?.value?.trim() || 'custom'
-    const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
-    const scenes: EditorScene[] = []
-    const base: any = { id: sceneId, bg: editorBg?.value?.trim() || undefined, music: editorMusic?.value?.trim() || undefined, steps: editorSteps.slice() }
-    try{
-      const rolesRaw = editorSceneRoles?.value?.trim()
-      if(rolesRaw) base.roles = JSON.parse(rolesRaw)
-    }catch{}
-    scenes.push(base)
-    for(const extra of bundleIds){
-      if(extra && extra !== sceneId){
-        scenes.push({ id: extra, steps: [] })
-      }
+    const { scenes, issues } = buildEditorScenesBundle()
+    if(issues.length){
+      const msg = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      if(editorErrors) editorErrors.textContent = msg
+      showErrorOverlay('Editor scene validation failed', msg)
+      return
     }
+    const sceneId = editorSceneId?.value?.trim() || 'custom'
     const json = JSON.stringify(scenes, null, 2)
     const blob = new Blob([json], { type:'application/json' })
     const url = URL.createObjectURL(blob)
