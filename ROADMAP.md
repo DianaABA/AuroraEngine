@@ -178,12 +178,12 @@ Phase 1: Creator Comfort (v1.1)
 - DONE: Docs: writer vs developer start pages; non-coder flow (Docs -> JSON via AI -> lint -> run).
 - DONE: Smooth polish pass on overlay copy/contrast and inline “Example pack” chooser description in template/README.
 
-Phase 2: Scene Editor (v1.2)
+Phase 2: Scene Editor (v1.2) — DONE
 - Minimal web editor (load/save JSON, reorder steps, inline edit, schema + lint).
-- v1.2.x: timeline/branch map (nodes=scenes, edges=goto).
+- Timeline/branch map: list + SVG mini-graph with broken-link badge/hover tooltips.
 
-Phase 3: Achievements/Gallery/Jukebox (v1.3)
-- Finalize data shapes; add query APIs and event hooks; keep data-driven (no hard-coded unlocks).
+Phase 3: Achievements/Gallery/Jukebox (v1.3) — DONE
+- Data shapes finalized and demoed; query APIs/event hooks in place; data-driven unlocks (no hard-coded logic).
 
 Phase 4: Localization & Theming (v1.4)
 - String tables or textId maps; RTL support; basic font/color theming for template UI.

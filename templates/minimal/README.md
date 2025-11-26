@@ -16,11 +16,21 @@ Now includes:
 - Drag-and-drop asset helper (local preview for images/audio; copy object URLs)
 - Codex pins/favorites with filters and badges
 - In-browser “Load Custom Scenes” (paste JSON, strict-validated)
+- Lightweight Scene Editor: add/edit/reorder steps, strict validation/link checks, branch map with SVG nodes/edges (broken link badge), local save/load, JSON import/export, and a lint button for custom scenes.
 
 ## Example Packs
 - Start buttons: Example (branching), Expressions (sprite expressions + CG unlock), Achievements (achievement + CG unlock path).
 - Or pick a pack in the dropdown and press Load Pack.
 - Use these to see features without editing JSON.
+
+## Scene Editor walkthrough
+- Open the “Lightweight Scene Editor” panel.
+- Enter `scene id`, optional `bg`/`music`, and add steps. Edit/reorder/delete inline.
+- Build & Run validates strictly (schema + links) and starts from your scene.
+- Save/Load buttons persist the editor state to localStorage.
+- Branch map shows scene nodes and goto/choice edges (red badge for broken links) plus a mini SVG graph.
+- Hover over nodes/edges in the SVG for tooltips; broken links are summarized above the list.
+- Custom JSON area has a Lint button (strict + link checks) and uses the error overlay on failures.
 
 ## One-click Starts
 - **StackBlitz:** `https://stackblitz.com/github/DianaABA/AuroraEngine?file=templates/minimal/src/main.ts&terminal=dev`

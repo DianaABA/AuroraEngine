@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aurora Minimal</title>
     <style>
-      html,body,#app{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
-      #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#151a2d,#28314a);overflow:hidden}
+      :root{
+        --font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Helvetica, Arial;
+        --bg-top:#151a2d;
+        --bg-bottom:#28314a;
+        --panel-bg:rgba(0,0,0,.5);
+        --panel-border:#27304a;
+        --text:#fff;
+        --accent:#3e59ff;
+        --accent-2:#2b2f43;
+        --accent-3:#a0e7ff;
+      }
+      html,body,#app{height:100%;margin:0;font-family:var(--font-family)}
+      #stage{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));overflow:hidden}
       /* Ensure proper stacking order so UI stays above background */
       #bg{position:absolute;inset:0;z-index:0;pointer-events:none}
       #bg .bg-layer{position:absolute;inset:0;background-size:cover;background-position:center center;filter:brightness(.95);opacity:0;transition:opacity 400ms ease-in-out}
@@ -18,12 +29,12 @@
       #content{position:relative;z-index:5}
       #sprites img{position:absolute;bottom:0;max-height:60vh;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));transform:translateX(-50%)}
       #bgLabel{position:absolute;top:8px;left:8px;color:#a8b0ff;font-size:12px;opacity:.8}
-      #content{margin-top:auto;background:rgba(0,0,0,.5);color:#fff;padding:16px}
+      #content{margin-top:auto;background:var(--panel-bg);color:var(--text);padding:16px}
       #name{font-weight:600;color:#a0e7ff}
       #choices{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-      button{background:#3e59ff;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+      button{background:var(--accent);color:var(--text);border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
       button:focus-visible{outline:2px solid #a0e7ff; outline-offset:2px}
-      button.secondary{background:#2b2f43}
+      button.secondary{background:var(--accent-2)}
       #notifications{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:60vw;}
       /* Error overlay */
       #errorOverlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;}
@@ -113,6 +124,7 @@
               <button id="toggleDebugToasts" class="secondary">Debug Toasts: Off</button>
               <button id="toggleHotkeys" class="secondary">Hotkeys: On</button>
               <button id="toggleDebugHud" class="secondary">Debug HUD: Off</button>
+              <button id="toggleTheme" class="secondary">Theme: Night</button>
               <button id="clearSeen" class="secondary">Clear Seen</button>
               <span style="font-size:12px; color:#a8b0ff">Skips dialogue lines you have already seen.</span>
             </div>
@@ -132,6 +144,7 @@
               <strong style="color:#a0e7ff; font-size:12px" id="langLabel">Language</strong>
               <button id="langEn" class="secondary">English</button>
               <button id="langEs" class="secondary">Spanish</button>
+              <button id="langAr" class="secondary">Arabic</button>
             </div>
           </div>
           <div id="line"><span id="name"></span><span id="text"></span></div>
@@ -265,6 +278,7 @@
             <div id="branchMap" style="margin-top:8px; padding:10px; background:#0b1020; border:1px solid #27304a; border-radius:8px; color:#a8b0ff; font-size:12px;">
               <strong style="color:#a0e7ff;">Branch map (scenes & goto targets)</strong>
               <div id="branchMapBody" style="margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
+              <div id="branchMapGraph" style="margin-top:8px; background:#0b1020; border:1px solid #27304a; border-radius:8px; padding:6px;"></div>
             </div>
           </div>
           <div id="savesPanel" style="display:none; padding:12px; background:rgba(0,0,0,.7); border-radius:8px; margin:12px 0;">

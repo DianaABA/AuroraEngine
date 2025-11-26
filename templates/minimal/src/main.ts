@@ -67,6 +67,7 @@ const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonE
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
+const langArBtn = document.getElementById('langAr') as HTMLButtonElement
 const openBacklogBtn = document.getElementById('openBacklog') as HTMLButtonElement
 const closeBacklogBtn = document.getElementById('closeBacklog') as HTMLButtonElement
 const backlogPanel = document.getElementById('backlogPanel') as HTMLDivElement
@@ -124,6 +125,7 @@ const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement |
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
+const branchMapGraph = document.getElementById('branchMapGraph') as HTMLDivElement | null
 const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
@@ -2062,9 +2064,18 @@ function renderBranchMap(scenes: EditorScene[]){
     p.textContent = 'Add scenes to visualize branching.'
     p.style.color = '#a8b0ff'
     branchMap.appendChild(p)
+    if(branchMapGraph) branchMapGraph.innerHTML = ''
     return
   }
   const { edges, sceneIds: ids } = computeBranchEdges(scenes)
+  const brokenCount = edges.filter(e=> !ids.has(e.to)).length
+  if(brokenCount > 0){
+    const warn = document.createElement('div')
+    warn.style.color = '#fca5a5'
+    warn.style.fontWeight = '600'
+    warn.textContent = `Broken links: ${brokenCount} target(s) missing`
+    branchMap.appendChild(warn)
+  }
   const list = document.createElement('div')
   list.style.display = 'flex'
   list.style.flexDirection = 'column'
@@ -2080,6 +2091,73 @@ function renderBranchMap(scenes: EditorScene[]){
     row.innerHTML = `<strong style="color:#a0e7ff">${id}</strong> → ${targets.length ? targets.map(t=> `${t.to} (${t.via})`).join(', ') : '—'} ${badge}`
     branchMap.appendChild(row)
   })
+  renderBranchMapGraph(Array.from(ids), edges)
+}
+
+function renderBranchMapGraph(ids: string[], edges: { from: string; to: string; via: string }[]){
+  if(!branchMapGraph) return
+  branchMapGraph.innerHTML = ''
+  const width = Math.max(branchMapGraph.clientWidth || 0, 560)
+  const height = 320
+  const radius = Math.min(width, height)/2 - 48
+  const cx = width/2
+  const cy = height/2
+  const positions: Record<string, {x:number;y:number}> = {}
+  ids.forEach((id, idx)=>{
+    const angle = (Math.PI * 2 * idx) / Math.max(ids.length, 1)
+    positions[id] = {
+      x: cx + radius * Math.cos(angle),
+      y: cy + radius * Math.sin(angle)
+    }
+  })
+  const svgNS = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(svgNS, 'svg')
+  svg.setAttribute('width', `${width}`)
+  svg.setAttribute('height', `${height}`)
+  svg.style.display = 'block'
+  svg.style.background = '#0b1020'
+  // edges
+  edges.forEach(e=>{
+    const from = positions[e.from]
+    const to = positions[e.to]
+    if(!from || !to) return
+    const line = document.createElementNS(svgNS, 'line')
+    line.setAttribute('x1', `${from.x}`)
+    line.setAttribute('y1', `${from.y}`)
+    line.setAttribute('x2', `${to.x}`)
+    line.setAttribute('y2', `${to.y}`)
+    line.setAttribute('stroke', ids.includes(e.to) ? '#4f6bff' : '#fca5a5')
+    line.setAttribute('stroke-width', '2')
+    const title = document.createElementNS(svgNS, 'title')
+    title.textContent = `${e.from} → ${e.to} (${e.via})`
+    svg.appendChild(line)
+    line.appendChild(title)
+  })
+  // nodes
+  ids.forEach(id=>{
+    const pos = positions[id]
+    const circle = document.createElementNS(svgNS, 'circle')
+    circle.setAttribute('cx', `${pos.x}`)
+    circle.setAttribute('cy', `${pos.y}`)
+    circle.setAttribute('r', '16')
+    circle.setAttribute('fill', '#1f2937')
+    circle.setAttribute('stroke', '#4f6bff')
+    circle.setAttribute('stroke-width', '2')
+    const title = document.createElementNS(svgNS, 'title')
+    title.textContent = id
+    circle.appendChild(title)
+    svg.appendChild(circle)
+    const text = document.createElementNS(svgNS, 'text')
+    text.setAttribute('x', `${pos.x}`)
+    text.setAttribute('y', `${pos.y + 4}`)
+    text.setAttribute('fill', '#a0e7ff')
+    text.setAttribute('font-size', '10')
+    text.setAttribute('font-family', 'monospace')
+    text.setAttribute('text-anchor', 'middle')
+    text.textContent = id
+    svg.appendChild(text)
+  })
+  branchMapGraph.appendChild(svg)
 }
 
 function editorAdd(){
