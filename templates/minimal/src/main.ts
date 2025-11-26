@@ -1,6 +1,5 @@
 ﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
 import { getAIAdapters } from '../../src/utils/aiModes'
-import { getAIAdapters } from '../../src/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
 import { resolveYPercent } from './helpers'
 
@@ -105,6 +104,11 @@ const customJsonInput = document.getElementById('customJson') as HTMLTextAreaEle
 const customLoadBtn = document.getElementById('customLoadBtn') as HTMLButtonElement | null
 const customFileBtn = document.getElementById('customFileBtn') as HTMLButtonElement | null
 const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
+const aiPromptInput = document.getElementById('aiPrompt') as HTMLInputElement | null
+const aiGenerateBtn = document.getElementById('aiGenerateBtn') as HTMLButtonElement | null
+const aiGenerateToEditorBtn = document.getElementById('aiGenerateToEditorBtn') as HTMLButtonElement | null
+const aiFixBtn = document.getElementById('aiFixBtn') as HTMLButtonElement | null
+const aiStatus = document.getElementById('aiStatus') as HTMLSpanElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
@@ -2094,6 +2098,149 @@ if(customLoadBtn && customJsonInput){
     }
   }
 }
+
+// AI helpers (generation + grammar) with validation before load
+function setAIStatus(msg: string){
+  if(aiStatus) aiStatus.textContent = msg
+}
+
+function validateSceneJsonText(json: string){
+  try{
+    const { scenes, errors } = loadScenesFromJsonStrict(json)
+    const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+    const issues = [...(errors||[]), ...(linkIssues||[])]
+    if(issues.length){
+      const details = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+      return { ok:false, scenes:[], message: details }
+    }
+    return { ok:true, scenes, message:`Valid (${scenes.length} scene${scenes.length===1?'':'s'})` }
+  }catch(e:any){
+    return { ok:false, scenes:[], message: 'Validation failed: '+(e?.message||e) }
+  }
+}
+
+function applyScenesToEditor(scenes: any[]){
+  if(!scenes?.length) return
+  editorScenes = {}
+  for(const sc of scenes as any[]){
+    if(!sc?.id) continue
+    editorScenes[sc.id] = { id: sc.id, bg: sc.bg, music: sc.music, roles: sc.roles, steps: Array.isArray(sc.steps)? sc.steps : [] }
+  }
+  activeSceneId = scenes[0].id || 'custom'
+  loadSceneToForm(activeSceneId)
+  renderEditorSteps()
+  renderEditorPreview()
+}
+
+async function streamOpenAI(apiKey: string, messages: {role:string; content:string}[], onChunk: (text:string)=>void){
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':`Bearer ${apiKey}`
+    },
+    body: JSON.stringify({ model:'gpt-4o-mini', stream:true, temperature:0.2, messages })
+  })
+  if(!resp.body) throw new Error('No response body')
+  const reader = resp.body.getReader()
+  const decoder = new TextDecoder()
+  let acc = ''
+  while(true){
+    const { value, done } = await reader.read()
+    if(done) break
+    const chunk = decoder.decode(value, { stream:true })
+    const lines = chunk.split('\n').map(l=> l.trim()).filter(Boolean)
+    for(const line of lines){
+      if(!line.startsWith('data:')) continue
+      const payload = line.replace('data:','').trim()
+      if(payload === '[DONE]') continue
+      try{
+        const parsed = JSON.parse(payload)
+        const delta = parsed?.choices?.[0]?.delta?.content
+        if(delta){
+          acc += delta
+          onChunk(delta)
+        }
+      }catch{
+        // ignore parse errors on partial chunks
+      }
+    }
+  }
+  return acc
+}
+
+async function aiGenerate(toEditor: boolean){
+  if(!aiPromptInput){ setAIStatus('No prompt input'); return }
+  const prompt = aiPromptInput.value.trim()
+  if(!prompt){ setAIStatus('Enter a prompt first.'); return }
+  setAIStatus('Preparing model...')
+  try{
+    const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
+    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '')
+    let text = ''
+    if(mode === 'byok' && prefs.aiApiKey){
+      // stream remote for faster feedback
+      if(customJsonInput) customJsonInput.value = ''
+      text = await streamOpenAI(prefs.aiApiKey, [
+        { role:'system', content:'You are an AuroraEngine authoring assistant. Output Aurora scene JSON only.' },
+        { role:'user', content: prompt }
+      ], chunk=>{
+        if(customJsonInput) customJsonInput.value += chunk
+        setAIStatus(`Receiving... ${customJsonInput?.value.length || 0} chars`)
+      })
+    } else if(adapter.local){
+      text = await adapter.local.convertScriptToJSON(prompt)
+    } else if(adapter.remote){
+      text = await adapter.remote.generateScene(prompt)
+    } else {
+      throw new Error('No AI adapter available')
+    }
+    if(customJsonInput) customJsonInput.value = text
+    const res = validateSceneJsonText(text)
+    customErrors!.textContent = res.message
+    if(res.ok){
+      showErrorOverlay('AI generation', res.message)
+      if(toEditor){
+        applyScenesToEditor(res.scenes as any)
+      }
+    } else {
+      showErrorOverlay('AI generation errors', res.message)
+    }
+  }catch(e:any){
+    const msg = e?.message || String(e)
+    setAIStatus('Error: '+msg)
+    showErrorOverlay('AI generation failed', msg)
+  }
+}
+
+async function aiFixGrammar(){
+  if(!aiPromptInput || !customJsonInput){ setAIStatus('No prompt or text'); return }
+  const text = customJsonInput.value.trim() || aiPromptInput.value.trim()
+  if(!text){ setAIStatus('Paste text to fix.'); return }
+  setAIStatus('Fixing grammar...')
+  try{
+    const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
+    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '')
+    let fixed = ''
+    if(mode === 'byok' && adapter.remote){
+      fixed = await adapter.remote.extendDialogue({}, `Fix grammar:\n${text}`)
+    } else if(adapter.local){
+      fixed = await adapter.local.fixGrammar(text)
+    } else {
+      throw new Error('No AI adapter available')
+    }
+    customJsonInput.value = fixed
+    setAIStatus('Grammar fixed.')
+  }catch(e:any){
+    const msg = e?.message || String(e)
+    setAIStatus('Error: '+msg)
+    showErrorOverlay('AI grammar fix failed', msg)
+  }
+}
+
+if(aiGenerateBtn){ aiGenerateBtn.onclick = ()=> aiGenerate(false) }
+if(aiGenerateToEditorBtn){ aiGenerateToEditorBtn.onclick = ()=> aiGenerate(true) }
+if(aiFixBtn){ aiFixBtn.onclick = ()=> aiFixGrammar() }
 
 // Lightweight scene editor (browser-only helper)
 function renderEditorPreview(){

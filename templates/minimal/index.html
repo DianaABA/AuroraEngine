@@ -227,6 +227,13 @@
               <button id="customLoadBtn">Run</button>
               <button id="customLint" class="secondary">Lint JSON</button>
             </div>
+            <div style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <input id="aiPrompt" placeholder="AI prompt (scene idea or script)" style="flex:1; min-width:260px; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
+              <button id="aiGenerateBtn" class="secondary">AI: Generate</button>
+              <button id="aiGenerateToEditorBtn" class="secondary">AI → Editor</button>
+              <button id="aiFixBtn" class="secondary">AI: Fix Grammar</button>
+              <span id="aiStatus" style="font-size:12px; color:#a8b0ff;"></span>
+            </div>
             <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
             <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
           </div>

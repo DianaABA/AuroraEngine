@@ -1,3 +1,10 @@
+# Aurora Engine
+
+## Recent Updates
+
+- **November 27, 2025**: Updated `getAIAdapters` integration, added AI authoring panel, and validated functionality with tests. See `aiModes.ts` and `templates/minimal/src/main.ts` for details.
+
+---
 
 1. **Download or clone this repo** (green "Code" button above)
  
