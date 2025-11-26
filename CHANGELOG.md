@@ -51,3 +51,13 @@ All notable changes to this project are documented here.
 - Tests:
   - Coverage for loader validation, auto-advance, transitions
   - Effects tests for music/background/sprites/sfx
+
+## v0.0.5 — 2025-11-26
+
+- Docs: Consolidated and cleaned `README.md` (shorter Quick Start, moved developer notes to `docs/developer.md`, added FAQ & troubleshooting).
+- Docs: added `docs/developer.md` with build instructions and troubleshooting; added `docs/scene-schema.json` for scene validation.
+- Build: updated root `tsconfig.json` to add `paths` mapping for `aurora-engine` and excluded `templates/minimal/src` from the root project to avoid strict-mode template errors.
+- Template: minor fixes to `templates/minimal` and committed helper/generated artifacts for convenience (JS / `.d.ts` files) to make the demo easier to run out-of-the-box.
+- CI: updated workflow and minor fixes to `scripts/scene-lint.js`.
+- Package: updated `package.json`/`package-lock.json` to reflect toolchain and package changes.
+
