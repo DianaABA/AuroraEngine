@@ -192,10 +192,27 @@ Phase 5: Packaging & Export (v1.5+)
 - Guides for Netlify/Vercel/GitHub Pages; reference Electron/Tauri repo.
 - Optional CLI to copy template, install deps, set project name.
 
-## AI Helper Modes (planned rollout)
-- 🟩 Mode 1 — Local AI (free & offline): browser-only inference via WebLLM/Transformers.js (small quantized models). Features: script→scene JSON, grammar/typo fix, missing-field detection. No keys, no cost, no data leaves device. Ideal for beginners/school/light editing.
-- 🟦 Mode 2 — BYOK (OpenAI/Anthropic/Groq/DeepSeek/any OpenAI-compatible): premium dialogue/branching/emotion tagging/scene polish; fast if provider allows. Keys stored only in localStorage. Functions: generateScene, extendDialogue, suggestBranches, generateAssets (future).
-- Rationale: free instant helper for newcomers, zero infra cost, no key storage risk, high-quality path for advanced users.
+## AI Helper Modes (Planned Rollout)
+- 🟩 Mode 1 — Local AI (free/offline): browser inference (WebLLM/Transformers.js, tiny quantized models). Features: script→scene JSON, grammar/typo fix, missing-field detection. No keys, no data leaves device.
+- 🟦 Mode 2 — BYOK (OpenAI/Anthropic/Groq/DeepSeek/compat): premium dialogue/branching/emotion tagging/scene polish; keys in localStorage only.
+- Why: free path for beginners; zero infra cost; high-quality path for advanced users without storing keys server-side.
 
+## New Roadmap (next iteration)
+1) AI UX & Safety
+   - Provider/model selector (local default to tiny model; BYOK supports OpenAI-compatible endpoints).
+   - Streamed JSON assembler with incremental strict/schema validation and “try fix” flow.
+   - Error UI for rate limits, incomplete JSON, model download size/progress; cancel option.
+2) AI Coverage
+   - Tests: AI prefs persistence, adapter selection (mocked), validation fallback for textId/RTL.
+   - Docs: provider options, streaming behavior, model size/cache notes.
+3) Content Examples
+   - Add RTL/textId example pack demonstrating locale toggle + dir switch.
+   - Add BYOK demo scene with placeholders and guardrails.
+4) Packaging & Starter
+   - Publish a starter repo scaffold (`aurora-engine-starter`) with template copied to /app, CI (build + scene-lint), deploy buttons wired.
+   - Optional CLI to copy template, set project name, install deps.
+5) Release Hygiene
+   - Keep `release:check` in CI; add AI adapter mock tests.
+   - Quick pre-release run: textId/RTL/theme toggle sanity, AI generate to editor with mock adapter.
 
 

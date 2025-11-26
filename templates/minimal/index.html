@@ -134,6 +134,12 @@
                 <option value="local">Local (offline)</option>
                 <option value="byok">BYOK (API key)</option>
               </select>
+              <select id="aiProvider" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff">
+                <option value="openai">OpenAI-compatible</option>
+              </select>
+              <input id="aiModel" placeholder="Model (e.g., gpt-4o-mini)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
+              <input id="aiBaseUrl" placeholder="Base URL (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:180px" />
+              <input id="aiLocalModel" placeholder="Local model id (e.g., Qwen2-0.5B)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:200px" />
               <input id="aiApiKey" placeholder="API key (stored locally)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:220px" />
               <span style="font-size:12px; color:#a8b0ff">Keys stay in your browser; local mode uses offline models.</span>
             </div>
@@ -168,6 +174,7 @@
               <option value="example">Example</option>
               <option value="expressions">Expressions</option>
               <option value="achievements">Achievements</option>
+              <option value="rtl">RTL/TextId Demo</option>
             </select>
             <button id="loadPack" class="secondary">Load Pack</button>
             <button id="autoBtn" class="secondary">Auto: Off</button>

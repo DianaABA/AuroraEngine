@@ -67,6 +67,10 @@ const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButto
 const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonElement
 const toggleThemeBtn = document.getElementById('toggleTheme') as HTMLButtonElement | null
 const aiModeSelect = document.getElementById('aiModeSelect') as HTMLSelectElement | null
+const aiProviderSelect = document.getElementById('aiProvider') as HTMLSelectElement | null
+const aiModelInput = document.getElementById('aiModel') as HTMLInputElement | null
+const aiBaseUrlInput = document.getElementById('aiBaseUrl') as HTMLInputElement | null
+const aiLocalModelInput = document.getElementById('aiLocalModel') as HTMLInputElement | null
 const aiApiKeyInput = document.getElementById('aiApiKey') as HTMLInputElement | null
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
@@ -166,8 +170,16 @@ const THEMES: Record<ThemeName, { bgTop: string; bgBottom: string; panelBg: stri
 type Locale = 'en' | 'es'
 type Locale = 'en' | 'es' | 'ar'
 type ThemeName = 'night' | 'sand'
-type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName; aiMode?: 'local' | 'byok'; aiApiKey?: string }
-let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night', aiMode: 'local', aiApiKey: '' }
+type Prefs = {
+  skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean;
+  volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName;
+  aiMode?: 'local' | 'byok'; aiApiKey?: string; aiProvider?: string; aiModel?: string; aiBaseUrl?: string; aiLocalModel?: string
+}
+let prefs: Prefs = {
+  skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true,
+  volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night',
+  aiMode: 'local', aiApiKey: '', aiProvider: 'openai', aiModel: 'gpt-4o-mini', aiBaseUrl: '', aiLocalModel: 'Qwen2-0.5B-Instruct-q4f16_1-MLC'
+}
 // AI adapter cache & helpers (initialized on demand)
 let _aiAdapters: Awaited<ReturnType<typeof getAIAdapters>> | null = null
 let _aiModeCached: string | undefined
@@ -1451,8 +1463,12 @@ function refreshSettingsUI(){
   langEsBtn.textContent = t('spanish')
   langArBtn.textContent = 'Arabic'
   if(toggleThemeBtn) toggleThemeBtn.textContent = `Theme: ${prefs.theme === 'night' ? 'Night' : 'Sand'}`
-   if(aiModeSelect) aiModeSelect.value = prefs.aiMode || 'local'
-   if(aiApiKeyInput) aiApiKeyInput.value = prefs.aiApiKey || ''
+  if(aiModeSelect) aiModeSelect.value = prefs.aiMode || 'local'
+  if(aiProviderSelect) aiProviderSelect.value = prefs.aiProvider || 'openai'
+  if(aiModelInput) aiModelInput.value = prefs.aiModel || ''
+  if(aiBaseUrlInput) aiBaseUrlInput.value = prefs.aiBaseUrl || ''
+  if(aiLocalModelInput) aiLocalModelInput.value = prefs.aiLocalModel || ''
+  if(aiApiKeyInput) aiApiKeyInput.value = prefs.aiApiKey || ''
   try{
     if(bgFadeMsInput){ bgFadeMsInput.value = String(prefs.bgFadeMs); bgFadeMsVal.textContent = `${prefs.bgFadeMs}ms` }
     if(spriteFadeMsInput){ spriteFadeMsInput.value = String(prefs.spriteFadeMs); spriteFadeMsVal.textContent = `${prefs.spriteFadeMs}ms` }
@@ -1472,6 +1488,18 @@ if(aiModeSelect){
     refreshSettingsUI()
     ensureAIAdapters(true)
   }
+}
+if(aiProviderSelect){
+  aiProviderSelect.onchange = ()=>{ prefs.aiProvider = aiProviderSelect.value || 'openai'; savePrefs(); ensureAIAdapters(true) }
+}
+if(aiModelInput){
+  aiModelInput.onchange = ()=>{ prefs.aiModel = aiModelInput.value || ''; savePrefs(); ensureAIAdapters(true) }
+}
+if(aiBaseUrlInput){
+  aiBaseUrlInput.onchange = ()=>{ prefs.aiBaseUrl = aiBaseUrlInput.value || ''; savePrefs(); ensureAIAdapters(true) }
+}
+if(aiLocalModelInput){
+  aiLocalModelInput.onchange = ()=>{ prefs.aiLocalModel = aiLocalModelInput.value || ''; savePrefs(); ensureAIAdapters(true) }
 }
 if(aiApiKeyInput){
   aiApiKeyInput.onchange = () => {
@@ -2176,7 +2204,12 @@ async function aiGenerate(toEditor: boolean){
   setAIStatus('Preparing model...')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
-    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '')
+    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
+      provider: (prefs.aiProvider as any) || 'openai',
+      baseURL: prefs.aiBaseUrl || undefined,
+      model: prefs.aiModel || undefined,
+      localModel: prefs.aiLocalModel || undefined
+    })
     let text = ''
     if(mode === 'byok' && prefs.aiApiKey){
       // stream remote for faster feedback
@@ -2220,7 +2253,12 @@ async function aiFixGrammar(){
   setAIStatus('Fixing grammar...')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
-    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '')
+    const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
+      provider: (prefs.aiProvider as any) || 'openai',
+      baseURL: prefs.aiBaseUrl || undefined,
+      model: prefs.aiModel || undefined,
+      localModel: prefs.aiLocalModel || undefined
+    })
     let fixed = ''
     if(mode === 'byok' && adapter.remote){
       fixed = await adapter.remote.extendDialogue({}, `Fix grammar:\n${text}`)
