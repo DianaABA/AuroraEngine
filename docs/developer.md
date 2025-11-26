@@ -1,6 +1,22 @@
-## Developer build notes
+## Developer Start Here (Engine/API)
 
-Use these steps to set up and build the project locally. These are the commands that worked for the repository structure in this workspace.
+Audience: developers embedding AuroraEngine or contributing to core.
+
+### Public API surface (stable)
+- `createEngine`, `VNEngine` (config: `autoEmit`, `autoAdvance`, `autoDecide`, `maxAutoSteps`)
+- Scene loading: `loadScenes`, `loadScenesFromJsonStrict`, `loadScenesFromUrlStrict`, `validateSceneLinksStrict`, `remapRoles`
+- Runtime: `engine.start(id)`, `engine.next()`, `engine.choose(idx)`, `engine.snapshot()/restore()`, `engine.getPublicState()`
+- Auto controls: `engine.setAutoAdvance(on)`, `engine.setAutoDecide(on)`, `engine.isAutoAdvance()`, `engine.isAutoDecide()`
+- Events: `vn:step`, `vn:auto-choice`, `vn:auto-choice-hint`, `vn:auto-loop-guard`, `vn:transition`, `music:*`
+- State helpers: `Achievements`, `Gallery`, `Jukebox`
+- UI kit (optional): `@aurora-engine/ui` vanilla renderer (`createVanillaRenderer`, `styles`)
+
+### Scene schema
+- JSON Schema: `docs/scene-schema.json` (strict loader alignment; yPct/moveTo/moves supported).
+- Lint: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (structure + cross-scene goto/choice).
+
+### Build/test
+Use these steps to set up and build locally (matches CI):
 
 1. Install root dependencies (optional but recommended):
 
@@ -40,3 +56,9 @@ Troubleshooting notes
 
 Optional: regenerate type declarations
 - If you need to regenerate `.d.ts` files, run the build for the package that produces them (often the TypeScript build step inside each package). Confirm output matches the committed files before committing.
+
+
+### Exports / Packages
+- Engine core: urora-engine (npm). Public exports: see exports in package.json; schema available at urora-engine/scene-schema.json.
+- UI kit: @aurora-engine/ui (prototype; builds via 
+pm run build:ui).

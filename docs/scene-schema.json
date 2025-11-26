@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AuroraEngine Scene Bundle",
+  "type": "array",
+  "items": { "$ref": "#/definitions/Scene" },
+  "definitions": {
+    "Scene": {
+      "type": "object",
+      "required": ["id", "steps"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "bg": { "type": "string" },
+        "music": { "type": "string" },
+        "roles": { "type": "object", "additionalProperties": true },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Step" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Step": {
+      "oneOf": [
+        { "$ref": "#/definitions/DialogueStep" },
+        { "$ref": "#/definitions/ChoiceStep" },
+        { "$ref": "#/definitions/BackgroundStep" },
+        { "$ref": "#/definitions/MusicStep" },
+        { "$ref": "#/definitions/SfxStep" },
+        { "$ref": "#/definitions/SpriteShowStep" },
+        { "$ref": "#/definitions/SpriteSwapStep" },
+        { "$ref": "#/definitions/SpriteHideStep" },
+        { "$ref": "#/definitions/FlagSetStep" },
+        { "$ref": "#/definitions/GotoStep" },
+        { "$ref": "#/definitions/TransitionStep" }
+      ]
+    },
+    "DialogueStep": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "dialogue" },
+        "char": { "type": "string" },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ChoiceOption": {
+      "type": "object",
+      "required": ["label"],
+      "properties": {
+        "label": { "type": "string" },
+        "goto": { "type": "string" },
+        "setFlag": { "type": "string" },
+        "condition": { "type": "string" },
+        "weight": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "ChoiceStep": {
+      "type": "object",
+      "required": ["type", "options"],
+      "properties": {
+        "type": { "const": "choice" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/ChoiceOption" }
+        },
+        "autoSingle": { "type": "boolean" },
+        "autoStrategy": { "enum": ["firstValid", "random", "highestWeight"] }
+      },
+      "additionalProperties": false
+    },
+    "SpritePlacement": {
+      "type": "object",
+      "properties": {
+        "pos": { "enum": ["left", "center", "right"] },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "yPct": { "type": "number" },
+        "z": { "type": "number" },
+        "scale": { "type": "number" },
+        "moveMs": { "type": "number" },
+        "moveEase": { "type": "string" },
+        "moveTo": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "yPct": { "type": "number" },
+            "ms": { "type": "number" },
+            "ease": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "const": "move" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "yPct": { "type": "number" },
+              "ms": { "type": "number" },
+              "ease": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "SpriteShowStep": {
+      "allOf": [
+        { "$ref": "#/definitions/SpritePlacement" },
+        {
+          "type": "object",
+          "required": ["type", "id", "src"],
+          "properties": {
+            "type": { "const": "spriteShow" },
+            "id": { "type": "string" },
+            "src": { "type": "string" },
+            "role": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SpriteSwapStep": {
+      "allOf": [
+        { "$ref": "#/definitions/SpritePlacement" },
+        {
+          "type": "object",
+          "required": ["type", "id", "src"],
+          "properties": {
+            "type": { "const": "spriteSwap" },
+            "id": { "type": "string" },
+            "src": { "type": "string" },
+            "role": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SpriteHideStep": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "const": "spriteHide" },
+        "id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "BackgroundStep": {
+      "type": "object",
+      "required": ["type", "src"],
+      "properties": {
+        "type": { "const": "background" },
+        "src": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "MusicStep": {
+      "type": "object",
+      "required": ["type", "track"],
+      "properties": {
+        "type": { "const": "music" },
+        "track": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SfxStep": {
+      "type": "object",
+      "required": ["type", "track"],
+      "properties": {
+        "type": { "const": "sfx" },
+        "track": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "FlagSetStep": {
+      "type": "object",
+      "required": ["type", "flag"],
+      "properties": {
+        "type": { "const": "flag" },
+        "flag": { "type": "string" },
+        "value": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "GotoStep": {
+      "type": "object",
+      "required": ["type", "scene"],
+      "properties": {
+        "type": { "const": "goto" },
+        "scene": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "TransitionStep": {
+      "type": "object",
+      "required": ["type", "kind"],
+      "properties": {
+        "type": { "const": "transition" },
+        "kind": { "enum": ["fade", "slide", "zoom", "shake", "flash"] },
+        "duration": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

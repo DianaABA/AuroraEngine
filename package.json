@@ -19,7 +19,8 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./scene-schema.json": "./docs/scene-schema.json"
   },
   "scripts": {
     "start": "npm run template:minimal:dev",
@@ -35,6 +36,7 @@
     "scenes:lint": "node scripts/scene-lint.js"
   },
   "devDependencies": {
+    "ajv": "^8.17.1",
     "@types/node": "^20.11.30",
     "execa": "^8.0.1",
     "rimraf": "^5.0.5",

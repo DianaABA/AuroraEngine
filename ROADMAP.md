@@ -164,3 +164,29 @@ Planned upgrades:
 ✔ Clear examples
 ✔ Teaching-first approach
 ✔ Branding tied to Aurora’s universe (cow, squirrel, vibes)
+
+## Proposed Release Track (post-0.0.4)
+
+Phase 0: Stabilize Core (v0.9 -> v1.0)
+- Lock public API; mark internals; finalize scene schema v1 + JSON Schema + lint.
+- Core tests on branching, save/restore, expressions; README + dev-start-here.
+- Deliverable: 1.0.0 npm package; templates/minimal as starter.
+
+Phase 1: Creator Comfort (v1.1)
+- Error overlay in browser demo with friendly messages; example packs (branching/CG/achievements).
+- Docs: writer vs developer start pages; non-coder flow (Docs -> JSON via AI -> lint -> run).
+
+Phase 2: Scene Editor (v1.2)
+- Minimal web editor (load/save JSON, reorder steps, inline edit, schema + lint).
+- v1.2.x: timeline/branch map (nodes=scenes, edges=goto).
+
+Phase 3: Achievements/Gallery/Jukebox (v1.3)
+- Finalize data shapes; add query APIs and event hooks; keep data-driven (no hard-coded unlocks).
+
+Phase 4: Localization & Theming (v1.4)
+- String tables or textId maps; RTL support; basic font/color theming for template UI.
+
+Phase 5: Packaging & Export (v1.5+)
+- Guides for Netlify/Vercel/GitHub Pages; reference Electron/Tauri repo.
+- Optional CLI to copy template, install deps, set project name.
+

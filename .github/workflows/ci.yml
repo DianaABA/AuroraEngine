@@ -47,3 +47,8 @@ jobs:
           cd templates/minimal
           npm ci
           npm run build
+
+      - name: Lint scenes (strict)
+        run: |
+          npm run build
+          node scripts/scene-lint.js --file templates/minimal/public/scenes/example.json

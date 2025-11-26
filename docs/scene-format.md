@@ -54,6 +54,10 @@ A loader will transform the JSON scene into these internal steps.
 - `goto` should reference another scene `id`.
 - `end`: a special `goto` value may signal the VN end or return to menu.
 
+## Schema & Lint
+- JSON Schema: `docs/scene-schema.json` (matches strict loader, includes `yPct`/`moveTo`/`moves`).
+- Lint: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (strict validation + cross-scene goto/choice checks).
+
 ## Transitions
 - `type: 'transition'`
 - `kind`: `fade | slide | zoom | shake | flash`
