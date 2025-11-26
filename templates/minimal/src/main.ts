@@ -64,6 +64,7 @@ const toggleSkipTransitionsBtn = document.getElementById('toggleSkipTransitions'
 const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTMLButtonElement
 const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButtonElement
 const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonElement
+const toggleThemeBtn = document.getElementById('toggleTheme') as HTMLButtonElement | null
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
@@ -149,9 +150,16 @@ const CODEX_META: Record<string, { title: string; body: string; category: string
   codex_hero: { title: 'Hero', body: 'A mysterious protagonist with many expressions.', category: 'Characters' },
   codex_lab: { title: 'Laboratory', body: 'A clean, bright lab used in demonstrations.', category: 'Locations' }
 }
+
+const THEMES: Record<ThemeName, { bgTop: string; bgBottom: string; panelBg: string; panelBorder: string; accent: string; accent2: string; font: string }> = {
+  night: { bgTop:'#151a2d', bgBottom:'#28314a', panelBg:'rgba(0,0,0,.5)', panelBorder:'#27304a', accent:'#3e59ff', accent2:'#2b2f43', font:'Inter, system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial' },
+  sand: { bgTop:'#2c1e1a', bgBottom:'#8a6b4f', panelBg:'rgba(20,12,8,.55)', panelBorder:'#4a3527', accent:'#d89c4b', accent2:'#4a3527', font:'"Segoe UI", sans-serif' }
+}
 type Locale = 'en' | 'es'
-type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale }
-let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en' }
+type Locale = 'en' | 'es' | 'ar'
+type ThemeName = 'night' | 'sand'
+type Prefs = { skipSeenText: boolean; skipTransitions: boolean; showDebugToasts: boolean; showDebugHud: boolean; hotkeysEnabled: boolean; volume: number; muted: boolean; bgFadeMs: number; spriteFadeMs: number; locale: Locale; theme: ThemeName }
+let prefs: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night' }
 const PREFS_KEY = 'aurora:minimal:prefs'
 let seenLines = new Set<string>()
 const SEEN_KEY = 'aurora:minimal:seen'
@@ -262,6 +270,35 @@ function resolveEase(name?: string, fallback = 'ease-in-out'){
   return EASE_PRESETS[name] || name
 }
 
+function applyTheme(theme: ThemeName){
+  prefs.theme = theme
+  const t = THEMES[theme] || THEMES.night
+  const root = document.documentElement.style
+  root.setProperty('--bg-top', t.bgTop)
+  root.setProperty('--bg-bottom', t.bgBottom)
+  root.setProperty('--panel-bg', t.panelBg)
+  root.setProperty('--panel-border', t.panelBorder)
+  root.setProperty('--accent', t.accent)
+  root.setProperty('--accent-2', t.accent2)
+  root.setProperty('--font-family', t.font)
+}
+
+function resolveStepText(step: any){
+  const table = TEXT_TABLE[prefs.locale] || TEXT_TABLE.en
+  if(step?.textId){
+    return table[step.textId] || TEXT_TABLE.en[step.textId] || step.text || step.textId
+  }
+  return step?.text
+}
+
+function resolveChoiceLabel(opt: any){
+  const table = TEXT_TABLE[prefs.locale] || TEXT_TABLE.en
+  if(opt?.textId){
+    return table[opt.textId] || TEXT_TABLE.en[opt.textId] || opt.label || opt.textId
+  }
+  return opt?.label
+}
+
 function loadBacklog(){
   try { const raw = localStorage.getItem(BACKLOG_KEY); backlog = raw ? JSON.parse(raw) : [] } catch { backlog = [] }
 }
@@ -269,13 +306,15 @@ function saveBacklog(){
   try { localStorage.setItem(BACKLOG_KEY, JSON.stringify(backlog)) } catch {}
 }
 function loadPrefs(){
-  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en' }
+  const defaults: Prefs = { skipSeenText: false, skipTransitions: false, showDebugToasts: false, showDebugHud: false, hotkeysEnabled: true, volume: 0.8, muted: false, bgFadeMs: 400, spriteFadeMs: 220, locale: 'en', theme: 'night' }
   try {
     const raw = localStorage.getItem(PREFS_KEY)
     if(!raw){ prefs = defaults; return }
     const parsed = JSON.parse(raw)
     prefs = { ...defaults, ...parsed }
   } catch { prefs = defaults }
+  applyTheme(prefs.theme)
+  document.documentElement.dir = prefs.locale === 'ar' ? 'rtl' : 'ltr'
 }
 function savePrefs(){
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch {}
@@ -874,7 +913,7 @@ on('vn:step', ({ step, state }) => {
 
   if(step.type === 'dialogue'){
     if(step.char){ nameEl.textContent = step.char+': ' }
-    textEl.textContent = step.text
+    textEl.textContent = resolveStepText(step)
     // Mark as seen after showing
     try {
       if (state.sceneId != null) {
@@ -883,7 +922,7 @@ on('vn:step', ({ step, state }) => {
       }
     } catch {}
     // Append to backlog (cap to 200 entries)
-    backlog.push({ char: step.char, text: step.text })
+    backlog.push({ char: step.char, text: resolveStepText(step) })
     if(backlog.length > 200) backlog.shift()
     saveBacklog()
   } else if(step.type === 'choice'){
@@ -903,7 +942,7 @@ on('vn:step', ({ step, state }) => {
       const b = document.createElement('button')
       b.textContent = ''
       const label = document.createElement('span')
-      label.textContent = opt.label
+      label.textContent = resolveChoiceLabel(opt)
       b.appendChild(label)
       if(hint && hint.chosenIndex === idx){
         const badge = document.createElement('span')
@@ -1369,6 +1408,8 @@ closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none'; updateBac
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(settingsPanel) }
 closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none'; updateBackdrop() }
 function refreshSettingsUI(){
+  document.documentElement.dir = prefs.locale === 'ar' ? 'rtl' : 'ltr'
+  applyTheme(prefs.theme)
   toggleSkipSeenBtn.textContent = t('skipSeen', { on: prefs.skipSeenText })
   toggleSkipTransitionsBtn.textContent = t('skipTransitions', { on: prefs.skipTransitions })
   toggleDebugToastsBtn.textContent = t('debugToasts', { on: prefs.showDebugToasts })
@@ -1379,6 +1420,8 @@ function refreshSettingsUI(){
   ;(document.getElementById('langLabel') as HTMLElement).textContent = t('language')
   langEnBtn.textContent = t('english')
   langEsBtn.textContent = t('spanish')
+  langArBtn.textContent = 'Arabic'
+  if(toggleThemeBtn) toggleThemeBtn.textContent = `Theme: ${prefs.theme === 'night' ? 'Night' : 'Sand'}`
   try{
     if(bgFadeMsInput){ bgFadeMsInput.value = String(prefs.bgFadeMs); bgFadeMsVal.textContent = `${prefs.bgFadeMs}ms` }
     if(spriteFadeMsInput){ spriteFadeMsInput.value = String(prefs.spriteFadeMs); spriteFadeMsVal.textContent = `${prefs.spriteFadeMs}ms` }
@@ -1389,9 +1432,11 @@ toggleSkipTransitionsBtn.onclick = () => { prefs.skipTransitions = !prefs.skipTr
 toggleDebugToastsBtn.onclick = () => { prefs.showDebugToasts = !prefs.showDebugToasts; savePrefs(); refreshSettingsUI() }
 if(toggleDebugHudBtn){ toggleDebugHudBtn.onclick = () => { prefs.showDebugHud = !prefs.showDebugHud; savePrefs(); refreshSettingsUI(); updateDebugHud() } }
 toggleHotkeysBtn.onclick = () => { prefs.hotkeysEnabled = !prefs.hotkeysEnabled; savePrefs(); refreshSettingsUI() }
+if(toggleThemeBtn){ toggleThemeBtn.onclick = () => { prefs.theme = prefs.theme === 'night' ? 'sand' : 'night'; applyTheme(prefs.theme); savePrefs(); refreshSettingsUI() } }
 clearSeenBtn.onclick = () => { seenLines = new Set(); saveSeen(); }
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
+langArBtn.onclick = () => { prefs.locale = 'ar'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 bgFadeMsInput?.addEventListener('input', ()=>{ const v = parseInt(bgFadeMsInput.value||'400',10); prefs.bgFadeMs = Math.max(0, Math.min(5000, v)); savePrefs(); refreshSettingsUI() })
 spriteFadeMsInput?.addEventListener('input', ()=>{ const v = parseInt(spriteFadeMsInput.value||'220',10); prefs.spriteFadeMs = Math.max(0, Math.min(5000, v)); savePrefs(); refreshSettingsUI() })
 
@@ -2092,6 +2137,43 @@ function renderBranchMap(scenes: EditorScene[]){
     branchMap.appendChild(row)
   })
   renderBranchMapGraph(Array.from(ids), edges)
+  ar: {
+    settings: ()=> 'الإعدادات',
+    close: ()=> 'إغلاق',
+    backlog: ()=> 'السجل',
+    gallery: ()=> 'المعرض',
+    achievements: ()=> 'الإنجازات',
+    auto: (c:{on:boolean})=> `تقدم تلقائي: ${c.on? 'نعم':'لا'}`,
+    autoChoose: (c:{on:boolean})=> `اختيار تلقائي: ${c.on? 'نعم':'لا'}`,
+    skipFx: (c:{on:boolean})=> `تخطي المؤثرات: ${c.on? 'نعم':'لا'}`,
+    skipSeen: (c:{on:boolean})=> `تخطي النص السابق: ${c.on? 'نعم':'لا'}`,
+    skipTransitions: (c:{on:boolean})=> `تخطي الانتقالات: ${c.on? 'نعم':'لا'}`,
+    debugToasts: (c:{on:boolean})=> `إشعارات تصحيح: ${c.on? 'نعم':'لا'}`,
+    debugHud: (c:{on:boolean})=> `لوحة تصحيح: ${c.on? 'نعم':'لا'}`,
+    hotkeys: (c:{on:boolean})=> `اختصارات: ${c.on? 'نعم':'لا'}`,
+    clearSeen: ()=> 'مسح المشاهدة',
+    language: ()=> 'اللغة',
+    english: ()=> 'إنجليزي',
+    spanish: ()=> 'إسباني',
+    slots: ()=> 'الحفظ:',
+    saveN: (c:{n:number})=> `حفظ ${c.n}`,
+    loadN: (c:{n:number})=> `تحميل ${c.n}`,
+  }
+}
+
+const TEXT_TABLE: Record<Locale, Record<string, string>> = {
+  en: {
+    intro_greeting: 'Welcome to AuroraEngine.',
+    intro_hint: 'Tap or press space to advance.',
+  },
+  es: {
+    intro_greeting: 'Bienvenido a AuroraEngine.',
+    intro_hint: 'Toque o presione espacio para avanzar.',
+  },
+  ar: {
+    intro_greeting: 'مرحبًا بك في AuroraEngine.',
+    intro_hint: 'اضغط للمضي قدمًا.',
+  }
 }
 
 function renderBranchMapGraph(ids: string[], edges: { from: string; to: string; via: string }[]){

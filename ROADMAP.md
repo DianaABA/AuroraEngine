@@ -185,8 +185,8 @@ Phase 2: Scene Editor (v1.2) — DONE
 Phase 3: Achievements/Gallery/Jukebox (v1.3) — DONE
 - Data shapes finalized and demoed; query APIs/event hooks in place; data-driven unlocks (no hard-coded logic).
 
-Phase 4: Localization & Theming (v1.4)
-- String tables or textId maps; RTL support; basic font/color theming for template UI.
+Phase 4: Localization & Theming (v1.4) — DONE
+- String tables/textId maps with locale fallback; RTL support; theme toggle (Night/Sand) via CSS vars.
 
 Phase 5: Packaging & Export (v1.5+)
 - Guides for Netlify/Vercel/GitHub Pages; reference Electron/Tauri repo.

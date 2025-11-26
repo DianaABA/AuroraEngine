@@ -16,6 +16,7 @@ Now includes:
 - Drag-and-drop asset helper (local preview for images/audio; copy object URLs)
 - Codex pins/favorites with filters and badges
 - In-browser “Load Custom Scenes” (paste JSON, strict-validated)
+- Locale/theme: en/es/ar (RTL) with string table support for `textId`; Theme toggle (Night/Sand) via CSS vars.
 - Lightweight Scene Editor: add/edit/reorder steps, strict validation/link checks, branch map with SVG nodes/edges (broken link badge), local save/load, JSON import/export, and a lint button for custom scenes.
 
 ## Example Packs
