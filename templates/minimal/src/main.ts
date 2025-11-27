@@ -108,6 +108,7 @@ const customJsonInput = document.getElementById('customJson') as HTMLTextAreaEle
 const customLoadBtn = document.getElementById('customLoadBtn') as HTMLButtonElement | null
 const customFileBtn = document.getElementById('customFileBtn') as HTMLButtonElement | null
 const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
+const customFixBtn = document.getElementById('customFix') as HTMLButtonElement | null
 const aiPromptInput = document.getElementById('aiPrompt') as HTMLInputElement | null
 const aiGenerateBtn = document.getElementById('aiGenerateBtn') as HTMLButtonElement | null
 const aiGenerateToEditorBtn = document.getElementById('aiGenerateToEditorBtn') as HTMLButtonElement | null
@@ -2135,6 +2136,21 @@ if(customLoadBtn && customJsonInput){
       }
     }
   }
+  if(customFixBtn){
+    customFixBtn.onclick = ()=>{
+      const json = customJsonInput?.value || ''
+      if(!json.trim()){ customErrors!.textContent = 'Paste scene JSON first.'; return }
+      const attempt = incrementalValidate(json.trim())
+      if(attempt.ok && attempt.scenes){
+        customJsonInput!.value = JSON.stringify(attempt.scenes, null, 2)
+        customErrors!.textContent = `Fixed (${attempt.scenes.length} scene${attempt.scenes.length===1?'':'s'})`
+        showErrorOverlay('Custom JSON fix', customErrors!.textContent)
+      } else {
+        customErrors!.textContent = 'Could not auto-fix. Check lint errors.'
+        showErrorOverlay('Custom JSON fix', customErrors!.textContent)
+      }
+    }
+  }
 }
 
 // AI helpers (generation + grammar) with validation before load
@@ -2563,16 +2579,23 @@ function renderBranchMapGraph(ids: string[], edges: { from: string; to: string; 
   branchMapGraph.innerHTML = ''
   const width = Math.max(branchMapGraph.clientWidth || 0, 560)
   const height = 320
-  const radius = Math.min(width, height)/2 - 48
-  const cx = width/2
-  const cy = height/2
   const positions: Record<string, {x:number;y:number}> = {}
-  ids.forEach((id, idx)=>{
-    const angle = (Math.PI * 2 * idx) / Math.max(ids.length, 1)
-    positions[id] = {
-      x: cx + radius * Math.cos(angle),
-      y: cy + radius * Math.sin(angle)
-    }
+  // Basic layered layout: assign Y by topological-ish order, spread X
+  const incoming: Record<string, number> = {}
+  ids.forEach(id=> incoming[id] = 0)
+  edges.forEach(e=> { incoming[e.to] = (incoming[e.to] || 0) + 1 })
+  const layers: string[][] = [[],[],[],[]]
+  ids.forEach(id=>{
+    const layer = Math.min(3, Math.max(0, incoming[id] || 0))
+    layers[layer].push(id)
+  })
+  const layerHeight = height / Math.max(1, layers.length)
+  layers.forEach((layerIds, li)=>{
+    const y = layerHeight * (li + 0.5)
+    layerIds.forEach((id, idx)=>{
+      const spacing = width / Math.max(1, layerIds.length+1)
+      positions[id] = { x: spacing * (idx+1), y }
+    })
   })
   const svgNS = 'http://www.w3.org/2000/svg'
   const svg = document.createElementNS(svgNS, 'svg')
@@ -2621,6 +2644,36 @@ function renderBranchMapGraph(ids: string[], edges: { from: string; to: string; 
     text.textContent = id
     svg.appendChild(text)
   })
+
+  // Pan/zoom
+  let viewX = 0, viewY = 0, isDragging = false, lastX = 0, lastY = 0
+  const applyView = ()=> svg.setAttribute('viewBox', `${viewX} ${viewY} ${width} ${height}`)
+  applyView()
+  svg.addEventListener('mousedown', (e)=>{
+    isDragging = true
+    lastX = e.clientX
+    lastY = e.clientY
+    svg.style.cursor = 'grabbing'
+  })
+  window.addEventListener('mouseup', ()=>{ isDragging=false; svg.style.cursor='grab' })
+  window.addEventListener('mousemove', (e)=>{
+    if(!isDragging) return
+    const dx = e.clientX - lastX
+    const dy = e.clientY - lastY
+    viewX -= dx
+    viewY -= dy
+    lastX = e.clientX
+    lastY = e.clientY
+    applyView()
+  })
+  svg.addEventListener('wheel', (e)=>{
+    e.preventDefault()
+    const delta = Math.sign(e.deltaY)
+    const zoom = delta > 0 ? 1.1 : 0.9
+    svg.setAttribute('width', `${width * zoom}`)
+    svg.setAttribute('height', `${height * zoom}`)
+  })
+
   branchMapGraph.appendChild(svg)
 }
 
