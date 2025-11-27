@@ -12,6 +12,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,7 +63,7 @@ jobs:
           prerelease: ${{ github.ref_type != 'tag' }}
 
       - name: Publish canary to npm (if token present)
-        if: github.ref_type == 'branch' && github.ref_name == 'main' && secrets.NPM_TOKEN != ''
+        if: github.ref_type == 'branch' && github.ref_name == 'main' && env.HAS_NPM_TOKEN == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
