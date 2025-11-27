@@ -16,6 +16,13 @@ If you can write a story, you can build a game.
 
 ---
 
+🎉 Play & Explore (no code)
+
+- Quick guide: `docs/play-and-explore.md`
+- Live demo: https://chakrahearts.netlify.app/
+
+---
+
 🌟 Features
 
 ✔ Modern Visual Novel Engine
@@ -324,4 +331,3 @@ Aurora brings it to life.
 🌐 Live Demo
 
 - Novel demo built on AuroraEngine: https://chakrahearts.netlify.app/ (includes example scenes, choices, and UI polish)
-

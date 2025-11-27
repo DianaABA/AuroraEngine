@@ -68,10 +68,11 @@ const closeSettingsBtn = document.getElementById('closeSettings') as HTMLButtonE
 const settingsPanel = document.getElementById('settingsPanel') as HTMLDivElement
 const toggleSkipSeenBtn = document.getElementById('toggleSkipSeen') as HTMLButtonElement
 const toggleSkipTransitionsBtn = document.getElementById('toggleSkipTransitions') as HTMLButtonElement
-const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTMLButtonElement
-const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButtonElement
+const toggleDebugToastsBtn = document.getElementById('toggleDebugToasts') as HTMLButtonElement | null
+const toggleDebugHudBtn = document.getElementById('toggleDebugHud') as HTMLButtonElement | null
 const toggleHotkeysBtn = document.getElementById('toggleHotkeys') as HTMLButtonElement
 const toggleThemeBtn = document.getElementById('toggleTheme') as HTMLButtonElement | null
+const devToggles: (HTMLElement | null)[] = [toggleDebugHudBtn, toggleDebugToastsBtn]
 const aiModeSelect = document.getElementById('aiModeSelect') as HTMLSelectElement | null
 const aiProviderSelect = document.getElementById('aiProvider') as HTMLSelectElement | null
 const aiModelInput = document.getElementById('aiModel') as HTMLInputElement | null
@@ -1583,7 +1584,7 @@ function refreshSettingsUI(){
   applyTheme(prefs.theme)
   toggleSkipSeenBtn.textContent = t('skipSeen', { on: prefs.skipSeenText })
   toggleSkipTransitionsBtn.textContent = t('skipTransitions', { on: prefs.skipTransitions })
-  toggleDebugToastsBtn.textContent = t('debugToasts', { on: prefs.showDebugToasts })
+  if(toggleDebugToastsBtn) toggleDebugToastsBtn.textContent = t('debugToasts', { on: prefs.showDebugToasts })
   if(toggleDebugHudBtn) toggleDebugHudBtn.textContent = t('debugHud', { on: prefs.showDebugHud })
   toggleHotkeysBtn.textContent = t('hotkeys', { on: prefs.hotkeysEnabled })
   ;(document.getElementById('settingsTitle') as HTMLElement).textContent = t('settings')
@@ -1606,7 +1607,7 @@ function refreshSettingsUI(){
 }
 toggleSkipSeenBtn.onclick = () => { prefs.skipSeenText = !prefs.skipSeenText; savePrefs(); refreshSettingsUI() }
 toggleSkipTransitionsBtn.onclick = () => { prefs.skipTransitions = !prefs.skipTransitions; skipFx = prefs.skipTransitions; savePrefs(); refreshSettingsUI(); refreshSkipFx() }
-toggleDebugToastsBtn.onclick = () => { prefs.showDebugToasts = !prefs.showDebugToasts; savePrefs(); refreshSettingsUI() }
+if(toggleDebugToastsBtn){ toggleDebugToastsBtn.onclick = () => { prefs.showDebugToasts = !prefs.showDebugToasts; savePrefs(); refreshSettingsUI() } }
 if(toggleDebugHudBtn){ toggleDebugHudBtn.onclick = () => { prefs.showDebugHud = !prefs.showDebugHud; savePrefs(); refreshSettingsUI(); updateDebugHud() } }
 toggleHotkeysBtn.onclick = () => { prefs.hotkeysEnabled = !prefs.hotkeysEnabled; savePrefs(); refreshSettingsUI() }
 if(toggleThemeBtn){ toggleThemeBtn.onclick = () => { prefs.theme = prefs.theme === 'night' ? 'sand' : 'night'; applyTheme(prefs.theme); savePrefs(); refreshSettingsUI() } }
