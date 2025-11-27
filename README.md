@@ -77,6 +77,11 @@ Enables:
 
 ---
 
+## Play & Explore (no code)
+
+- Quick guide: `docs/play-and-explore.md`
+- Live demo: https://chakrahearts.netlify.app/
+
 ## Quick Start (React Template)
 
 ```bash

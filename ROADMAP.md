@@ -226,5 +226,11 @@ Phase 5: Packaging & Export (v1.5+)
    - Add “How it was built” blurb + link to chakrahearts.netlify.app in docs/template.
 5) Release guardrails
    - CI dry-run for npm publish token presence; versioning rule notes in release checklist.
+6) Player-first simplification
+   - Add a “Play & Explore” doc (non-tech quickstart: launch demo, switch packs, controls, save/load).
+   - Relabel UI for plain language (“Start Scene” vs Build, “Story File” vs JSON); hide dev-only controls behind an “Advanced” toggle/accordion.
+   - Keep only core packs in default view; move experimental/debug packs to Advanced.
+   - Default debug HUD/toasts off; error overlay uses action text (“Fix”/“Load new”).
+   - Prune legacy/outdated docs/scripts that reference old scene formats.
 
 
