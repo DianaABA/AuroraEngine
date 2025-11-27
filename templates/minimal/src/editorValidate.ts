@@ -1,4 +1,4 @@
-import { loadScenesFromJsonStrict, validateSceneLinksStrict } from 'aurora-engine'
+import { loadScenesFromJsonStrict, validateSceneLinksStrict } from '../../../src/vn/sceneLoader'
 
 export function validateSceneJsonText(json: string){
   try{

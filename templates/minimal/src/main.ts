@@ -657,7 +657,17 @@ function showErrorOverlay(title: string, details: string){
   if(!errorOverlay || !errorOverlayBody) return
   errorOverlay.style.display = 'flex'
   errorOverlayOpen = true
-  errorOverlayBody.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div><pre style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:12px;">${details}</pre>`
+  errorOverlayBody.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div><pre style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:12px;">${details}</pre><div style="margin-top:8px;"><button id="errorJumpJson" class="secondary">Jump to JSON</button></div>`
+  const jumpBtn = document.getElementById('errorJumpJson') as HTMLButtonElement | null
+  if(jumpBtn && customJsonInput){
+    jumpBtn.onclick = ()=>{
+      hideErrorOverlay()
+      customJsonInput.focus()
+      customJsonInput.scrollIntoView({ behavior:'smooth', block:'center' })
+      customJsonInput.style.outline = '2px solid #fca5a5'
+      setTimeout(()=> customJsonInput.style.outline = '', 1200)
+    }
+  }
   errorOverlay?.focus?.()
 }
 function hideErrorOverlay(){
@@ -2414,6 +2424,11 @@ presetButtons.forEach(pb => {
 // Lightweight scene editor (browser-only helper)
 function renderEditorPreview(){
   if(!editorPreview) return
+  if(editorMeta){
+    const stepsCount = editorSteps.length
+    const savedAt = localStorage.getItem(EDITOR_STATE_SAVED_AT)
+    editorMeta.textContent = `Active: ${activeSceneId || 'custom'} (${stepsCount} step${stepsCount===1?'':'s'})${savedAt? ' · saved '+savedAt:''}`
+  }
   editorScenes[activeSceneId] = {
     id: editorSceneId?.value?.trim() || 'custom',
     bg: editorBg?.value?.trim() || undefined,

@@ -318,5 +318,5 @@ Aurora brings it to life.
 
 🌐 Live Demo
 
-- Novel demo built on AuroraEngine: https://chakrahearts.netlify.app/
+- Novel demo built on AuroraEngine: https://chakrahearts.netlify.app/ (includes example scenes, choices, and UI polish)
 
