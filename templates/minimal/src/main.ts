@@ -220,11 +220,13 @@ let localAssets: LocalAsset[] = []
 type MoveStep = { x?: number; y?: number; yPct?: number; ms?: number; ease?: string }
 type EditorScene = { id: string; bg?: string; music?: string; steps: any[]; roles?: Record<string, any> }
 let editorSteps: any[] = []
+let editorDragIndex = -1
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
 const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
 let editorScenes: Record<string, EditorScene> = {}
 let activeSceneId: string = 'custom'
+let editorLintTimer: any = null
 
 function parseMove(input: string): MoveStep | null {
   if(!input) return null
@@ -2478,13 +2480,25 @@ function renderEditorSteps(){
   }
   editorSteps.forEach((st, idx)=>{
     const row = document.createElement('div')
+    row.dataset.index = String(idx)
+    row.draggable = true
     row.style.background = '#111827'
     row.style.border = '1px solid #27304a'
     row.style.borderRadius = '6px'
     row.style.padding = '6px 8px'
     row.style.color = '#a8b0ff'
     row.style.fontSize = '12px'
-    row.textContent = `#${idx} ${st.type} ${st.text||st.src||''} ${st.goto? '-> '+st.goto:''}`
+    row.style.display = 'flex'
+    row.style.justifyContent = 'space-between'
+    row.style.alignItems = 'center'
+    const summary = document.createElement('div')
+    summary.textContent = `#${idx} ${st.type} ${st.text||st.src||''} ${st.goto? '-> '+st.goto:''}`
+    const handle = document.createElement('span')
+    handle.textContent = '⋮⋮'
+    handle.title = 'Drag to reorder'
+    handle.style.cursor = 'grab'
+    handle.style.marginRight = '8px'
+    handle.style.userSelect = 'none'
     const actions = document.createElement('div')
     actions.style.display = 'inline-flex'
     actions.style.gap = '6px'
@@ -2519,13 +2533,56 @@ function renderEditorSteps(){
     del.className = 'secondary'
     del.textContent = 'Delete'
     del.onclick = ()=>{ editorSteps.splice(idx,1); renderEditorSteps(); renderEditorPreview() }
+    row.addEventListener('dragstart', (e)=>{
+      editorDragIndex = idx
+      row.style.opacity = '0.6'
+      e.dataTransfer?.setData('text/plain', String(idx))
+    })
+    row.addEventListener('dragend', ()=>{
+      row.style.opacity = '1'
+      editorDragIndex = -1
+    })
+    row.addEventListener('dragover', (e)=>{
+      e.preventDefault()
+      row.style.borderColor = '#4f6bff'
+    })
+    row.addEventListener('dragleave', ()=>{
+      row.style.borderColor = '#27304a'
+    })
+    row.addEventListener('drop', (e)=>{
+      e.preventDefault()
+      row.style.borderColor = '#27304a'
+      const targetIdx = Number(row.dataset.index||-1)
+      const from = editorDragIndex
+      if(from < 0 || targetIdx < 0 || from === targetIdx) return
+      const [moved] = editorSteps.splice(from,1)
+      editorSteps.splice(targetIdx,0,moved)
+      renderEditorSteps()
+      renderEditorPreview()
+    })
     actions.appendChild(up)
     actions.appendChild(down)
     actions.appendChild(edit)
     actions.appendChild(del)
+    row.appendChild(handle)
+    row.appendChild(summary)
     row.appendChild(actions)
     editorStepsEl.appendChild(row)
   })
+}
+
+function scheduleEditorLint(){
+  if(editorLintTimer) clearTimeout(editorLintTimer)
+  editorLintTimer = setTimeout(()=> renderEditorPreview(), 200)
+}
+
+function setupEditorLiveLint(){
+  const fields = [editorSceneId, editorBg, editorMusic, editorSceneRoles, editorBundleIds, editorText, editorChar, editorMove, editorOptions]
+  fields.forEach(f=>{
+    f?.addEventListener('input', scheduleEditorLint)
+    f?.addEventListener('change', scheduleEditorLint)
+  })
+  editorStepType?.addEventListener('change', scheduleEditorLint)
 }
 
 function buildEditorScenesBundle(){
@@ -2963,6 +3020,7 @@ renderEditorTabs()
 hydrateEditorFromStorage()
 renderEditorPreview()
 renderEditorSteps()
+setupEditorLiveLint()
 
 if(codexCategory){
   codexCategory.addEventListener('change', ()=>{

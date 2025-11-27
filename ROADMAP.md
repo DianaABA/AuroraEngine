@@ -215,4 +215,16 @@ Phase 5: Packaging & Export (v1.5+)
    - Keep `release:check` in CI; add AI adapter mock tests.
    - Quick pre-release run: textId/RTL/theme toggle sanity, AI generate to editor with mock adapter.
 
+## Next Up (now)
+1) Block-based editor thin slice
+   - Drag to reorder steps; inline lint-as-you-type; keep schema/link checks.
+2) Reference starters
+   - Publish full Expo/Electron starter repos and link from docs; add deploy buttons where possible.
+3) AI UX hardening
+   - Rate-limit/error badges; download/progress indicator for local models; tidy cancel UX.
+4) Demo story spotlight
+   - Add “How it was built” blurb + link to chakrahearts.netlify.app in docs/template.
+5) Release guardrails
+   - CI dry-run for npm publish token presence; versioning rule notes in release checklist.
+
 
