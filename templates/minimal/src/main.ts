@@ -242,12 +242,12 @@ const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
 const EDITOR_STATE_SAVED_AT = 'aurora:minimal:editorState:savedAt'
 const STARTER_SCENE: EditorScene = {
   id: 'intro',
-  bg: 'lab.svg',
+  bg: 'bg/aurora_engine_background.png',
   music: 'calm.mp3',
   roles: { guide: 'spr_guide' },
   steps: [
     { type:'dialogue', char:'Guide', text:'Welcome to AuroraEngine!' },
-    { type:'dialogue', text:'This starter shows dialogue, choice, and a goto.' },
+    { type:'dialogue', text:'This starter shows dialogue, a choice, and a jump.' },
     { type:'choice', options:[ { label:'Continue', goto:'next' }, { label:'Restart intro', goto:'intro' } ] }
   ]
 }
@@ -302,20 +302,20 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     settings: ()=> 'Ajustes',
     close: ()=> 'Cerrar',
     backlog: ()=> 'Historial',
-    gallery: ()=> 'Galer├¡a',
+    gallery: ()=> 'Galeria',
     achievements: ()=> 'Logros',
-    auto: (c:{on:boolean})=> `Auto: ${c.on? 'S├¡':'No'}`,
-    autoChoose: (c:{on:boolean})=> `Auto-Elegir: ${c.on? 'S├¡':'No'}`,
-    skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'S├¡':'No'}`,
-    skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'S├¡':'No'}`,
-    skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'S├¡':'No'}`,
-    debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'S├¡':'No'}`,
-    debugHud: (c:{on:boolean})=> `HUD debug: ${c.on? 'S├¡':'No'}`,
-    hotkeys: (c:{on:boolean})=> `Atajos: ${c.on? 'S├¡':'No'}`,
+    auto: (c:{on:boolean})=> `Auto: ${c.on? 'Si':'No'}`,
+    autoChoose: (c:{on:boolean})=> `Auto-Elegir: ${c.on? 'Si':'No'}`,
+    skipFx: (c:{on:boolean})=> `Omitir FX: ${c.on? 'Si':'No'}`,
+    skipSeen: (c:{on:boolean})=> `Omitir texto visto: ${c.on? 'Si':'No'}`,
+    skipTransitions: (c:{on:boolean})=> `Omitir transiciones: ${c.on? 'Si':'No'}`,
+    debugToasts: (c:{on:boolean})=> `Avisos debug: ${c.on? 'Si':'No'}`,
+    debugHud: (c:{on:boolean})=> `HUD debug: ${c.on? 'Si':'No'}`,
+    hotkeys: (c:{on:boolean})=> `Atajos: ${c.on? 'Si':'No'}`,
     clearSeen: ()=> 'Limpiar vistos',
     language: ()=> 'Idioma',
-    english: ()=> 'Ingl├®s',
-    spanish: ()=> 'Espa├▒ol',
+    english: ()=> 'Ingles',
+    spanish: ()=> 'Espanol',
     slots: ()=> 'Ranuras:',
     saveN: (c:{n:number})=> `Guardar ${c.n}`,
     loadN: (c:{n:number})=> `Cargar ${c.n}`,
@@ -1352,6 +1352,7 @@ function addLocalAssets(files: FileList | File[]){
   if(localAssets.length > 12){
     localAssets = localAssets.slice(localAssets.length - 12)
   }
+  if(assetDrop) assetDrop.textContent = 'Drop images/audio here to preview. Object URLs stay local.'
   renderAssets()
 }
 
@@ -3153,7 +3154,10 @@ if(editorNewSceneBtn){
 }
 
 function loadStarterScene(){
-  editorScenes = { [STARTER_SCENE.id]: JSON.parse(JSON.stringify(STARTER_SCENE)) }
+  editorScenes = { 
+    [STARTER_SCENE.id]: JSON.parse(JSON.stringify(STARTER_SCENE)),
+    next: { id:'next', steps:[ { type:'dialogue', text:'You jumped to the next part.' } ] }
+  }
   activeSceneId = STARTER_SCENE.id
   loadSceneToForm(activeSceneId)
   if(editorErrors) editorErrors.textContent = 'Loaded starter scene (dialogue + choice).'
