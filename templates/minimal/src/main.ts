@@ -143,6 +143,7 @@ const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement |
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 const editorLintStatus = document.getElementById('editorLintStatus') as HTMLSpanElement | null
+const editorMeta = document.getElementById('editorMeta') as HTMLSpanElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
 const branchMapGraph = document.getElementById('branchMapGraph') as HTMLDivElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
@@ -226,6 +227,7 @@ let editorDragIndex = -1
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
 const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
+const EDITOR_STATE_SAVED_AT = 'aurora:minimal:editorState:savedAt'
 const STARTER_SCENE: EditorScene = {
   id: 'intro',
   bg: 'lab.svg',
@@ -2433,6 +2435,11 @@ function renderEditorPreview(){
   const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
   const { scenes, issues } = buildEditorScenesBundle()
   editorPreview.textContent = JSON.stringify(scenes || [], null, 2)
+  if(editorMeta){
+    const stepsCount = editorSteps.length
+    const savedAt = localStorage.getItem(EDITOR_STATE_SAVED_AT)
+    editorMeta.textContent = `Active: ${activeSceneId || 'custom'} (${stepsCount} step${stepsCount===1?'':'s'})${savedAt? ' · saved '+savedAt:''}`
+  }
   if(editorLintStatus){
     if(issues.length){
       editorLintStatus.textContent = `Lint: ${issues.length} issue(s)`
@@ -2457,6 +2464,7 @@ function renderEditorPreview(){
       bundle: editorBundleIds?.value || ''
     }
     localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
+    localStorage.setItem(EDITOR_STATE_SAVED_AT, new Date().toLocaleTimeString())
   }catch{}
 }
 
