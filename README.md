@@ -313,3 +313,10 @@ Aurora is built for creators first â€” writers, teachers, devs, and dreamers.
 
 You bring the story.
 Aurora brings it to life.
+
+---
+
+ðŸŒ? Live Demo
+
+- Novel demo built on AuroraEngine: https://chakrahearts.netlify.app/
+
