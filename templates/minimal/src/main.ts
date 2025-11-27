@@ -1,5 +1,6 @@
 ﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
-import { getAIAdapters } from '../../src/utils/aiModes'
+// Use built adapters from root dist to avoid export map issues during template build
+import { getAIAdapters } from '../../../dist/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
 import { resolveYPercent } from './helpers'
 
@@ -142,12 +143,10 @@ const editorPreview = document.getElementById('editorPreview') as HTMLPreElement
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
 const branchMapGraph = document.getElementById('branchMapGraph') as HTMLDivElement | null
-const customLintBtn = document.getElementById('customLint') as HTMLButtonElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
 let errorOverlayOpen = false
-import { computeBranchEdges } from './editorHelpers'
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -170,7 +169,6 @@ const THEMES: Record<ThemeName, { bgTop: string; bgBottom: string; panelBg: stri
   night: { bgTop:'#151a2d', bgBottom:'#28314a', panelBg:'rgba(0,0,0,.5)', panelBorder:'#27304a', accent:'#3e59ff', accent2:'#2b2f43', font:'Inter, system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial' },
   sand: { bgTop:'#2c1e1a', bgBottom:'#8a6b4f', panelBg:'rgba(20,12,8,.55)', panelBorder:'#4a3527', accent:'#d89c4b', accent2:'#4a3527', font:'"Segoe UI", sans-serif' }
 }
-type Locale = 'en' | 'es'
 type Locale = 'en' | 'es' | 'ar'
 type ThemeName = 'night' | 'sand'
 type Prefs = {
@@ -291,6 +289,28 @@ const STRINGS: Record<Locale, Record<string, (ctx?: any)=>string>> = {
     slots: ()=> 'Ranuras:',
     saveN: (c:{n:number})=> `Guardar ${c.n}`,
     loadN: (c:{n:number})=> `Cargar ${c.n}`,
+  },
+  ar: {
+    settings: ()=> 'الإعدادات',
+    close: ()=> 'إغلاق',
+    backlog: ()=> 'السجل',
+    gallery: ()=> 'المعرض',
+    achievements: ()=> 'الإنجازات',
+    auto: (c:{on:boolean})=> `تقدم تلقائي: ${c.on? 'نعم':'لا'}`,
+    autoChoose: (c:{on:boolean})=> `اختيار تلقائي: ${c.on? 'نعم':'لا'}`,
+    skipFx: (c:{on:boolean})=> `تخطي المؤثرات: ${c.on? 'نعم':'لا'}`,
+    skipSeen: (c:{on:boolean})=> `تخطي النص السابق: ${c.on? 'نعم':'لا'}`,
+    skipTransitions: (c:{on:boolean})=> `تخطي الانتقالات: ${c.on? 'نعم':'لا'}`,
+    debugToasts: (c:{on:boolean})=> `إشعارات تصحيح: ${c.on? 'نعم':'لا'}`,
+    debugHud: (c:{on:boolean})=> `لوحة تصحيح: ${c.on? 'نعم':'لا'}`,
+    hotkeys: (c:{on:boolean})=> `اختصارات: ${c.on? 'نعم':'لا'}`,
+    clearSeen: ()=> 'مسح المشاهدة',
+    language: ()=> 'اللغة',
+    english: ()=> 'إنجليزي',
+    spanish: ()=> 'إسباني',
+    slots: ()=> 'الحفظ:',
+    saveN: (c:{n:number})=> `حفظ ${c.n}`,
+    loadN: (c:{n:number})=> `تحميل ${c.n}`,
   }
 }
 function t(key: string, ctx?: any){ const fn = STRINGS[prefs.locale][key]; return fn ? fn(ctx) : key }
@@ -1427,18 +1447,20 @@ boot('/scenes/example.json', 'intro')
 startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 startAchBtn && (startAchBtn.onclick = () => boot('/scenes/achievements.json', 'ach_intro'))
-if(packLoadBtn && packSelect){
-  packLoadBtn.onclick = () => {
-    const opt = packSelect.value
+  if(packLoadBtn && packSelect){
+    packLoadBtn.onclick = () => {
+      const opt = packSelect.value
     const map: Record<string, { path: string; start: string }> = {
-      example: { path: '/scenes/example.json', start: 'intro' },
-      expressions: { path: '/scenes/expressions.json', start: 'intro' },
-      achievements: { path: '/scenes/achievements.json', start: 'ach_intro' }
+        example: { path: '/scenes/example.json', start: 'intro' },
+        expressions: { path: '/scenes/expressions.json', start: 'intro' },
+        achievements: { path: '/scenes/achievements.json', start: 'ach_intro' },
+        rtl: { path: '/scenes/rtl.json', start: 'intro' },
+        byok: { path: '/scenes/byok.json', start: 'byok_intro' }
+      }
+      const cfg = map[opt] || map.example
+      boot(cfg.path, cfg.start)
     }
-    const cfg = map[opt] || map.example
-    boot(cfg.path, cfg.start)
   }
-}
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(galleryPanel) }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
@@ -2156,25 +2178,25 @@ if(customLoadBtn && customJsonInput){
 }
 
 // AI helpers (generation + grammar) with validation before load
-function setAIStatus(msg: string){
+function setInlineAIStatus(msg: string){
   if(aiStatus) aiStatus.textContent = msg
 }
-function setAIError(msg: string){
+function setInlineAIError(msg: string){
   if(aiError) aiError.textContent = msg
 }
-function setAIProgress(msg: string){
-  setAIStatus(msg)
+function setInlineAIProgress(msg: string){
+  setInlineAIStatus(msg)
 }
 
 const aiCancelToken = { cancelled: false }
 function resetAICancel(){
   aiCancelToken.cancelled = false
-  setAIError('')
+  setInlineAIError('')
 }
 function markAICancel(){
   aiCancelToken.cancelled = true
-  setAIStatus('AI request cancelled')
-  setAIError('')
+  setInlineAIStatus('AI request cancelled')
+  setInlineAIError('')
 }
 function throwIfCancelled(){
   if(aiCancelToken.cancelled) throw new Error('AI cancelled')
@@ -2283,12 +2305,12 @@ function incrementalValidate(text: string){
 }
 
 async function aiGenerate(toEditor: boolean){
-  if(!aiPromptInput){ setAIStatus('No prompt input'); return }
+  if(!aiPromptInput){ setInlineAIStatus('No prompt input'); return }
   const prompt = aiPromptInput.value.trim()
-  if(!prompt){ setAIStatus('Enter a prompt first.'); return }
+  if(!prompt){ setInlineAIStatus('Enter a prompt first.'); return }
   resetAICancel()
-  setAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Contacting AI…')
-  setAIError('')
+  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Contacting AI…')
+  setInlineAIError('')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2307,10 +2329,10 @@ async function aiGenerate(toEditor: boolean){
         { role:'user', content: prompt }
       ], chunk=>{
         if(customJsonInput) customJsonInput.value += chunk
-        setAIStatus(`Receiving... ${customJsonInput?.value.length || 0} chars`)
+        setInlineAIStatus(`Receiving... ${customJsonInput?.value.length || 0} chars`)
       })
     } else if(adapter.local){
-      setAIProgress('Downloading/initializing local model…')
+      setInlineAIProgress('Downloading/initializing local model…')
       text = await adapter.local.convertScriptToJSON(prompt)
     } else if(adapter.remote){
       text = await adapter.remote.generateScene(prompt)
@@ -2337,24 +2359,24 @@ async function aiGenerate(toEditor: boolean){
         return
       }
       const actions = 'Click Lint JSON to revalidate, or adjust the prompt.'
-      setAIError(res.message)
+      setInlineAIError(res.message)
       showErrorOverlay('AI generation errors', `${res.message}\n${actions}`)
     }
   }catch(e:any){
     const msg = e?.message || String(e)
-    setAIStatus('Error: '+msg)
-    setAIError(msg)
+    setInlineAIStatus('Error: '+msg)
+    setInlineAIError(msg)
     showErrorOverlay('AI generation failed', msg)
   }
 }
 
-async function aiFixGrammar(){
-  if(!aiPromptInput || !customJsonInput){ setAIStatus('No prompt or text'); return }
+async function aiFixGrammarInline(){
+  if(!aiPromptInput || !customJsonInput){ setInlineAIStatus('No prompt or text'); return }
   const text = customJsonInput.value.trim() || aiPromptInput.value.trim()
-  if(!text){ setAIStatus('Paste text to fix.'); return }
+  if(!text){ setInlineAIStatus('Paste text to fix.'); return }
   resetAICancel()
-  setAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Fixing grammar…')
-  setAIError('')
+  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Fixing grammar…')
+  setInlineAIError('')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2368,24 +2390,24 @@ async function aiFixGrammar(){
     if(mode === 'byok' && adapter.remote){
       fixed = await adapter.remote.extendDialogue({}, `Fix grammar:\n${text}`)
     } else if(adapter.local){
-      setAIProgress('Downloading/initializing local model…')
+      setInlineAIProgress('Downloading/initializing local model…')
       fixed = await adapter.local.fixGrammar(text)
     } else {
       throw new Error('No AI adapter available')
     }
     customJsonInput.value = fixed
-    setAIStatus('Grammar fixed.')
+    setInlineAIStatus('Grammar fixed.')
   }catch(e:any){
     const msg = e?.message || String(e)
-    setAIStatus('Error: '+msg)
-    setAIError(msg)
+    setInlineAIStatus('Error: '+msg)
+    setInlineAIError(msg)
     showErrorOverlay('AI grammar fix failed', msg)
   }
 }
 
 if(aiGenerateBtn){ aiGenerateBtn.onclick = ()=> aiGenerate(false) }
 if(aiGenerateToEditorBtn){ aiGenerateToEditorBtn.onclick = ()=> aiGenerate(true) }
-if(aiFixBtn){ aiFixBtn.onclick = ()=> aiFixGrammar() }
+if(aiFixBtn){ aiFixBtn.onclick = ()=> aiFixGrammarInline() }
 if(aiCancelBtn){ aiCancelBtn.onclick = ()=> markAICancel() }
 
 // Prompt presets for AI helpers
@@ -2567,28 +2589,6 @@ function renderBranchMap(scenes: EditorScene[]){
     branchMap.appendChild(row)
   })
   renderBranchMapGraph(Array.from(ids), edges)
-  ar: {
-    settings: ()=> 'الإعدادات',
-    close: ()=> 'إغلاق',
-    backlog: ()=> 'السجل',
-    gallery: ()=> 'المعرض',
-    achievements: ()=> 'الإنجازات',
-    auto: (c:{on:boolean})=> `تقدم تلقائي: ${c.on? 'نعم':'لا'}`,
-    autoChoose: (c:{on:boolean})=> `اختيار تلقائي: ${c.on? 'نعم':'لا'}`,
-    skipFx: (c:{on:boolean})=> `تخطي المؤثرات: ${c.on? 'نعم':'لا'}`,
-    skipSeen: (c:{on:boolean})=> `تخطي النص السابق: ${c.on? 'نعم':'لا'}`,
-    skipTransitions: (c:{on:boolean})=> `تخطي الانتقالات: ${c.on? 'نعم':'لا'}`,
-    debugToasts: (c:{on:boolean})=> `إشعارات تصحيح: ${c.on? 'نعم':'لا'}`,
-    debugHud: (c:{on:boolean})=> `لوحة تصحيح: ${c.on? 'نعم':'لا'}`,
-    hotkeys: (c:{on:boolean})=> `اختصارات: ${c.on? 'نعم':'لا'}`,
-    clearSeen: ()=> 'مسح المشاهدة',
-    language: ()=> 'اللغة',
-    english: ()=> 'إنجليزي',
-    spanish: ()=> 'إسباني',
-    slots: ()=> 'الحفظ:',
-    saveN: (c:{n:number})=> `حفظ ${c.n}`,
-    loadN: (c:{n:number})=> `تحميل ${c.n}`,
-  }
 }
 
 const TEXT_TABLE: Record<Locale, Record<string, string>> = {

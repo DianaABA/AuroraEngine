@@ -1,0 +1,27 @@
+[
+  {
+    "id": "byok_intro",
+    "bg": "lab.svg",
+    "music": "calm.mp3",
+    "steps": [
+      { "type": "dialogue", "char": "Guide", "text": "This pack demos BYOK (bring your own key) for remote AI." },
+      { "type": "dialogue", "char": "Guide", "text": "Open Settings → AI Mode: BYOK. Paste your API key and pick a provider/model." },
+      { "type": "dialogue", "char": "Guide", "text": "Use the AI buttons to generate or extend scenes. Streaming responses show up as they arrive." },
+      {
+        "type": "choice",
+        "options": [
+          { "label": "Generate a sample", "goto": "byok_generate" },
+          { "label": "Back to start", "goto": "byok_intro" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "byok_generate",
+    "steps": [
+      { "type": "dialogue", "text": "Try the BYOK prompt presets to produce branching dialogue or summaries." },
+      { "type": "dialogue", "text": "Outputs are linted against the schema before loading to avoid bad JSON." },
+      { "type": "dialogue", "text": "When finished, you can switch back to Local mode for offline edits." }
+    ]
+  }
+]

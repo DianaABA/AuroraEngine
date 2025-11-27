@@ -22,6 +22,7 @@ Now includes:
 ## Example Packs
 - Start buttons: Example (branching), Expressions (sprite expressions + CG unlock), Achievements (achievement + CG unlock path).
 - Or pick a pack in the dropdown and press Load Pack.
+- Extra packs: RTL/TextId demo (switch language to Arabic to see RTL) and BYOK demo (walks you through BYOK AI mode).
 - Use these to see features without editing JSON.
 
 ## Scene Editor walkthrough
@@ -70,6 +71,11 @@ Then open http://localhost:5173
 - Scene defaults: per-scene `spriteDefaults` provide default `pos/x/scale/z` for sprite IDs
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
+
+## Starter CLI (experimental)
+- Copy the minimal template into a new folder: `node starters/cli/index.js my-game`
+- Add `--install` to run `npm install` automatically.
+- Planned: npx package + flags for BYOK/RTL packs.
 
 ## Deploy (Netlify)
 Deploy with one click:
