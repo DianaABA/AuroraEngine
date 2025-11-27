@@ -14,6 +14,8 @@ const startExpressionsBtn = document.getElementById('startExpressions') as HTMLB
 const startAchBtn = document.getElementById('startAch') as HTMLButtonElement | null
 const packSelect = document.getElementById('packSelect') as HTMLSelectElement | null
 const packLoadBtn = document.getElementById('loadPack') as HTMLButtonElement | null
+const packDesc = document.getElementById('packDesc') as HTMLSpanElement | null
+const viewPackJsonBtn = document.getElementById('viewPackJson') as HTMLButtonElement | null
 const autoBtn = document.getElementById('autoBtn') as HTMLButtonElement
 const autoChooseBtn = document.getElementById('autoChooseBtn') as HTMLButtonElement
 const skipFxBtn = document.getElementById('skipFx') as HTMLButtonElement
@@ -118,6 +120,7 @@ const aiFixBtn = document.getElementById('aiFixBtn') as HTMLButtonElement | null
 const aiCancelBtn = document.getElementById('aiCancel') as HTMLButtonElement | null
 const aiStatus = document.getElementById('aiStatus') as HTMLSpanElement | null
 const aiError = document.getElementById('aiError') as HTMLSpanElement | null
+const aiRateHint = document.getElementById('aiRateHint') as HTMLSpanElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
@@ -144,12 +147,18 @@ const editorPreview = document.getElementById('editorPreview') as HTMLPreElement
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
 const editorLintStatus = document.getElementById('editorLintStatus') as HTMLSpanElement | null
 const editorMeta = document.getElementById('editorMeta') as HTMLSpanElement | null
+const editorLive = document.getElementById('editorLive') as HTMLSpanElement | null
+const editorSavedAt = document.getElementById('editorSavedAt') as HTMLSpanElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
 const branchMapGraph = document.getElementById('branchMapGraph') as HTMLDivElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
+const errorCopyBtn = document.getElementById('errorCopy') as HTMLButtonElement | null
 let errorOverlayOpen = false
+const onbStepLoad = document.getElementById('onbStepLoad') as HTMLLIElement | null
+const onbStepEdit = document.getElementById('onbStepEdit') as HTMLLIElement | null
+const onbStepRun = document.getElementById('onbStepRun') as HTMLLIElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -242,6 +251,7 @@ const STARTER_SCENE: EditorScene = {
 let editorScenes: Record<string, EditorScene> = {}
 let activeSceneId: string = 'custom'
 let editorLintTimer: any = null
+let editorDragPlaceholder: HTMLDivElement | null = null
 
 function parseMove(input: string): MoveStep | null {
   if(!input) return null
@@ -668,11 +678,33 @@ function showErrorOverlay(title: string, details: string){
       setTimeout(()=> customJsonInput.style.outline = '', 1200)
     }
   }
+  if(errorCopyBtn){
+    errorCopyBtn.onclick = async ()=>{
+      try{
+        await navigator.clipboard.writeText(details)
+        showToast('Copied errors to clipboard')
+      }catch{
+        showToast('Copy failed')
+      }
+    }
+  }
   errorOverlay?.focus?.()
 }
 function hideErrorOverlay(){
   if(errorOverlay) errorOverlay.style.display = 'none'
   errorOverlayOpen = false
+}
+function markOnboardingStep(step: 'load'|'edit'|'run'){
+  const doneMark = '✅'
+  if(step === 'load' && onbStepLoad && !onbStepLoad.textContent?.startsWith(doneMark)){
+    onbStepLoad.textContent = `${doneMark} Load sample scene`
+  }
+  if(step === 'edit' && onbStepEdit && !onbStepEdit.textContent?.startsWith(doneMark)){
+    onbStepEdit.textContent = `${doneMark} Open scene editor`
+  }
+  if(step === 'run' && onbStepRun && !onbStepRun.textContent?.startsWith(doneMark)){
+    onbStepRun.textContent = `${doneMark} Build & Run`
+  }
 }
 if(errorOverlayClose){ errorOverlayClose.onclick = hideErrorOverlay }
 if(errorOverlay){
@@ -1471,23 +1503,55 @@ function refreshSlotThumb(n: number){
 boot('/scenes/example.json', 'intro')
 
 // Allow switching demos on demand
-startExampleBtn.onclick = () => boot('/scenes/example.json', 'intro')
+startExampleBtn.onclick = () => { markOnboardingStep('load'); boot('/scenes/example.json', 'intro') }
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 startAchBtn && (startAchBtn.onclick = () => boot('/scenes/achievements.json', 'ach_intro'))
-  if(packLoadBtn && packSelect){
-    packLoadBtn.onclick = () => {
-      const opt = packSelect.value
+if(packLoadBtn && packSelect){
+  packLoadBtn.onclick = () => {
+    const opt = packSelect.value
     const map: Record<string, { path: string; start: string }> = {
         example: { path: '/scenes/example.json', start: 'intro' },
         expressions: { path: '/scenes/expressions.json', start: 'intro' },
         achievements: { path: '/scenes/achievements.json', start: 'ach_intro' },
         rtl: { path: '/scenes/rtl.json', start: 'intro' },
         byok: { path: '/scenes/byok.json', start: 'byok_intro' }
-      }
-      const cfg = map[opt] || map.example
-      boot(cfg.path, cfg.start)
+    }
+    const cfg = map[opt] || map.example
+    boot(cfg.path, cfg.start)
+  }
+}
+if(packSelect && packDesc){
+  const desc: Record<string,string> = {
+    example: 'Example — branching basics',
+    expressions: 'Expressions — sprites + CG unlock',
+    achievements: 'Achievements — badge unlock path',
+    rtl: 'RTL/TextId — Arabic + textId table',
+    byok: 'BYOK — API key demo'
+  }
+  packSelect.addEventListener('change', ()=>{
+    packDesc.textContent = desc[packSelect.value] || ''
+  })
+}
+if(viewPackJsonBtn && packSelect){
+  viewPackJsonBtn.onclick = async ()=>{
+    const opt = packSelect.value
+    const map: Record<string,string> = {
+      example: '/scenes/example.json',
+      expressions: '/scenes/expressions.json',
+      achievements: '/scenes/achievements.json',
+      rtl: '/scenes/rtl.json',
+      byok: '/scenes/byok.json'
+    }
+    const url = map[opt] || map.example
+    try{
+      const res = await fetch(url)
+      const txt = await res.text()
+      showErrorOverlay('Pack JSON (read-only)', txt)
+    }catch(e:any){
+      showErrorOverlay('Pack JSON', 'Failed to load: '+(e?.message||e))
     }
   }
+}
 
 openGalleryBtn.onclick = () => { renderGallery(); galleryPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(galleryPanel) }
 closeGalleryBtn.onclick = () => { galleryPanel.style.display = 'none'; updateBackdrop() }
@@ -2210,6 +2274,15 @@ function setInlineAIStatus(msg: string){
 }
 function setInlineAIError(msg: string){
   if(aiError) aiError.textContent = msg
+  if(aiRateHint){
+    if(/429|rate limit|too many/i.test(msg)){
+      aiRateHint.textContent = 'Possible rate limit. Retry or switch to Local mode.'
+    } else if(/overloaded|quota/i.test(msg)){
+      aiRateHint.textContent = 'Provider busy. Try later or use Local.'
+    } else {
+      aiRateHint.textContent = ''
+    }
+  }
 }
 function setInlineAIProgress(msg: string){
   setInlineAIStatus(msg)
@@ -2309,6 +2382,7 @@ async function aiGenerate(toEditor: boolean){
   resetAICancel()
   setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Contacting AI…')
   setInlineAIError('')
+  if(aiRateHint) aiRateHint.textContent = ''
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2375,6 +2449,7 @@ async function aiFixGrammarInline(){
   resetAICancel()
   setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Fixing grammar…')
   setInlineAIError('')
+  if(aiRateHint) aiRateHint.textContent = ''
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2455,6 +2530,10 @@ function renderEditorPreview(){
     const savedAt = localStorage.getItem(EDITOR_STATE_SAVED_AT)
     editorMeta.textContent = `Active: ${activeSceneId || 'custom'} (${stepsCount} step${stepsCount===1?'':'s'})${savedAt? ' · saved '+savedAt:''}`
   }
+  if(editorSavedAt){
+    const savedAt = localStorage.getItem(EDITOR_STATE_SAVED_AT) || '—'
+    editorSavedAt.textContent = `Saved: ${savedAt}`
+  }
   if(editorLintStatus){
     if(issues.length){
       editorLintStatus.textContent = `Lint: ${issues.length} issue(s)`
@@ -2486,6 +2565,13 @@ function renderEditorPreview(){
 function renderEditorSteps(){
   if(!editorStepsEl) return
   editorStepsEl.innerHTML = ''
+  if(!editorDragPlaceholder){
+    editorDragPlaceholder = document.createElement('div')
+    editorDragPlaceholder.style.border = '1px dashed #4f6bff'
+    editorDragPlaceholder.style.borderRadius = '4px'
+    editorDragPlaceholder.style.height = '4px'
+    editorDragPlaceholder.style.margin = '4px 0'
+  }
   if(editorSteps.length === 0){
     const div = document.createElement('div')
     div.textContent = 'No steps yet. Add dialogue/choice/sprite/background.'
@@ -2561,13 +2647,26 @@ function renderEditorSteps(){
     row.addEventListener('dragover', (e)=>{
       e.preventDefault()
       row.style.borderColor = '#4f6bff'
+      if(editorDragPlaceholder && row.parentElement){
+        if(editorDragPlaceholder.parentElement !== row.parentElement){
+          row.parentElement.insertBefore(editorDragPlaceholder, row)
+        } else {
+          row.parentElement.insertBefore(editorDragPlaceholder, row)
+        }
+      }
     })
     row.addEventListener('dragleave', ()=>{
       row.style.borderColor = '#27304a'
+      if(editorDragPlaceholder && editorDragPlaceholder.parentElement){
+        editorDragPlaceholder.parentElement.removeChild(editorDragPlaceholder)
+      }
     })
     row.addEventListener('drop', (e)=>{
       e.preventDefault()
       row.style.borderColor = '#27304a'
+      if(editorDragPlaceholder && editorDragPlaceholder.parentElement){
+        editorDragPlaceholder.parentElement.removeChild(editorDragPlaceholder)
+      }
       const targetIdx = Number(row.dataset.index||-1)
       const from = editorDragIndex
       if(from < 0 || targetIdx < 0 || from === targetIdx) return
@@ -2585,11 +2684,36 @@ function renderEditorSteps(){
     row.appendChild(actions)
     editorStepsEl.appendChild(row)
   })
+  // Keyboard reorder (Alt+Arrow)
+  editorStepsEl.onkeydown = (e: KeyboardEvent)=>{
+    const target = e.target as HTMLElement
+    if(!target?.closest) return
+    const row = target.closest('[data-index]') as HTMLElement | null
+    if(!row) return
+    const idx = Number(row.dataset.index||-1)
+    if(idx < 0) return
+    if(e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){
+      e.preventDefault()
+      const dir = e.key === 'ArrowUp' ? -1 : 1
+      const to = idx + dir
+      if(to < 0 || to >= editorSteps.length) return
+      ;[editorSteps[idx], editorSteps[to]] = [editorSteps[to], editorSteps[idx]]
+      renderEditorSteps()
+      renderEditorPreview()
+      const rows = editorStepsEl.querySelectorAll('[data-index]')
+      const focusRow = Array.from(rows).find(r => Number((r as HTMLElement).dataset.index||-1) === to) as HTMLElement | undefined
+      focusRow?.focus?.()
+    }
+  }
 }
 
 function scheduleEditorLint(){
   if(editorLintTimer) clearTimeout(editorLintTimer)
-  editorLintTimer = setTimeout(()=> renderEditorPreview(), 200)
+  if(editorLive) editorLive.textContent = 'Live'
+  editorLintTimer = setTimeout(()=> {
+    renderEditorPreview()
+    if(editorLive) editorLive.textContent = ''
+  }, 200)
 }
 
 function setupEditorLiveLint(){
@@ -2866,11 +2990,13 @@ if(editorLoad){
       showErrorOverlay('Editor scene validation failed', msg)
       return
     }
+    markOnboardingStep('run')
     if(editorErrors) editorErrors.textContent = ''
     editorPreview!.textContent = JSON.stringify(scenes, null, 2)
     bootFromScenes(scenes as any, sceneId || 'custom')
   }
 }
+(document.getElementById('editorLoad') as HTMLButtonElement | null)?.addEventListener('focus', ()=> markOnboardingStep('run'))
 if(editorDownload){
   editorDownload.onclick = ()=>{
     const { scenes, issues } = buildEditorScenesBundle()
@@ -2998,6 +3124,7 @@ function renderEditorTabs(){
     }
     editorTabs.appendChild(tab)
   })
+  markOnboardingStep('edit')
 }
 
 if(editorNewSceneBtn){
@@ -3015,22 +3142,26 @@ function loadStarterScene(){
   activeSceneId = STARTER_SCENE.id
   loadSceneToForm(activeSceneId)
   if(editorErrors) editorErrors.textContent = 'Loaded starter scene (dialogue + choice).'
+  markOnboardingStep('load')
 }
 
 if(editorSaveBtn){
   editorSaveBtn.onclick = ()=>{
-    try{
-      const state = {
-        active: activeSceneId,
-        scenes: editorScenes,
-        bundle: editorBundleIds?.value || ''
-      }
-      localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
-      if(editorErrors) editorErrors.textContent = 'Editor state saved locally.'
-    }catch(e:any){
-      if(editorErrors) editorErrors.textContent = 'Save failed: '+ (e?.message||e)
+  try{
+    const state = {
+      active: activeSceneId,
+      scenes: editorScenes,
+      bundle: editorBundleIds?.value || ''
     }
+    localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
+    const now = new Date().toLocaleTimeString()
+    localStorage.setItem(EDITOR_STATE_SAVED_AT, now)
+    if(editorSavedAt) editorSavedAt.textContent = `Saved: ${now}`
+    if(editorErrors) editorErrors.textContent = 'Editor state saved locally.'
+  }catch(e:any){
+    if(editorErrors) editorErrors.textContent = 'Save failed: '+ (e?.message||e)
   }
+}
 }
 
 if(editorLoadSavedBtn){

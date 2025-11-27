@@ -183,6 +183,8 @@
               <option value="byok">BYOK — API key demo</option>
             </select>
             <button id="loadPack" class="secondary">Load Pack</button>
+            <button id="viewPackJson" class="secondary" title="View pack JSON (read-only)">View JSON</button>
+            <span id="packDesc" style="color:#a8b0ff; font-size:12px;">Example — branching basics</span>
             <button id="autoBtn" class="secondary">Auto: Off</button>
             <button id="autoChooseBtn" class="secondary">Auto-Choose: Off</button>
             <button id="skipFx" class="secondary">Skip FX: Off</button>
@@ -243,15 +245,16 @@
             </div>
             <div style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
               <input id="aiPrompt" placeholder="AI prompt (scene idea or script)" style="flex:1; min-width:260px; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
-              <button id="aiGenerateBtn" class="secondary">AI: Generate</button>
-              <button id="aiGenerateToEditorBtn" class="secondary">AI → Editor</button>
-              <button id="aiFixBtn" class="secondary">AI: Fix Grammar</button>
-              <button id="aiCancel" class="secondary">Cancel AI</button>
-              <button id="aiPresetBranch" class="secondary" title="Preset: branch this scene">Preset: Branch</button>
-              <button id="aiPresetCoach" class="secondary" title="Preset: story coach">Preset: Coach</button>
-              <span id="aiStatus" style="font-size:12px; color:#a8b0ff;"></span>
-              <span id="aiError" style="font-size:12px; color:#fca5a5;"></span>
-            </div>
+                <button id="aiGenerateBtn" class="secondary" title="Generate scene JSON from prompt">AI: Generate</button>
+                <button id="aiGenerateToEditorBtn" class="secondary" title="Generate and load into editor">AI → Editor</button>
+                <button id="aiFixBtn" class="secondary" title="Fix grammar/typos">AI: Fix Grammar</button>
+                <button id="aiCancel" class="secondary" title="Cancel current AI request">Cancel AI</button>
+                <button id="aiPresetBranch" class="secondary" title="Adds branching choices to the current scene">Preset: Branch</button>
+                <button id="aiPresetCoach" class="secondary" title="Story coach: pacing & beat suggestions">Preset: Coach</button>
+                <span id="aiStatus" style="font-size:12px; color:#a8b0ff;"></span>
+                <span id="aiError" style="font-size:12px; color:#fca5a5;"></span>
+                <span id="aiRateHint" style="font-size:12px; color:#fca5a5;"></span>
+              </div>
             <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
             <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
           </div>
@@ -315,11 +318,13 @@
               <button id="editorAddStep" class="secondary">Add Step</button>
               <button id="editorReset" class="secondary">Reset</button>
               <button id="editorStarter" class="secondary" title="Load sample dialogue + choice">Load Starter</button>
-              <button id="editorLoad" class="">Build & Run</button>
+              <button id="editorLoad" class="" title="Validate and load scenes into the engine">Build & Run</button>
               <button id="editorDownload" class="secondary">Download JSON</button>
               <button id="editorImport" class="secondary">Import JSON</button>
               <span id="editorLintStatus" style="font-size:12px; color:#a8b0ff;">Lint: pending</span>
+              <span id="editorLive" style="font-size:12px; color:#fca5a5;"></span>
               <span id="editorMeta" style="font-size:12px; color:#a8b0ff;">Active: —</span>
+              <span id="editorSavedAt" style="font-size:12px; color:#a0e7ff;">Saved: —</span>
             </div>
             <div id="editorSteps" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; color:#a8b0ff; font-size:12px;"></div>
             <pre id="editorPreview" style="margin-top:8px; background:#0b1020; color:#a0e7ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-size:12px; max-height:180px; overflow:auto;"></pre>
@@ -401,6 +406,9 @@
           The scene data didn’t validate. Fix the issues below, then reload.
         </p>
         <div id="errorOverlayBody"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button id="errorCopy" class="secondary">Copy errors</button>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

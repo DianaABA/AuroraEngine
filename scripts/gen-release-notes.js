@@ -4,9 +4,12 @@
  * Usage: TARGET_VERSION=v0.0.4 node scripts/gen-release-notes.js
  */
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = new URL('..', import.meta.url).pathname
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const root = join(__dirname, '..')
 const target = process.env.TARGET_VERSION || ''
 
 function parseChangelog(text) {
