@@ -233,4 +233,15 @@ Phase 5: Packaging & Export (v1.5+)
    - Default debug HUD/toasts off; error overlay uses action text (“Fix”/“Load new”).
    - Prune legacy/outdated docs/scripts that reference old scene formats.
 
+## Long-Term — Aurora Assistant (built-in AI helper)
+- Phase 0: Prep — add OPENAI_API_KEY to .env, create `/assistant` folder with `api/`, `components/`, `prompts/`, `config/`.
+- Phase 1: System prompt — `/assistant/prompts/system-prompt.txt` (step-by-step, examples, Aurora-only focus).
+- Phase 2: Backend API — `/assistant/api/aurora-assistant.ts` (OpenAI GPT-4.1 Mini, loads system prompt, answers questions).
+- Phase 3: Minimal chat UI — `/assistant/components/ChatBox.tsx` (input, messages, ask button).
+- Phase 4: Test common questions — choices, backgrounds, scene format, missing ID, React Native integration; refine prompt.
+- Phase 5: Branding/UI polish — assistant.css (glass, neon teal/purple, BugQueen Flow branding, Midjourney BG).
+- Phase 6: Deploy — Vercel/Netlify/docs hosting; keep cost low (€0.01–€0.50/mo).
+- Phase 7: Enhancements — context injection (scene upload), page-aware questions, scene fixer, error explainer, AI-generated examples.
+- Phase 8: Editor integration — “Ask Aurora” button in the editor that calls the same API.
+
 

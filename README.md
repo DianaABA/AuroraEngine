@@ -18,8 +18,8 @@ If you can write a story, you can build a game.
 
 🎉 Play & Explore (no code)
 
-- Quick guide: `docs/play-and-explore.md`
-- Live demo: https://chakrahearts.netlify.app/
+- Quick start: pick a demo pack and play. Live demo: https://chakrahearts.netlify.app/
+- Need help? Ask the built-in Aurora Assistant (planned): “How do I add a choice?” and follow the steps it returns.
 
 ---
 
@@ -86,8 +86,8 @@ Enables:
 
 ## Play & Explore (no code)
 
-- Quick guide: `docs/play-and-explore.md`
-- Live demo: https://chakrahearts.netlify.app/
+- Quick start: pick a demo pack and play. Live demo: https://chakrahearts.netlify.app/
+- Need help? Ask the built-in Aurora Assistant (planned): “How do I add a choice?” and follow the steps it returns.
 
 ## Quick Start (React Template)
 

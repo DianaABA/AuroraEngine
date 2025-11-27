@@ -92,6 +92,8 @@ const closeSavesBtn = document.getElementById('closeSaves') as HTMLButtonElement
 const savesPanel = document.getElementById('savesPanel') as HTMLDivElement
 const savesList = document.getElementById('savesList') as HTMLDivElement
 const openShortcutsBtn = document.getElementById('openShortcuts') as HTMLButtonElement
+const undoBtn = document.getElementById('undoBtn') as HTMLButtonElement | null
+const escapeBtn = document.getElementById('escapeBtn') as HTMLButtonElement | null
 const bgFadeMsInput = document.getElementById('bgFadeMs') as HTMLInputElement
 const spriteFadeMsInput = document.getElementById('spriteFadeMs') as HTMLInputElement
 const bgFadeMsVal = document.getElementById('bgFadeMsVal') as HTMLSpanElement
@@ -1578,6 +1580,8 @@ closeCodexBtn.onclick = () => { codexPanel.style.display = 'none'; updateBackdro
 codexDetailClose.onclick = ()=> { codexSelectedEntry = null; codexDetail.style.display = 'none' }
 openBacklogBtn.onclick = () => { renderBacklog(); backlogPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(backlogPanel) }
 closeBacklogBtn.onclick = () => { backlogPanel.style.display = 'none'; updateBackdrop() }
+if(undoBtn){ undoBtn.onclick = ()=> engine.undo?.() }
+if(escapeBtn){ escapeBtn.onclick = ()=> { hideAllPanels(); updateBackdrop() } }
 openSettingsBtn.onclick = () => { refreshSettingsUI(); settingsPanel.style.display = 'block'; updateBackdrop(); trapFocusIn(settingsPanel) }
 closeSettingsBtn.onclick = () => { settingsPanel.style.display = 'none'; updateBackdrop() }
 function refreshSettingsUI(){
@@ -1761,7 +1765,7 @@ function updateMusicStatus(){
   const track = engine.getPublicState().music
   const volPct = Math.round((prefs.volume || 0) * 100)
   const volLabel = prefs.muted ? 'Muted' : `Vol ${volPct}%`
-  musicStatus.textContent = track ? `${track} ÔÇö ${isPlaying? 'Playing':'Paused'} ÔÇö ${volLabel}` : `No track ÔÇö ${volLabel}`
+  musicStatus.textContent = track ? `${track} — ${isPlaying? 'Playing':'Paused'} — ${volLabel}` : `No track — ${volLabel}`
 }
 on('music:track-change', ()=> { /* engine updates track */ updateMusicStatus() })
 on('music:play', ()=> { isPlaying = true; updateMusicStatus() })
@@ -2054,7 +2058,7 @@ function oneTimeHint(id: string, message: string){
   }catch{}
 }
 
-oneTimeHint('hotkeys', 'Tip: Press ? for shortcuts ÔÇö Space/Enter: Next, A: Auto, Ctrl+S: Save')
+oneTimeHint('hotkeys', 'Tip: Press ? for shortcuts — Space/Enter: Next, A: Auto, Ctrl+S: Save')
 
 // Shortcuts button opens overlay
 openShortcutsBtn.onclick = () => toggleHotkeyHelp()
@@ -3235,13 +3239,13 @@ function updateDebugHud(){
     const flags = (st.flags||[]) as string[]
     const spriteIds = Object.keys(st.sprites||{})
     const lines: string[] = []
-    lines.push(`Scene: ${st.sceneId || 'ÔÇö'} (#${st.index ?? 0})`)
-    lines.push(`Background: ${st.bg || 'ÔÇö'}`)
-    lines.push(`Music: ${st.music || 'ÔÇö'} ${isPlaying? '(playing)':'(paused)'}`)
+    lines.push(`Scene: ${st.sceneId || '—'} (#${st.index ?? 0})`)
+    lines.push(`Background: ${st.bg || '—'}`)
+    lines.push(`Music: ${st.music || '—'} ${isPlaying? '(playing)':'(paused)'}`)
     lines.push(`AutoAdvance: ${engine.isAutoAdvance()}`)
     lines.push(`AutoDecide: ${engine.isAutoDecide()}`)
-    lines.push(`Sprites (${spriteIds.length}): ${spriteIds.join(', ') || 'ÔÇö'}`)
-    lines.push(`Flags (${flags.length}): ${flags.join(', ') || 'ÔÇö'}`)
+    lines.push(`Sprites (${spriteIds.length}): ${spriteIds.join(', ') || '—'}`)
+    lines.push(`Flags (${flags.length}): ${flags.join(', ') || '—'}`)
     lines.push(`SkipTransitions: ${prefs.skipTransitions}`)
     lines.push(`Hotkeys: ${prefs.hotkeysEnabled}`)
     lines.push(`Volume: ${prefs.muted? 'Muted' : Math.round(prefs.volume*100)+'%'}`)
