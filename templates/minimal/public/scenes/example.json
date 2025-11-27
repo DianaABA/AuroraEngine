@@ -1,7 +1,7 @@
 [
   {
     "id": "intro",
-    "bg": "lab.svg",
+    "bg": "bg/aurora_engine_background.png",
     "music": "calm.mp3",
     "steps": [
       { "type": "dialogue", "char": "Guide", "text": "Welcome to Aurora’s Engine." },
