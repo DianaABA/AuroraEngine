@@ -57,6 +57,8 @@ Goal: make it easy to ship AuroraEngine projects to the web and desktop.
   - Scripts: `npm run dev`, `npm run build`, `npm test` (proxy to engine if needed), `npm run lint:scenes`.
   - CI: run `npm ci && npm run build` and scene-lint on `public/scenes/*.json`.
   - Deploy buttons (Netlify/Vercel) preconfigured to use `/app/dist`.
+- Expo stub: see `starters/expo/App.js` for a minimal RN/Expo integration (loads a dialogue and advances with Next).
+- Electron stub: see `starters/electron/main.js` to wrap `templates/minimal/dist` in a desktop shell.
 
 ## Checklist before packaging
 - `npm run release:check` (build/test/template-build/scene-lint/dist guard).

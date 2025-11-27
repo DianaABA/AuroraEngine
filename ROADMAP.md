@@ -199,18 +199,18 @@ Phase 5: Packaging & Export (v1.5+)
 
 ## New Roadmap (next iteration)
 1) AI UX & Safety
-   - Provider/model selector (local default to tiny model; BYOK supports OpenAI-compatible endpoints).
-   - Streamed JSON assembler with incremental strict/schema validation and “try fix” flow.
-   - Error UI for rate limits, incomplete JSON, model download size/progress; cancel option.
+   - DONE: Provider/model selector (local model configurable; BYOK supports OpenAI-compatible, Anthropic/Groq/DeepSeek presets).
+   - DONE: Streamed JSON incremental validation + “Try Fix” flow (partial salvage of partial JSON).
+   - TODO: Error UI for rate limits, model download size/progress; cancel option.
 2) AI Coverage
    - Tests: AI prefs persistence, adapter selection (mocked), validation fallback for textId/RTL.
    - Docs: provider options, streaming behavior, model size/cache notes.
 3) Content Examples
-   - Add RTL/textId example pack demonstrating locale toggle + dir switch.
-   - Add BYOK demo scene with placeholders and guardrails.
+   - DONE: RTL/textId example pack + dropdown option.
+   - TODO: Add BYOK demo scene with placeholders and guardrails.
 4) Packaging & Starter
-   - Publish a starter repo scaffold (`aurora-engine-starter`) with template copied to /app, CI (build + scene-lint), deploy buttons wired.
-   - Optional CLI to copy template, set project name, install deps.
+   - DONE (stubs): Expo starter (`starters/expo/App.js`), Electron starter (`starters/electron/main.js`) linked in docs.
+   - TODO: Publish full starter repo (`aurora-engine-starter`) with CI/deploy buttons; optional CLI to copy template, set project name, install deps.
 5) Release Hygiene
    - Keep `release:check` in CI; add AI adapter mock tests.
    - Quick pre-release run: textId/RTL/theme toggle sanity, AI generate to editor with mock adapter.
