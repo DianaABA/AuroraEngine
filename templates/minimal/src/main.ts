@@ -33,6 +33,8 @@ const slotStatus = document.getElementById('slotStatus')!
 const slot1thumb = document.getElementById('slot1thumb') as HTMLImageElement
 const slot2thumb = document.getElementById('slot2thumb') as HTMLImageElement
 const slot3thumb = document.getElementById('slot3thumb') as HTMLImageElement
+const toggleAdvancedBtn = document.getElementById('toggleAdvanced') as HTMLButtonElement | null
+const advancedPanel = document.getElementById('advancedPanel') as HTMLDivElement | null
 const bgLabel = document.getElementById('bgLabel')!
 const bgEl = document.getElementById('bg') as HTMLDivElement
 const bgA = document.getElementById('bgA') as HTMLDivElement
@@ -1434,6 +1436,18 @@ slot2save.onclick = ()=> saveToSlot(2)
 slot2load.onclick = ()=> loadFromSlot(2)
 slot3save.onclick = ()=> saveToSlot(3)
 slot3load.onclick = ()=> loadFromSlot(3)
+if(toggleAdvancedBtn && advancedPanel){
+  toggleAdvancedBtn.onclick = ()=>{
+    const open = advancedPanel.style.display !== 'none'
+    const next = open ? 'none' : 'block'
+    advancedPanel.style.display = next
+    toggleAdvancedBtn.textContent = open ? 'Advanced ▸' : 'Advanced ▾'
+    toggleAdvancedBtn.setAttribute('aria-expanded', open ? 'false' : 'true')
+  }
+  advancedPanel.style.display = 'none'
+  toggleAdvancedBtn.textContent = 'Advanced ▸'
+  toggleAdvancedBtn.setAttribute('aria-expanded','false')
+}
 
 // Extra autosave on tab hide/close
 function writeAutosave(){

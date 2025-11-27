@@ -235,23 +235,28 @@
             <img id="slot3thumb" alt="" style="width:96px; height:54px; object-fit:cover; border-radius:4px; border:1px solid #27304a" />
             <span id="slotStatus" style="font-size:12px; color:#a8b0ff"></span>
           </div>
-          <div id="assetPanel" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border:1px dashed #27304a; border-radius:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-              <strong style="color:#a0e7ff; font-size:13px">Drag & Drop Assets (non-coder helper)</strong>
-              <button id="assetPick" class="secondary">Pick Files</button>
+          <div style="margin-top:8px;">
+            <button id="toggleAdvanced" class="secondary" aria-expanded="false">Advanced ▸</button>
+            <div id="advancedPanel" style="display:none; margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border:1px dashed #27304a; border-radius:8px;">
+              <div id="assetPanel">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <strong style="color:#a0e7ff; font-size:13px">Drag & Drop Assets</strong>
+                  <button id="assetPick" class="secondary">Pick Files</button>
+                </div>
+                <div id="assetDrop" style="margin-top:6px; padding:10px; border:1px dashed #27304a; border-radius:8px; color:#a8b0ff; font-size:12px; text-align:center; background:#0b1020;">
+                  Drop images/audio here to preview. Object URLs stay local to your browser.
+                </div>
+                <div id="assetList" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;"></div>
+              </div>
             </div>
-            <div id="assetDrop" style="margin-top:6px; padding:10px; border:1px dashed #27304a; border-radius:8px; color:#a8b0ff; font-size:12px; text-align:center; background:#0b1020;">
-              Drop images/audio here to preview. Object URLs stay local to your browser.
-            </div>
-            <div id="assetList" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;"></div>
           </div>
           <div id="sceneLoader" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border-radius:8px; border:1px solid #27304a;">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-              <strong style="color:#a0e7ff; font-size:13px">Load Custom Scenes (paste JSON)</strong>
-              <input id="customStartId" placeholder="Start scene id (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
-              <button id="customFileBtn" class="secondary">Pick JSON</button>
-              <button id="customLoadBtn">Run</button>
-              <button id="customLint" class="secondary">Lint JSON</button>
+              <strong style="color:#a0e7ff; font-size:13px">Load Story File (paste JSON)</strong>
+              <input id="customStartId" placeholder="Start story part (optional)" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:160px" />
+              <button id="customFileBtn" class="secondary">Pick File</button>
+              <button id="customLoadBtn">Start Story</button>
+              <button id="customLint" class="secondary">Check Story</button>
               <button id="customFix" class="secondary">Try Fix</button>
             </div>
             <div style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
@@ -271,7 +276,7 @@
           </div>
           <div id="sceneEditor" style="margin-top:8px; padding:12px; background:rgba(0,0,0,.65); border-radius:8px; border:1px solid #27304a;">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-              <strong style="color:#a0e7ff; font-size:13px">Lightweight Scene Editor</strong>
+              <strong style="color:#a0e7ff; font-size:13px">Story Editor</strong>
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <input id="editorSceneId" placeholder="scene id" style="padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff; min-width:120px" />
                 <small style="color:#8892b0; font-size:11px">Required. Used by goto/choice targets.</small>
@@ -309,11 +314,11 @@
                 </select>
               </div>
               <div>
-                <label style="color:#a8b0ff; font-size:12px">Char / Sprite / Flag</label>
-                <input id="editorChar" placeholder="char or sprite id / flag key" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
+                <label style="color:#a8b0ff; font-size:12px">Who / Sprite / Flag</label>
+                <input id="editorChar" placeholder="character or sprite id / flag key" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
               </div>
               <div>
-                <label style="color:#a8b0ff; font-size:12px">Text / Src / Track</label>
+                <label style="color:#a8b0ff; font-size:12px">Text / Image / Music</label>
                 <input id="editorText" placeholder="dialogue text, sprite src, audio track" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid #27304a; background:#0b1020; color:#a8b0ff" />
               </div>
               <div>
@@ -353,7 +358,7 @@
             </div>
             <div style="margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:8px;">
               <div style="display:flex; flex-direction:column; gap:6px;">
-                <label for="aiScript" style="color:#a8b0ff; font-size:12px">Script to convert ➜ JSON (local)</label>
+                <label for="aiScript" style="color:#a8b0ff; font-size:12px">Script to Story JSON (local)</label>
                 <textarea id="aiScript" style="min-height:100px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:6px; padding:8px; font-size:12px"></textarea>
                 <button id="aiConvert" class="secondary">Convert Script ➜ JSON</button>
                 <button id="aiFixGrammar" class="secondary">Fix Grammar (local)</button>
