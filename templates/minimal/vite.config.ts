@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   server: { port: 5173 },
   build: {
+    sourcemap: false,
     chunkSizeWarningLimit: 1024,
     rollupOptions: {
       output: {
@@ -12,6 +13,11 @@ export default defineConfig({
           ai: ['@mlc-ai/web-llm', 'openai'],
         },
       },
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      sourcemap: false, // avoid parsing problematic sourcemaps from dependencies
     },
   },
 })
