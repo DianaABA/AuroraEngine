@@ -247,6 +247,8 @@
               <button id="aiGenerateToEditorBtn" class="secondary">AI → Editor</button>
               <button id="aiFixBtn" class="secondary">AI: Fix Grammar</button>
               <button id="aiCancel" class="secondary">Cancel AI</button>
+              <button id="aiPresetBranch" class="secondary" title="Preset: branch this scene">Preset: Branch</button>
+              <button id="aiPresetCoach" class="secondary" title="Preset: story coach">Preset: Coach</button>
               <span id="aiStatus" style="font-size:12px; color:#a8b0ff;"></span>
               <span id="aiError" style="font-size:12px; color:#fca5a5;"></span>
             </div>
@@ -300,9 +302,11 @@
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
               <button id="editorAddStep" class="secondary">Add Step</button>
               <button id="editorReset" class="secondary">Reset</button>
+              <button id="editorStarter" class="secondary" title="Load sample dialogue + choice">Load Starter</button>
               <button id="editorLoad" class="">Build & Run</button>
               <button id="editorDownload" class="secondary">Download JSON</button>
               <button id="editorImport" class="secondary">Import JSON</button>
+              <span id="editorLintStatus" style="font-size:12px; color:#a8b0ff;">Lint: pending</span>
             </div>
             <div id="editorSteps" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; color:#a8b0ff; font-size:12px;"></div>
             <pre id="editorPreview" style="margin-top:8px; background:#0b1020; color:#a0e7ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-size:12px; max-height:180px; overflow:auto;"></pre>

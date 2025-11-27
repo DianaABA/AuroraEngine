@@ -2,6 +2,7 @@
 // Use built adapters from root dist to avoid export map issues during template build
 import { getAIAdapters } from '../../../dist/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
+import { incrementalValidate, validateSceneJsonText } from './editorValidate'
 import { resolveYPercent } from './helpers'
 
 const nameEl = document.getElementById('name')!
@@ -141,6 +142,7 @@ const editorImport = document.getElementById('editorImport') as HTMLButtonElemen
 const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
+const editorLintStatus = document.getElementById('editorLintStatus') as HTMLSpanElement | null
 const branchMap = document.getElementById('branchMapBody') as HTMLDivElement | null
 const branchMapGraph = document.getElementById('branchMapGraph') as HTMLDivElement | null
 const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement | null
@@ -224,6 +226,17 @@ let editorDragIndex = -1
 const TRANSITIONS = ['fade','slide','zoom','shake','flash']
 const DEFAULT_SPRITE_MOVE: MoveStep = { ms: 250, ease: 'ease-in-out' }
 const EDITOR_STATE_KEY = 'aurora:minimal:editorState'
+const STARTER_SCENE: EditorScene = {
+  id: 'intro',
+  bg: 'lab.svg',
+  music: 'calm.mp3',
+  roles: { guide: 'spr_guide' },
+  steps: [
+    { type:'dialogue', char:'Guide', text:'Welcome to AuroraEngine!' },
+    { type:'dialogue', text:'This starter shows dialogue, choice, and a goto.' },
+    { type:'choice', options:[ { label:'Continue', goto:'next' }, { label:'Restart intro', goto:'intro' } ] }
+  ]
+}
 let editorScenes: Record<string, EditorScene> = {}
 let activeSceneId: string = 'custom'
 let editorLintTimer: any = null
@@ -2204,21 +2217,6 @@ function throwIfCancelled(){
   if(aiCancelToken.cancelled) throw new Error('AI cancelled')
 }
 
-function validateSceneJsonText(json: string){
-  try{
-    const { scenes, errors } = loadScenesFromJsonStrict(json)
-    const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
-    const issues = [...(errors||[]), ...(linkIssues||[])]
-    if(issues.length){
-      const details = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
-      return { ok:false, scenes:[], message: details }
-    }
-    return { ok:true, scenes, message:`Valid (${scenes.length} scene${scenes.length===1?'':'s'})` }
-  }catch(e:any){
-    return { ok:false, scenes:[], message: 'Validation failed: '+(e?.message||e) }
-  }
-}
-
 function applyScenesToEditor(scenes: any[]){
   if(!scenes?.length) return
   editorScenes = {}
@@ -2290,20 +2288,6 @@ async function streamOpenAI(apiKey: string, messages: {role:string; content:stri
     }
   }
   return acc
-}
-
-function incrementalValidate(text: string){
-  try{
-    const cleaned = text.trim()
-    if(!cleaned.endsWith(']')) return { ok:false, partial:true }
-    const { scenes, errors } = loadScenesFromJsonStrict(cleaned)
-    const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
-    const issues = [...(errors||[]), ...(linkIssues||[])]
-    if(issues.length) return { ok:false, partial:false, issues }
-    return { ok:true, partial:false, scenes }
-  }catch{
-    return { ok:false, partial:true }
-  }
 }
 
 async function aiGenerate(toEditor: boolean){
@@ -2449,6 +2433,15 @@ function renderEditorPreview(){
   const bundleIds = (editorBundleIds?.value || '').split(',').map(s=> s.trim()).filter(Boolean)
   const { scenes, issues } = buildEditorScenesBundle()
   editorPreview.textContent = JSON.stringify(scenes || [], null, 2)
+  if(editorLintStatus){
+    if(issues.length){
+      editorLintStatus.textContent = `Lint: ${issues.length} issue(s)`
+      editorLintStatus.style.color = '#fca5a5'
+    } else {
+      editorLintStatus.textContent = 'Lint: OK'
+      editorLintStatus.style.color = '#a0e7ff'
+    }
+  }
   if(issues.length && editorErrors){
     editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
   }
@@ -2994,6 +2987,13 @@ if(editorNewSceneBtn){
   }
 }
 
+function loadStarterScene(){
+  editorScenes = { [STARTER_SCENE.id]: JSON.parse(JSON.stringify(STARTER_SCENE)) }
+  activeSceneId = STARTER_SCENE.id
+  loadSceneToForm(activeSceneId)
+  if(editorErrors) editorErrors.textContent = 'Loaded starter scene (dialogue + choice).'
+}
+
 if(editorSaveBtn){
   editorSaveBtn.onclick = ()=>{
     try{
@@ -3016,8 +3016,12 @@ if(editorLoadSavedBtn){
     if(editorErrors) editorErrors.textContent = 'Loaded saved editor state (if present).'
   }
 }
+;(document.getElementById('editorStarter') as HTMLButtonElement | null)?.addEventListener('click', ()=> loadStarterScene())
 renderEditorTabs()
 hydrateEditorFromStorage()
+if(Object.keys(editorScenes).length === 0 || editorSteps.length === 0){
+  loadStarterScene()
+}
 renderEditorPreview()
 renderEditorSteps()
 setupEditorLiveLint()
