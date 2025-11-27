@@ -316,7 +316,7 @@ Aurora brings it to life.
 
 ---
 
-ğŸŒ? Live Demo
+ğŸŒ Live Demo
 
 - Novel demo built on AuroraEngine: https://chakrahearts.netlify.app/
 
