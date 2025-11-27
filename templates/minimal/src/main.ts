@@ -113,7 +113,9 @@ const aiPromptInput = document.getElementById('aiPrompt') as HTMLInputElement | 
 const aiGenerateBtn = document.getElementById('aiGenerateBtn') as HTMLButtonElement | null
 const aiGenerateToEditorBtn = document.getElementById('aiGenerateToEditorBtn') as HTMLButtonElement | null
 const aiFixBtn = document.getElementById('aiFixBtn') as HTMLButtonElement | null
+const aiCancelBtn = document.getElementById('aiCancel') as HTMLButtonElement | null
 const aiStatus = document.getElementById('aiStatus') as HTMLSpanElement | null
+const aiError = document.getElementById('aiError') as HTMLSpanElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
@@ -2157,6 +2159,26 @@ if(customLoadBtn && customJsonInput){
 function setAIStatus(msg: string){
   if(aiStatus) aiStatus.textContent = msg
 }
+function setAIError(msg: string){
+  if(aiError) aiError.textContent = msg
+}
+function setAIProgress(msg: string){
+  setAIStatus(msg)
+}
+
+const aiCancelToken = { cancelled: false }
+function resetAICancel(){
+  aiCancelToken.cancelled = false
+  setAIError('')
+}
+function markAICancel(){
+  aiCancelToken.cancelled = true
+  setAIStatus('AI request cancelled')
+  setAIError('')
+}
+function throwIfCancelled(){
+  if(aiCancelToken.cancelled) throw new Error('AI cancelled')
+}
 
 function validateSceneJsonText(json: string){
   try{
@@ -2201,12 +2223,20 @@ async function streamOpenAI(apiKey: string, messages: {role:string; content:stri
       base_url: prefs.aiBaseUrl || undefined
     })
   })
+  if(!resp.ok){
+    const errTxt = await resp.text()
+    if(resp.status === 429){
+      throw new Error('Rate limited. Try again later or lower temperature.')
+    }
+    throw new Error(`AI error (${resp.status}): ${errTxt}`)
+  }
   if(!resp.body) throw new Error('No response body')
   const reader = resp.body.getReader()
   const decoder = new TextDecoder()
   let acc = ''
   let buffer = ''
   while(true){
+    throwIfCancelled()
     const { value, done } = await reader.read()
     if(done) break
     const chunk = decoder.decode(value, { stream:true })
@@ -2256,7 +2286,9 @@ async function aiGenerate(toEditor: boolean){
   if(!aiPromptInput){ setAIStatus('No prompt input'); return }
   const prompt = aiPromptInput.value.trim()
   if(!prompt){ setAIStatus('Enter a prompt first.'); return }
-  setAIStatus('Preparing model...')
+  resetAICancel()
+  setAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Contacting AI…')
+  setAIError('')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2265,6 +2297,7 @@ async function aiGenerate(toEditor: boolean){
       model: prefs.aiModel || undefined,
       localModel: prefs.aiLocalModel || undefined
     })
+    throwIfCancelled()
     let text = ''
     if(mode === 'byok' && prefs.aiApiKey){
       // stream remote for faster feedback
@@ -2277,6 +2310,7 @@ async function aiGenerate(toEditor: boolean){
         setAIStatus(`Receiving... ${customJsonInput?.value.length || 0} chars`)
       })
     } else if(adapter.local){
+      setAIProgress('Downloading/initializing local model…')
       text = await adapter.local.convertScriptToJSON(prompt)
     } else if(adapter.remote){
       text = await adapter.remote.generateScene(prompt)
@@ -2303,11 +2337,13 @@ async function aiGenerate(toEditor: boolean){
         return
       }
       const actions = 'Click Lint JSON to revalidate, or adjust the prompt.'
+      setAIError(res.message)
       showErrorOverlay('AI generation errors', `${res.message}\n${actions}`)
     }
   }catch(e:any){
     const msg = e?.message || String(e)
     setAIStatus('Error: '+msg)
+    setAIError(msg)
     showErrorOverlay('AI generation failed', msg)
   }
 }
@@ -2316,7 +2352,9 @@ async function aiFixGrammar(){
   if(!aiPromptInput || !customJsonInput){ setAIStatus('No prompt or text'); return }
   const text = customJsonInput.value.trim() || aiPromptInput.value.trim()
   if(!text){ setAIStatus('Paste text to fix.'); return }
-  setAIStatus('Fixing grammar...')
+  resetAICancel()
+  setAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Fixing grammar…')
+  setAIError('')
   try{
     const mode = (prefs.aiMode === 'byok' ? 'byok' : 'local')
     const adapter = await getAIAdapters(mode as any, prefs.aiApiKey || '', {
@@ -2325,10 +2363,12 @@ async function aiFixGrammar(){
       model: prefs.aiModel || undefined,
       localModel: prefs.aiLocalModel || undefined
     })
+    throwIfCancelled()
     let fixed = ''
     if(mode === 'byok' && adapter.remote){
       fixed = await adapter.remote.extendDialogue({}, `Fix grammar:\n${text}`)
     } else if(adapter.local){
+      setAIProgress('Downloading/initializing local model…')
       fixed = await adapter.local.fixGrammar(text)
     } else {
       throw new Error('No AI adapter available')
@@ -2338,6 +2378,7 @@ async function aiFixGrammar(){
   }catch(e:any){
     const msg = e?.message || String(e)
     setAIStatus('Error: '+msg)
+    setAIError(msg)
     showErrorOverlay('AI grammar fix failed', msg)
   }
 }
@@ -2345,6 +2386,7 @@ async function aiFixGrammar(){
 if(aiGenerateBtn){ aiGenerateBtn.onclick = ()=> aiGenerate(false) }
 if(aiGenerateToEditorBtn){ aiGenerateToEditorBtn.onclick = ()=> aiGenerate(true) }
 if(aiFixBtn){ aiFixBtn.onclick = ()=> aiFixGrammar() }
+if(aiCancelBtn){ aiCancelBtn.onclick = ()=> markAICancel() }
 
 // Prompt presets for AI helpers
 const presetButtons = [
