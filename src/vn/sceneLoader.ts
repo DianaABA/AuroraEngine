@@ -22,7 +22,10 @@ function toSegments(path: string): (string|number)[]{
 
 function validateChoiceOption(raw: any, path: string, push: IssuePusher): ChoiceOption | null {
   if(!raw || typeof raw !== 'object'){ push(path, 'choice.option.invalid_object', 'Choice option must be an object'); return null }
-  if(typeof raw.label !== 'string') push(path, 'choice.option.missing_label', 'Choice option needs a label')
+  const hasLabel = typeof raw.label === 'string'
+  const hasTextId = typeof (raw as any).textId === 'string'
+  if(!hasLabel && !hasTextId) push(path, 'choice.option.missing_label', 'Choice option needs label or textId')
+  if((raw as any).textId!==undefined && typeof (raw as any).textId!=='string') push(`${path}.textId`, 'choice.option.textId_not_string', 'Choice option textId must be a string')
   if(raw.goto!==undefined && typeof raw.goto!=='string') push(`${path}.goto`, 'choice.option.goto_not_string', 'Choice option goto must be a string')
   if(raw.setFlag!==undefined && typeof raw.setFlag!=='string') push(`${path}.setFlag`, 'choice.option.setFlag_not_string', 'Choice option setFlag must be a string')
   if(raw.condition!==undefined && typeof raw.condition!=='string') push(`${path}.condition`, 'choice.option.condition_not_string', 'Choice option condition must be a string')
@@ -83,7 +86,8 @@ export function validateSceneDefStrict(raw: any): { def?: SceneDef; errors: Vali
       if(typeof s.type !== 'string'){ pushIssue(stepPath, 'step.missing_type', 'Step is missing type'); return }
       switch(s.type){
         case 'dialogue':
-          if(typeof s.text !== 'string') pushIssue(`${stepPath}.text`, 'dialogue.missing_text', 'Dialogue needs text')
+          if(typeof (s as any).text !== 'string' && typeof (s as any).textId !== 'string')
+            pushIssue(`${stepPath}.text`, 'dialogue.missing_text', 'Dialogue needs text or textId')
           if(s.char!==undefined && typeof s.char !== 'string') pushIssue(`${stepPath}.char`, 'dialogue.char_not_string', 'Dialogue char must be string')
           break
         case 'choice':
