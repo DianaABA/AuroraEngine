@@ -32,18 +32,32 @@ function parseArgs() {
 
 async function main() {
   const { file } = parseArgs()
-  if (!file) {
-    console.error('Usage: node scripts/scene-lint.js --file <path-to-json>')
-    process.exit(1)
+  // If no file provided, lint all scene JSON files in standard locations.
+  let files = []
+  if (file) {
+    files = [file]
+  } else {
+    const roots = ['scenes', 'templates/minimal/public/scenes']
+    for (const root of roots) {
+      try {
+        const dirPath = resolve(process.cwd(), root)
+        const entries = await import('node:fs').then(m => m.readdirSync(dirPath, { withFileTypes: true }))
+        for (const ent of entries) {
+          if (ent.isFile() && ent.name.endsWith('.json')) {
+            files.push(root + '/' + ent.name)
+          }
+        }
+      } catch { /* ignore missing */ }
+    }
+    if (files.length === 0) {
+      console.error('No scene JSON files found. Provide --file <path-to-json>.')
+      process.exit(1)
+    }
   }
-  const filepath = resolve(process.cwd(), file)
-  let text = ''
-  try {
-    text = readFileSync(filepath, 'utf8')
-  } catch (e) {
-    console.error(`Failed to read ${filepath}:`, e.message)
-    process.exit(1)
-  }
+
+  const results = []
+  let totalErrors = 0
+  let totalScenes = 0
 
   let loader
   try {
@@ -65,33 +79,55 @@ async function main() {
   }
 
   const { loadScenesFromJsonStrict, validateSceneLinksStrict } = loader
-  const { scenes, errors } = loadScenesFromJsonStrict(text)
-  const linkIssues = validateSceneLinksStrict(scenes)
-  const allErrors = [...errors, ...linkIssues]
 
-  if (schemaValidator) {
-    let parsed = null
-    try { parsed = JSON.parse(text) } catch {}
-    if (parsed) {
-      const valid = schemaValidator(parsed)
-      if (!valid) {
-        for (const err of schemaValidator.errors || []) {
-          allErrors.push({ code:'schema', path: err.instancePath || '/', message: err.message || 'schema error' })
+  for (const f of files) {
+    const filepath = resolve(process.cwd(), f)
+    let text = ''
+    try { text = readFileSync(filepath, 'utf8') } catch (e) {
+      console.error(`Failed to read ${filepath}:`, e.message)
+      totalErrors++
+      results.push({ file: f, scenes: 0, errors: [{ code: 'fs', path: filepath, message: e.message || 'read failed' }] })
+      continue
+    }
+    const { scenes, errors } = loadScenesFromJsonStrict(text)
+    const linkIssues = validateSceneLinksStrict(scenes)
+    const allErrors = [...errors, ...linkIssues]
+    totalScenes += scenes.length
+    // Schema validation (optional)
+    if (schemaValidator) {
+      let parsed = null
+      try { parsed = JSON.parse(text) } catch {}
+      if (parsed) {
+        const valid = schemaValidator(parsed)
+        if (!valid) {
+          for (const err of schemaValidator.errors || []) {
+            allErrors.push({ code:'schema', path: err.instancePath || '/', message: err.message || 'schema error' })
+          }
         }
       }
     }
+    totalErrors += allErrors.length
+    results.push({ file: f, scenes: scenes.length, errors: allErrors })
   }
 
-  if (allErrors.length === 0) {
-    console.log(`✓ ${file} is valid (${scenes.length} scene${scenes.length === 1 ? '' : 's'})`)
+  // Summary output
+  for (const r of results) {
+    if (r.errors.length === 0) {
+      console.log(`✓ ${r.file} valid (${r.scenes} scene${r.scenes === 1 ? '' : 's'})`)
+    } else {
+      console.error(`Found ${r.errors.length} issue(s) in ${r.file}:`)
+      for (const err of r.errors) {
+        console.error(`- [${err.code}] ${err.path} :: ${err.message}`)
+      }
+    }
+  }
+  if (totalErrors === 0) {
+    console.log(`✓ All ${files.length} file(s) valid (${totalScenes} total scene${totalScenes === 1 ? '' : 's'})`)
     process.exit(0)
+  } else {
+    console.error(`✗ ${totalErrors} total issue(s) across ${files.length} file(s)`) 
+    process.exit(1)
   }
-
-  console.error(`Found ${allErrors.length} issue(s) in ${file}:\n`)
-  for (const err of allErrors) {
-    console.error(`- [${err.code}] ${err.path} :: ${err.message}`)
-  }
-  process.exit(1)
 }
 
 main()

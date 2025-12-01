@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Guard: run only if npm is available
+command -v npm >/dev/null 2>&1 || exit 0
+
+# Run test suite before pushing
+npm test || exit 1

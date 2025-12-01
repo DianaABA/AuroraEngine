@@ -100,6 +100,19 @@
       .badge.error{border-color:#f87171;color:#fecaca;background:#3b0a0a}
       .spinner{width:12px;height:12px;border:2px solid rgba(160,231,255,.25);border-top-color:#a0e7ff;border-radius:50%;animation:spin 0.9s linear infinite}
       @keyframes spin{to{transform:rotate(360deg)}}
+
+      /* Assistant chat */
+      #assistantOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:30;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+      #assistantPanel{max-width:720px;width:92%;background:#0b1020;border:1px solid #27304a;border-radius:10px;box-shadow:0 18px 44px rgba(0,0,0,.6);display:flex;flex-direction:column;max-height:80vh}
+      #assistantHeader{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #27304a}
+      #assistantHeader strong{color:#a0e7ff}
+      #assistantBody{padding:10px 12px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+      .asst-msg{padding:8px 10px;border:1px solid #27304a;border-radius:8px;font-size:12px;white-space:pre-wrap}
+      .asst-user{background:#111827;color:#a8b0ff;align-self:flex-end}
+      .asst-bot{background:#0f172a;color:#a0e7ff;align-self:flex-start}
+      #assistantFooter{display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid #27304a}
+      #assistantInput{flex:1;min-width:160px;padding:8px;border-radius:8px;border:1px solid #27304a;background:#0b1020;color:#a8b0ff}
+      #assistantSend{min-width:92px}
     </style>
   </head>
   <body>
@@ -107,6 +120,8 @@
       <div id="stage">
         <div style="position:absolute; top:8px; right:8px; z-index:9; display:flex; gap:6px; align-items:center;">
           <a href="https://github.com/DianaABA/AuroraEngine#readme" target="_blank" rel="noreferrer noopener" style="color:#93c5fd; font-size:12px; text-decoration:underline" title="Open Docs (new tab)">Docs ↗</a>
+          <a href="https://github.com/DianaABA/AuroraEngine/tree/main/docs/assistant-guides" target="_blank" rel="noreferrer noopener" style="color:#93c5fd; font-size:12px; text-decoration:underline" title="Open Assistant Guides (new tab)">Assistant Guides ↗</a>
+          <a href="https://www.youtube.com/@BugQueenFlow" target="_blank" rel="noreferrer noopener" style="color:#93c5fd; font-size:12px; text-decoration:underline" title="YouTube — BugQueen Flow (general channel)">YouTube ↗</a>
           <button id="openStartSplash" class="secondary" title="Choose Storyteller or Developer">Mode</button>
         </div>
         <div id="startSplash" role="dialog" aria-modal="true">
@@ -115,12 +130,12 @@
             <button id="splitLeft" class="split-btn left">
               <span class="split-pill">For Storytellers</span>
               <div class="split-title">Play & Explore</div>
-              <div class="split-desc">Jump into the demo, make choices, switch packs, and feel the flow — no setup needed. Click anywhere on the left to start.</div>
+              <div class="split-desc">Jump into the demo, make choices, switch packs — no setup needed. For quick help, see <a class="split-docs" href="https://github.com/DianaABA/AuroraEngine/tree/main/docs/assistant-guides" target="_blank" rel="noreferrer noopener" onclick="event.stopPropagation()">Assistant Guides ↗</a>. Click anywhere on the left to start.</div>
             </button>
             <div id="splitRight" class="split-btn right" role="button" tabindex="0">
               <span class="split-pill">For Developers</span>
               <div class="split-title">Build & Edit</div>
-              <div class="split-desc">Open the lightweight editor, validate scenes, view the branch map, and use advanced tools. Click anywhere on the right to start.</div>
+              <div class="split-desc">Open the lightweight editor, validate scenes, view the branch map, and use advanced tools. For step‑by‑step tasks, see <a class="split-docs" href="https://github.com/DianaABA/AuroraEngine/tree/main/docs/assistant-guides" target="_blank" rel="noreferrer noopener" onclick="event.stopPropagation()">Assistant Guides ↗</a>. Click anywhere on the right to start.</div>
               <a class="split-docs" href="https://github.com/DianaABA/AuroraEngine#readme" target="_blank" rel="noreferrer noopener" title="Open Docs (new tab)" onclick="event.stopPropagation()">Docs ↗</a>
             </div>
           </div>
@@ -397,6 +412,7 @@
               <button id="editorLintRun" class="secondary" title="Quick lint; run on pass">Lint & Run</button>
               <button id="editorDownload" class="secondary">Download JSON</button>
               <button id="editorImport" class="secondary">Import JSON</button>
+              <button id="editorAskAurora" class="secondary" title="Open Ask Aurora with current scene and errors">Ask Aurora (Context)</button>
               <span id="editorLintStatus" style="font-size:12px; color:#a8b0ff;">Lint: pending</span>
               <span id="editorLive" style="font-size:12px; color:#fca5a5;"></span>
               <span id="editorMeta" style="font-size:12px; color:#a8b0ff;">Active: —</span>
@@ -485,10 +501,35 @@
         <div id="errorOverlayBody"></div>
         <div style="display:flex; gap:8px; flex-wrap:wrap">
           <button id="errorCopy" class="secondary">Copy errors</button>
+              <button id="errorAskAurora" class="secondary" title="Open Ask Aurora with these errors">Ask Aurora about errors</button>
+        </div>
+      </div>
+    </div>
+    <!-- Assistant chat overlay -->
+    <div id="assistantOverlay" role="dialog" aria-modal="true">
+      <div id="assistantPanel">
+        <div id="assistantHeader">
+          <strong>Ask Aurora</strong>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="assistantProvider" class="badge" title="Current provider" style="display:inline-flex"></span>
+            <span id="assistantModel" class="badge" title="Current model" style="display:inline-flex"></span>
+            <span id="assistantTokens" class="badge" title="Estimated tokens" style="display:none"></span>
+            <span id="assistantStatus" class="badge" style="display:none"></span>
+            <button id="assistantClose" class="secondary">Close</button>
+          </div>
+        </div>
+        <div id="assistantBody" aria-live="polite"></div>
+        <div id="assistantFooter">
+          <input id="assistantInput" placeholder="Ask about scenes, packs, errors…" />
+          <button id="assistantSend">Send</button>
+          <button id="assistantStop" class="secondary" title="Cancel current request">Stop</button>
+          <button id="assistantCopy" class="secondary" title="Copy last answer">Copy</button>
+          <button id="assistantClear" class="secondary" title="Clear chat history">Clear</button>
         </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/assistant.ts"></script>
   </body>
 </html>
 

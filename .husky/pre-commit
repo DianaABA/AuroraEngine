@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+# Guard: run only if npm is available
+command -v npm >/dev/null 2>&1 || exit 0
+
+# Fast sanity checks before committing
+npm run typecheck || exit 1
+npm run scenes:lint || exit 1
+npm run validate:packs || exit 1

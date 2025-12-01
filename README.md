@@ -19,7 +19,7 @@ If you can write a story, you can build a game.
 🎉 Play & Explore (no code)
 
 - Quick start: pick a demo pack and play. Live demo: https://chakrahearts.netlify.app/
-- Need help? Ask the built-in Aurora Assistant (planned): “How do I add a choice?” and follow the steps it returns.
+- Need help? See Assistant Guides: `docs/assistant-guides/` (e.g., noncoder-quickstart, scene-format-quick, troubleshooting). The Aurora Assistant will use these to answer in‑editor.
 
 ---
 
@@ -87,7 +87,51 @@ Enables:
 ## Play & Explore (no code)
 
 - Quick start: pick a demo pack and play. Live demo: https://chakrahearts.netlify.app/
-- Need help? Ask the built-in Aurora Assistant (planned): “How do I add a choice?” and follow the steps it returns.
+- Need help? Start with:
+  - `docs/assistant-guides/getting-started.md`
+  - `docs/assistant-guides/noncoder-quickstart.md`
+  - `docs/assistant-guides/scene-format-quick.md`
+  - `docs/assistant-guides/troubleshooting.md`
+
+## Assistant API (BYOK)
+
+Call the serverless endpoint with your API key passed at request time (not stored).
+
+Endpoint:
+
+```
+/api/aurora-assistant
+```
+
+Headers:
+
+- `content-type: application/json`
+- `x-openai-key: <YOUR_OPENAI_COMPAT_KEY>` (or set `OPENAI_API_KEY` in serverless env)
+
+Request body (example):
+
+```json
+{
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "messages": [
+    { "role": "system", "content": "You are Aurora Assistant." },
+    { "role": "user", "content": "Generate a minimal scene with one choice." }
+  ]
+}
+```
+
+Response (shape):
+
+```json
+{ "ok": true, "content": "...LLM text or JSON..." }
+```
+
+Notes:
+
+- Stateless proxy: no key or data is stored; BYOK only.
+- For Netlify/Vercel, this route is prewired in `netlify/functions/aurora-assistant.ts` and `api/aurora-assistant.ts`.
+- Prefer returning JSON that validates against `docs/scene-schema.json` when asking for scenes.
 
 ## Quick Start (React Template)
 
@@ -346,6 +390,7 @@ MIT — open, free, and creator-friendly.
 - Issues & feature requests
 - Examples & templates
 - Discord (coming soon)
+- YouTube (general channel): https://www.youtube.com/@BugQueenFlow (music channel will be separate)
 
 ---
 

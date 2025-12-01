@@ -25,6 +25,17 @@ Now includes:
 
 - Lightweight Scene Editor: add/edit/reorder steps, strict validation/link checks, branch map with SVG nodes/edges (broken link badge), local save/load, JSON import/export, and a lint button for custom scenes.
 
+## Assistant & Automation
+- Ask Aurora overlay: opens an in-browser chat that can explain errors and generate scene JSON via your own API key (BYOK) or local model.
+- Provider hints and badges: shows selected provider/model and a live token estimate.
+- JSON actions: when replies look like JSON, quick actions appear — “Use JSON in Editor” and “Lint & Run”.
+- Automation toggles (Settings):
+	- Auto-Apply AI JSON: on valid JSON replies, validate and apply directly to the editor.
+	- Auto-Run AI JSON: on valid JSON replies, validate and start the scene immediately.
+	- Mutually exclusive: enabling one disables the other.
+- BYOK quality-of-life: if an API key is present, AI Mode auto-switches to BYOK; provider is inferred from `aiBaseUrl` when possible.
+- Local model UX: inline progress bar and status while a local model downloads/initializes; Cancel button to abort.
+
 ## Demo
 ![Aurora Minimal Demo](public/media/demo.gif)
 

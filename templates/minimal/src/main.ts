@@ -79,6 +79,9 @@ const aiModelInput = document.getElementById('aiModel') as HTMLInputElement | nu
 const aiBaseUrlInput = document.getElementById('aiBaseUrl') as HTMLInputElement | null
 const aiLocalModelInput = document.getElementById('aiLocalModel') as HTMLInputElement | null
 const aiApiKeyInput = document.getElementById('aiApiKey') as HTMLInputElement | null
+// Assistant automation toggles (created dynamically)
+let toggleAutoApplyBtn: HTMLButtonElement | null = null
+let toggleAutoRunBtn: HTMLButtonElement | null = null
 const clearSeenBtn = document.getElementById('clearSeen') as HTMLButtonElement
 const langEnBtn = document.getElementById('langEn') as HTMLButtonElement
 const langEsBtn = document.getElementById('langEs') as HTMLButtonElement
@@ -149,6 +152,7 @@ const editorReset = document.getElementById('editorReset') as HTMLButtonElement 
 const editorLoad = document.getElementById('editorLoad') as HTMLButtonElement | null
 const editorDownload = document.getElementById('editorDownload') as HTMLButtonElement | null
 const editorImport = document.getElementById('editorImport') as HTMLButtonElement | null
+const editorAskAurora = document.getElementById('editorAskAurora') as HTMLButtonElement | null
 const editorStepsEl = document.getElementById('editorSteps') as HTMLDivElement | null
 const editorPreview = document.getElementById('editorPreview') as HTMLPreElement | null
 const editorErrors = document.getElementById('editorErrors') as HTMLDivElement | null
@@ -162,6 +166,7 @@ const errorOverlay = document.getElementById('errorOverlay') as HTMLDivElement |
 const errorOverlayBody = document.getElementById('errorOverlayBody') as HTMLDivElement | null
 const errorOverlayClose = document.getElementById('errorOverlayClose') as HTMLButtonElement | null
 const errorCopyBtn = document.getElementById('errorCopy') as HTMLButtonElement | null
+const errorAskBtn = document.getElementById('errorAskAurora') as HTMLButtonElement | null
 let errorOverlayOpen = false
 const onbStepLoad = document.getElementById('onbStepLoad') as HTMLLIElement | null
 const onbStepEdit = document.getElementById('onbStepEdit') as HTMLLIElement | null
@@ -427,6 +432,11 @@ function loadPrefs(){
 function savePrefs(){
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch {}
 }
+
+// Assistant prefs are stored in the same key used by assistant.ts
+type AssistantPrefs = { aiMode?: 'local'|'byok'; aiApiKey?: string; aiProvider?: string; aiModel?: string; aiBaseUrl?: string; autoApplyJson?: boolean; autoRunJson?: boolean }
+function loadAssistantPrefs(): AssistantPrefs { try { return JSON.parse(localStorage.getItem('aurora:minimal:prefs') || '{}') } catch { return {} } }
+function saveAssistantPrefs(p: AssistantPrefs){ try { localStorage.setItem('aurora:minimal:prefs', JSON.stringify(p||{})) } catch {} }
 function loadSeen(){
   try { const raw = localStorage.getItem(SEEN_KEY); const arr: string[] = raw ? JSON.parse(raw) : []; seenLines = new Set(arr) } catch { seenLines = new Set() }
 }
@@ -731,6 +741,17 @@ if(errorOverlay){
   document.addEventListener('keydown', (e)=>{
     if(errorOverlayOpen && e.key === 'Escape'){ hideErrorOverlay() }
   })
+}
+// Ask Aurora about validation errors (auto-seeded prompt)
+if(errorAskBtn){
+  errorAskBtn.onclick = ()=>{
+    try{
+      const body = (errorOverlayBody?.textContent || '').trim()
+      const seed = `Explain these AuroraEngine validation errors and propose a corrected scene JSON.\n\nErrors:\n${body}`
+      const api = (window as any).auroraAssistant
+      api?.openChatWithSeed?.(seed, true)
+    }catch{}
+  }
 }
 
 async function boot(scenePath: string, startSceneId: string = 'intro'){
@@ -1220,6 +1241,7 @@ function showToast(message: string){
     setTimeout(()=>{ try{ div.remove() }catch{} }, 3000)
   }catch{}
 }
+;(window as any).auroraShowToast = showToast
 
 function describeStep(state: any, step: any): string{
   if(!step){
@@ -1536,7 +1558,7 @@ function getStartMode(): StartMode { try{ return (localStorage.getItem(START_MOD
 function setStartMode(mode: StartMode){ try{ if(mode) localStorage.setItem(START_MODE_KEY, mode); else localStorage.removeItem(START_MODE_KEY) }catch{} }
 
 function showStartSplash(){ if(startSplash){ startSplash.style.display = 'flex' } }
-function hideStartSplash(){ if(startSplash){ startSplash.style.display = 'none' } }
+function hideStartSplash(){ if(startSplash){ startSplash.style.display = 'none' }; stopSplashBgPreview() }
 
 function initStart(){
   const mode = getStartMode()
@@ -1606,6 +1628,31 @@ if(splitRightBtn){
   }
 }
 
+// Split preview imagery on hover/focus
+function startSplashBgPreview(side: 'left'|'right'){
+  try{
+    if(!startSplash || startSplash.style.display === 'none') return
+    const src = side === 'left' ? '/room.svg' : '/lab.svg'
+    setBackground(src)
+    bgLabel.textContent = side === 'left' ? 'Preview: Room' : 'Preview: Lab'
+  }catch{}
+}
+function stopSplashBgPreview(){
+  try{ if(!startSplash || startSplash.style.display === 'none') return; setBackground(undefined); bgLabel.textContent = '' }catch{}
+}
+if(splitLeftBtn){
+  splitLeftBtn.addEventListener('mouseenter', ()=> startSplashBgPreview('left'))
+  splitLeftBtn.addEventListener('mouseleave', stopSplashBgPreview)
+  splitLeftBtn.addEventListener('focus', ()=> startSplashBgPreview('left'))
+  splitLeftBtn.addEventListener('blur', stopSplashBgPreview)
+}
+if(splitRightBtn){
+  splitRightBtn.addEventListener('mouseenter', ()=> startSplashBgPreview('right'))
+  splitRightBtn.addEventListener('mouseleave', stopSplashBgPreview)
+  splitRightBtn.addEventListener('focus', ()=> startSplashBgPreview('right'))
+  splitRightBtn.addEventListener('blur', stopSplashBgPreview)
+}
+
 // Manual control to reopen splash
 if(openStartSplashBtn){
   openStartSplashBtn.onclick = ()=>{
@@ -1621,6 +1668,13 @@ document.addEventListener('keydown', (e)=>{
     hideStartSplash()
     boot('/scenes/example.json','intro')
   }
+  // Global shortcut: Ctrl+Shift+A opens Ask Aurora
+  try{
+    if((e.ctrlKey || (e as any).metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')){
+      e.preventDefault()
+      ;(window as any).auroraAssistant?.openChat?.()
+    }
+  }catch{}
 })
 
 // Initialize app (replaces eager boot)
@@ -1755,6 +1809,7 @@ function refreshSettingsUI(){
   if(aiBaseUrlInput) aiBaseUrlInput.value = prefs.aiBaseUrl || ''
   if(aiLocalModelInput) aiLocalModelInput.value = prefs.aiLocalModel || ''
   if(aiApiKeyInput) aiApiKeyInput.value = prefs.aiApiKey || ''
+  ensureAssistantAutomationToggles()
   try{
     if(bgFadeMsInput){ bgFadeMsInput.value = String(prefs.bgFadeMs); bgFadeMsVal.textContent = `${prefs.bgFadeMs}ms` }
     if(spriteFadeMsInput){ spriteFadeMsInput.value = String(prefs.spriteFadeMs); spriteFadeMsVal.textContent = `${prefs.spriteFadeMs}ms` }
@@ -1803,6 +1858,54 @@ if(aiApiKeyInput){
     savePrefs()
     if(prefs.aiMode === 'byok') ensureAIAdapters(true)
   }
+}
+
+function ensureAssistantAutomationToggles(){
+  try{
+    if(!settingsPanel) return
+    const ap = loadAssistantPrefs()
+    const createRow = (id: string, label: string, onClick: ()=>void): HTMLButtonElement => {
+      const btn = document.createElement('button')
+      btn.id = id
+      btn.className = 'secondary'
+      btn.style.marginTop = '6px'
+      btn.onclick = onClick
+      btn.title = 'Assistant automation preference'
+      settingsPanel.appendChild(btn)
+      return btn
+    }
+    if(!toggleAutoApplyBtn){
+      toggleAutoApplyBtn = createRow('toggleAutoApplyJson', 'Auto-Apply AI JSON', ()=>{
+        const cur = loadAssistantPrefs()
+        cur.autoApplyJson = !cur.autoApplyJson
+        // If enabling auto-run, disable auto-apply (mutually exclusive semantics)
+        if(cur.autoApplyJson) cur.autoRunJson = false
+        saveAssistantPrefs(cur)
+        updateAssistantToggleLabels()
+        ;(window as any).auroraShowToast?.(`Auto-Apply AI JSON: ${cur.autoApplyJson ? 'On' : 'Off'}`)
+      })
+    }
+    if(!toggleAutoRunBtn){
+      toggleAutoRunBtn = createRow('toggleAutoRunJson', 'Auto-Run AI JSON', ()=>{
+        const cur = loadAssistantPrefs()
+        cur.autoRunJson = !cur.autoRunJson
+        // If enabling auto-run, disable auto-apply (mutually exclusive semantics)
+        if(cur.autoRunJson) cur.autoApplyJson = false
+        saveAssistantPrefs(cur)
+        updateAssistantToggleLabels()
+        ;(window as any).auroraShowToast?.(`Auto-Run AI JSON: ${cur.autoRunJson ? 'On' : 'Off'}`)
+      })
+    }
+    updateAssistantToggleLabels()
+  }catch{}
+}
+
+function updateAssistantToggleLabels(){
+  try{
+    const ap = loadAssistantPrefs()
+    if(toggleAutoApplyBtn) toggleAutoApplyBtn.textContent = `Auto-Apply AI JSON: ${ap.autoApplyJson ? 'On' : 'Off'}`
+    if(toggleAutoRunBtn) toggleAutoRunBtn.textContent = `Auto-Run AI JSON: ${ap.autoRunJson ? 'On' : 'Off'}`
+  }catch{}
 }
 langEnBtn.onclick = () => { prefs.locale = 'en'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
 langEsBtn.onclick = () => { prefs.locale = 'es'; savePrefs(); refreshSettingsUI(); refreshAutoButtons(); refreshSkipFx() }
@@ -3441,6 +3544,81 @@ if(Object.keys(editorScenes).length === 0 || editorSteps.length === 0){
   loadStarterScene()
 }
 renderEditorPreview()
+
+// Public editor API for assistant overlay
+;(window as any).auroraEditor = {
+  pasteJson(text: string){
+    try{
+      if(!customJsonInput) return
+      customJsonInput.value = text
+      customJsonInput.dispatchEvent(new Event('input', { bubbles:true }))
+    }catch{}
+  },
+  validateJson(text: string){
+    try{
+      const { scenes, errors } = loadScenesFromJsonStrict(text)
+      const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+      const issues = [...(errors||[]), ...(linkIssues||[])]
+      return { ok: issues.length === 0, issues, scenes }
+    }catch(e:any){
+      return { ok:false, issues:[{ code:'json.parse', path:'', message: e?.message||String(e) }] }
+    }
+  },
+  applyToEditorFromJson(text: string){
+    try{
+      const parsed = JSON.parse(text)
+      const scenes = Array.isArray(parsed) ? parsed : [parsed]
+      applyScenesToEditor(scenes as any)
+      showToast('Applied to editor')
+    }catch(e:any){ showToast('Apply failed') }
+  },
+  runScenesFromJson(text: string){
+    try{
+      const { scenes, errors } = loadScenesFromJsonStrict(text)
+      const linkIssues = scenes ? validateSceneLinksStrict(scenes as any) : []
+      const issues = [...(errors||[]), ...(linkIssues||[])]
+      if(issues.length){
+        const details = issues.map((i:any)=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+        customErrors!.textContent = details
+        showErrorOverlay('Custom scene validation failed', details)
+        return { ok:false, issues }
+      }
+      const startId = (customStartIdInput?.value?.trim()) || (scenes[0]?.id || 'intro')
+      customErrors!.textContent = `Loaded ${scenes.length} scene(s). Starting at ${startId}.`
+      bootFromScenes(scenes as any, startId)
+      showToast('Running scene(s)')
+      return { ok:true }
+    }catch(e:any){
+      const msg = 'Validation failed: '+ (e?.message||e)
+      customErrors!.textContent = msg
+      showErrorOverlay('Custom scene load failed', msg)
+      return { ok:false, issues:[{ code:'run.error', message: msg }] }
+    }
+  }
+}
+
+// Editor → Ask Aurora (Contextual)
+if(editorAskAurora){
+  editorAskAurora.onclick = ()=>{
+    try{
+      const { scenes, issues, sceneId } = buildEditorScenesBundle()
+      const sceneJson = JSON.stringify(scenes || [], null, 2)
+      const errs = (issues||[]).map((i:any)=>`[${i.code||'error'}] ${i.path||''} :: ${i.message||''}`).join('\n')
+      const hasErrors = !!(issues && issues.length)
+      const header = hasErrors
+        ? 'Explain these AuroraEngine scene validation issues and suggest fixes. Then propose corrected JSON.'
+        : 'Review this Aurora scene and suggest improvements (choices, pacing, clarity). If useful, propose edited JSON.'
+      const seed = `${header}\n\nScene ID: ${sceneId}\n\n${hasErrors? `Errors (first ${Math.min(issues.length, 12)}):\n${errs}\n\n` : ''}Scene JSON:\n${sceneJson}`
+      const api = (window as any).auroraAssistant
+      if(api && typeof api.openChatWithSeed === 'function'){
+        api.openChatWithSeed(seed, false)
+      } else {
+        // Fallback: open chat if available
+        api?.openChat?.();
+      }
+    }catch(e){ /* noop */ }
+  }
+}
 renderEditorSteps()
 setupEditorLiveLint()
 
