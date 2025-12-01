@@ -43,7 +43,7 @@ Focus: creator-first workflow and ecosystem starters.
 
 Success criteria: template + editor + packs provide a smooth “create → play → share” loop.
 
-## Status â€” v0.0.4 (2025-11-19)
+## Status — v0.0.4 (2025-11-19)
 
 - Engine:
   - Scene cross-link validation on `loadScenes` (fail fast on unknown `goto`)
@@ -61,7 +61,7 @@ Success criteria: template + editor + packs provide a smooth “create → play 
   - `docs/events.md` for engine events
   - Tests green (12 files / 27 tests); GitHub Actions enabled
 
-## PHASE 1 â€” The Essentials
+## PHASE 1 — The Essentials
 
 Goal: Create the minimum features to call it a VN engine.
 
@@ -80,7 +80,7 @@ Docs:
 - CONTRIBUTING.md (newcomer-friendly)
 - ISSUE_LABELS.md
 
-## PHASE 2 â€” Script Language / JSON Scene Files
+## PHASE 2 — Script Language / JSON Scene Files
 
 Goal: Let creators build a VN without touching React.
 
@@ -109,21 +109,21 @@ Engine loads scenes dynamically:
 Docs:
 - docs/scene-format.md
 
-## PHASE 3 â€” Tools for Non-Coders
+## PHASE 3 — Tools for Non-Coders
 
 Goal: Make the engine usable by Udemy students, writers, yoga teachers, and the occasional confused accountant.
 
 Tools:
 - Drag-and-drop asset folder (DONE in minimal template)
 - Template project (DONE: minimal template)
-- â€œWrite sceneâ€ AI prompt examples (DONE: docs/ai-prompts.md)
-- â€œFix my errorâ€ AI prompt guide (DONE: docs/ai-prompts.md, docs/prompt-fix-errors.md)
+- “Write scene” AI prompt examples (DONE: docs/ai-prompts.md)
+- “Fix my error” AI prompt guide (DONE: docs/ai-prompts.md, docs/prompt-fix-errors.md)
 - GitHub Codespaces or StackBlitz starter (DONE: StackBlitz link in template README)
 - One-click Netlify deploy button (DONE in template README)
 
-## PHASE 4 â€” Bonus Systems
+## PHASE 4 — Bonus Systems
 
-Goal: Close the gap to Renâ€™Py-lite.
+Goal: Close the gap to Ren’Py-lite.
 
 Add:
 - Character expression switching (DONE via spriteSwap/expressions)
@@ -143,20 +143,20 @@ Docs:
 - docs/achievements.md
 - docs/jukebox.md
 
-## PHASE 5 â€” Branding + Public Launch
+## PHASE 5 — Branding + Public Launch
 
 Goal: Make creators WANT to use it.
 
 - Website landing page (bugqueenflow.com/engine)
 - Example VN demo
-- Video intro: â€œYour First VN in 15 Minutesâ€
+- Video intro: “Your First VN in 15 Minutes”
 - Udemy course integration
 - ZTM-friendly contributor page
-- â€œBe a Cow. Go For Your Dreams.â€ footer
+- “Be a Cow. Go For Your Dreams.” footer
 
-## PHASE 6 â€” Expansions
+## PHASE 6 — Expansions
 
-Goal: Turn it from â€œniceâ€ into â€œoh damn.â€
+Goal: Turn it from “nice” into “oh damn.”
 
 Planned upgrades:
 - Scene editor (lightweight)
@@ -195,16 +195,16 @@ Planned upgrades:
 - Automated release notes from CHANGELOG; basic canary tag
 - DONE: CI builds UI + template; release builds UI and generates notes/canary tag
 
-## TL;DR â€” Creator-Friendly Checklist
+## TL;DR — Creator-Friendly Checklist
 
-âœ” Easy file structure
-âœ” Simple scene language
-âœ” Docs written like oxygen: required and calm
-âœ” Templates, starter kits, prompt packs
-âœ” One-click deploy
-âœ” Clear examples
-âœ” Teaching-first approach
-âœ” Branding tied to Auroraâ€™s universe (cow, squirrel, vibes)
+✔ Easy file structure
+✔ Simple scene language
+✔ Docs written like oxygen: required and calm
+✔ Templates, starter kits, prompt packs
+✔ One-click deploy
+✔ Clear examples
+✔ Teaching-first approach
+✔ Branding tied to Aurora’s universe (cow, squirrel, vibes)
 
 ## Proposed Release Track (post-0.0.4)
 
