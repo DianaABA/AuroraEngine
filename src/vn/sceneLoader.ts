@@ -5,6 +5,7 @@ export type ValidationIssue = { path: string; code: string; message: string; seg
 
 const SPRITE_POS = new Set(['left','center','right'])
 const TRANSITIONS = new Set(['fade','slide','zoom','shake','flash'])
+const ALIAS_TYPES = new Set(['bg','show','hide','jump'])
 
 type IssuePusher = (path: string, code: string, message: string)=>void
 
@@ -31,6 +32,25 @@ function validateChoiceOption(raw: any, path: string, push: IssuePusher): Choice
   if(raw.condition!==undefined && typeof raw.condition!=='string') push(`${path}.condition`, 'choice.option.condition_not_string', 'Choice option condition must be a string')
   if(raw.weight!==undefined && typeof raw.weight!=='number') push(`${path}.weight`, 'choice.option.weight_not_number', 'Choice option weight must be a number')
   return raw as ChoiceOption
+}
+
+// Normalize authoring aliases to canonical step forms
+function normalizeAliasStep(s: any): any {
+  if(!s || typeof s !== 'object') return s
+  switch(s.type){
+    case 'bg':
+      return { type:'background', src: s.src }
+    case 'show':
+      return { type:'spriteShow', id: s.id, src: s.src, role: s.role }
+    case 'hide':
+      return { type:'spriteHide', id: s.id }
+    case 'jump': {
+      const target = typeof s.label === 'string' ? s.label : typeof s.target === 'string' ? s.target : typeof s.scene === 'string' ? s.scene : undefined
+      return { type:'goto', scene: target }
+    }
+    default:
+      return s
+  }
 }
 
 function validateSpriteMotion(raw: any, path: string, push: IssuePusher): SpritePlacement & SpriteMotion {
@@ -79,11 +99,16 @@ export function validateSceneDefStrict(raw: any): { def?: SceneDef; errors: Vali
   if(!Array.isArray(raw.steps)) pushIssue(ctx('steps'), 'missing_steps', 'Scene is missing steps[]')
   const steps: SceneStep[] = []
   if(Array.isArray(raw.steps)){
+    // Pre-normalize all alias steps up-front for a single pass canonical validation.
+    raw.steps = raw.steps.map(normalizeAliasStep)
     raw.steps.forEach((s:any, i:number)=>{
       const sp = `step[${i}]`
       const stepPath = ctx(sp)
+      
       if(!s || typeof s !== 'object'){ pushIssue(stepPath, 'step.invalid_object', 'Step must be an object'); return }
       if(typeof s.type !== 'string'){ pushIssue(stepPath, 'step.missing_type', 'Step is missing type'); return }
+      // Ensure alias normalization even if pre-normalization was skipped by bundler
+      s = normalizeAliasStep(s)
       switch(s.type){
         case 'dialogue':
           if(typeof (s as any).text !== 'string' && typeof (s as any).textId !== 'string')
@@ -152,7 +177,15 @@ export function loadSceneDefsFromArray(arr: any[]): SceneLoadResult {
 }
 
 export function validateScenesStrictCollection(raw: any[]): { scenes: SceneDef[]; errors: ValidationIssue[] } {
-  const { scenes, errors } = loadSceneDefsStrict(raw)
+  // Pre-normalize alias step types on all raw scenes before strict validation
+  const normalizedInput = (raw || []).map((r:any)=>{
+    if(!r || typeof r !== 'object') return r
+    const copy:any = { ...r }
+    if(Array.isArray(copy.steps)) copy.steps = copy.steps.map(normalizeAliasStep)
+    return copy
+  })
+  
+  const { scenes, errors } = loadSceneDefsStrict(normalizedInput)
   const linkIssues = validateSceneLinksStrict(scenes)
   return { scenes, errors: [...errors, ...linkIssues] }
 }
@@ -282,8 +315,9 @@ export function loadScenesFromJsonStrict(json: string): { scenes: SceneDef[]; er
   const errors: ValidationIssue[] = []
   try {
     const data = JSON.parse(json)
-    if (Array.isArray(data)) return validateScenesStrictCollection(data)
-    if (data && typeof data === 'object') return validateScenesStrictCollection(Object.values(data))
+    // Strict parsing returns only per-scene definition issues; link checks done separately.
+    if (Array.isArray(data)) return loadSceneDefsStrict(data)
+    if (data && typeof data === 'object') return loadSceneDefsStrict(Object.values(data))
     return { scenes: [], errors: [ { path:'root', code:'json_root_must_be_array_or_object', message:'Root must be array or object of scenes' } ] }
   } catch (e:any) {
     errors.push({ path:'root', code:'json_parse_error', message:e?.message||'unknown' })

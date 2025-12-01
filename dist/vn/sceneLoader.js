@@ -1,5 +1,6 @@
 const SPRITE_POS = new Set(['left', 'center', 'right']);
 const TRANSITIONS = new Set(['fade', 'slide', 'zoom', 'shake', 'flash']);
+const ALIAS_TYPES = new Set(['bg', 'show', 'hide', 'jump']);
 function toSegments(path) {
     const flat = path.replace(/:/g, '.');
     const parts = [];
@@ -33,6 +34,25 @@ function validateChoiceOption(raw, path, push) {
     if (raw.weight !== undefined && typeof raw.weight !== 'number')
         push(`${path}.weight`, 'choice.option.weight_not_number', 'Choice option weight must be a number');
     return raw;
+}
+// Normalize authoring aliases to canonical step forms
+function normalizeAliasStep(s) {
+    if (!s || typeof s !== 'object')
+        return s;
+    switch (s.type) {
+        case 'bg':
+            return { type: 'background', src: s.src };
+        case 'show':
+            return { type: 'spriteShow', id: s.id, src: s.src, role: s.role };
+        case 'hide':
+            return { type: 'spriteHide', id: s.id };
+        case 'jump': {
+            const target = typeof s.label === 'string' ? s.label : typeof s.target === 'string' ? s.target : typeof s.scene === 'string' ? s.scene : undefined;
+            return { type: 'goto', scene: target };
+        }
+        default:
+            return s;
+    }
 }
 function validateSpriteMotion(raw, path, push) {
     const placement = {};
@@ -107,6 +127,8 @@ export function validateSceneDefStrict(raw) {
         pushIssue(ctx('steps'), 'missing_steps', 'Scene is missing steps[]');
     const steps = [];
     if (Array.isArray(raw.steps)) {
+        // Pre-normalize all alias steps up-front for a single pass canonical validation.
+        raw.steps = raw.steps.map(normalizeAliasStep);
         raw.steps.forEach((s, i) => {
             const sp = `step[${i}]`;
             const stepPath = ctx(sp);
@@ -118,6 +140,8 @@ export function validateSceneDefStrict(raw) {
                 pushIssue(stepPath, 'step.missing_type', 'Step is missing type');
                 return;
             }
+            // Ensure alias normalization even if pre-normalization was skipped by bundler
+            s = normalizeAliasStep(s);
             switch (s.type) {
                 case 'dialogue':
                     if (typeof s.text !== 'string' && typeof s.textId !== 'string')
@@ -204,7 +228,16 @@ export function loadSceneDefsFromArray(arr) {
     return { scenes, errors };
 }
 export function validateScenesStrictCollection(raw) {
-    const { scenes, errors } = loadSceneDefsStrict(raw);
+    // Pre-normalize alias step types on all raw scenes before strict validation
+    const normalizedInput = (raw || []).map((r) => {
+        if (!r || typeof r !== 'object')
+            return r;
+        const copy = { ...r };
+        if (Array.isArray(copy.steps))
+            copy.steps = copy.steps.map(normalizeAliasStep);
+        return copy;
+    });
+    const { scenes, errors } = loadSceneDefsStrict(normalizedInput);
     const linkIssues = validateSceneLinksStrict(scenes);
     return { scenes, errors: [...errors, ...linkIssues] };
 }
@@ -358,10 +391,11 @@ export function loadScenesFromJsonStrict(json) {
     const errors = [];
     try {
         const data = JSON.parse(json);
+        // Strict parsing returns only per-scene definition issues; link checks done separately.
         if (Array.isArray(data))
-            return validateScenesStrictCollection(data);
+            return loadSceneDefsStrict(data);
         if (data && typeof data === 'object')
-            return validateScenesStrictCollection(Object.values(data));
+            return loadSceneDefsStrict(Object.values(data));
         return { scenes: [], errors: [{ path: 'root', code: 'json_root_must_be_array_or_object', message: 'Root must be array or object of scenes' }] };
     }
     catch (e) {
