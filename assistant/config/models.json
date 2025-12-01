@@ -1,0 +1,8 @@
+{
+  "presets": [
+    { "provider": "openai", "label": "OpenAI GPT-4.1 Mini", "model": "gpt-4.1-mini" },
+    { "provider": "openai", "label": "OpenAI o4-mini (reasoning)", "model": "o4-mini" },
+    { "provider": "local", "label": "Local (WebLLM tiny)", "model": "webllm-tiny" }
+  ],
+  "defaults": { "provider": "openai", "model": "gpt-4.1-mini" }
+}

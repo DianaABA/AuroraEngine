@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "functions": {
+    "api/aurora-assistant.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "routes": [
+    { "src": "/api/aurora-assistant", "dest": "/api/aurora-assistant.ts" }
+  ]
+}
