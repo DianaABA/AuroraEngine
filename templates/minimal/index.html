@@ -99,6 +99,7 @@
     <div id="app">
       <div id="stage">
         <div style="position:absolute; top:8px; right:8px; z-index:9; display:flex; gap:6px; align-items:center;">
+          <a href="https://github.com/DianaABA/AuroraEngine#readme" target="_blank" rel="noreferrer noopener" style="color:#93c5fd; font-size:12px; text-decoration:underline" title="Open Docs (new tab)">Docs ↗</a>
           <button id="openStartSplash" class="secondary" title="Choose Storyteller or Developer">Mode</button>
         </div>
         <div id="startSplash" role="dialog" aria-modal="true">
@@ -383,6 +384,7 @@
               <button id="editorReset" class="secondary">Reset</button>
               <button id="editorStarter" class="secondary" title="Load sample dialogue + choice">Load Starter</button>
               <button id="editorLoad" class="" title="Validate and load scenes into the engine">Build & Run</button>
+              <button id="editorLintRun" class="secondary" title="Quick lint; run on pass">Lint & Run</button>
               <button id="editorDownload" class="secondary">Download JSON</button>
               <button id="editorImport" class="secondary">Import JSON</button>
               <span id="editorLintStatus" style="font-size:12px; color:#a8b0ff;">Lint: pending</span>
@@ -390,7 +392,8 @@
               <span id="editorMeta" style="font-size:12px; color:#a8b0ff;">Active: —</span>
               <span id="editorSavedAt" style="font-size:12px; color:#a0e7ff;">Saved: —</span>
             </div>
-            <div id="editorSteps" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; color:#a8b0ff; font-size:12px;"></div>
+            <div id="editorStepsHint" style="margin-top:4px; color:#8aa0e0; font-size:11px;">Tip: Drag ⋮⋮ or use Alt+Arrow to reorder steps.</div>
+            <div id="editorSteps" style="margin-top:6px; display:flex; flex-direction:column; gap:6px; color:#a8b0ff; font-size:12px;"></div>
             <pre id="editorPreview" style="margin-top:8px; background:#0b1020; color:#a0e7ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-size:12px; max-height:180px; overflow:auto;"></pre>
             <div id="editorErrors" style="margin-top:6px; color:#ffb4b4; font-size:12px; white-space:pre-wrap"></div>
             <div id="branchMap" style="margin-top:8px; padding:10px; background:#0b1020; border:1px solid #27304a; border-radius:8px; color:#a8b0ff; font-size:12px;">

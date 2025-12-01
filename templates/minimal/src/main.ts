@@ -2706,11 +2706,17 @@ function renderEditorPreview(){
     if(issues.length){
       editorLintStatus.textContent = `Lint: ${issues.length} issue(s)`
       editorLintStatus.style.color = '#fca5a5'
+      try{
+        const sample = issues.slice(0,3).map(i=>`[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+        editorLintStatus.title = sample
+      }catch{ editorLintStatus.title = '' }
     } else {
       editorLintStatus.textContent = 'Lint: OK'
       editorLintStatus.style.color = '#a0e7ff'
+      editorLintStatus.title = ''
     }
   }
+  try{ highlightEditorFields(issues) }catch{}
   if(issues.length && editorErrors){
     editorErrors.textContent = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
   }
@@ -2728,6 +2734,37 @@ function renderEditorPreview(){
     localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
     localStorage.setItem(EDITOR_STATE_SAVED_AT, new Date().toLocaleTimeString())
   }catch{}
+}
+
+function highlightEditorFields(issues: Array<{ code?: string; path?: string; message?: string }>)
+{
+  const fields: Array<[HTMLElement|null,string[]]> = [
+    [editorSceneId, ['id','/id'] as string[]],
+    [editorBg, ['bg','/bg']],
+    [editorMusic, ['music','/music']],
+    [editorSceneRoles, ['roles','/roles']],
+    [editorText, ['text','/text','dialogue','background','music']],
+    [editorChar, ['char','/char','id','sprite','flag']],
+    [editorMove, ['move','/moves','moveTo']],
+    [editorOptions, ['options','/options','choice']]
+  ]
+  const clear = (el: HTMLElement|null)=>{ if(!el) return; el.style.outline=''; el.style.borderColor=''; el.removeAttribute('title') }
+  const mark = (el: HTMLElement|null, hint: string)=>{ if(!el) return; el.style.outline='2px solid #fca5a5'; el.style.borderColor='#fca5a5'; el.title = hint }
+  fields.forEach(([el])=> clear(el))
+  if(!issues || !issues.length) return
+  const byField: Map<HTMLElement, string[]> = new Map()
+  for(const it of issues){
+    const p = (it.path||'').toLowerCase()+ ' ' + (it.message||'').toLowerCase()
+    for(const [el,keys] of fields){
+      if(!el) continue
+      if(keys.some(k => p.includes(k))){
+        const arr = byField.get(el) || []
+        arr.push(`[${it.code||'error'}] ${it.path||''} :: ${it.message||''}`)
+        byField.set(el, arr)
+      }
+    }
+  }
+  for(const [el, msgs] of byField){ mark(el, msgs.slice(0,3).join('\n')) }
 }
 
 function renderEditorSteps(){
@@ -3164,6 +3201,19 @@ if(editorLoad){
     bootFromScenes(scenes as any, sceneId || 'custom')
   }
 }
+// Quick Lint & Run
+;(document.getElementById('editorLintRun') as HTMLButtonElement | null)?.addEventListener('click', ()=>{
+  const { scenes, issues, sceneId } = buildEditorScenesBundle()
+  if(issues.length){
+    const msg = issues.map(i=> `[${i.code}] ${i.path} :: ${i.message}`).join('\n')
+    if(editorErrors) editorErrors.textContent = msg
+    showErrorOverlay('Lint failed', msg)
+    return
+  }
+  if(editorErrors) editorErrors.textContent = 'Lint OK. Running…'
+  editorPreview!.textContent = JSON.stringify(scenes, null, 2)
+  bootFromScenes(scenes as any, sceneId || 'custom')
+})
 (document.getElementById('editorLoad') as HTMLButtonElement | null)?.addEventListener('focus', ()=> markOnboardingStep('run'))
 if(editorDownload){
   editorDownload.onclick = ()=>{
