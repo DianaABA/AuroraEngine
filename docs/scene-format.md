@@ -46,17 +46,25 @@ A loader will transform the JSON scene into these internal steps.
 - `id` (string): unique scene identifier
 - `bg` (string): background asset key/path
 - `music` (string): music asset key/path
-- `dialogue` (array): sequence of dialogue or choice entries
-  - Dialogue: `{ "char"?: string, "text": string }`
-  - Choice: `{ "choice": [ { "label": string, "goto": string } ] }`
+- `spriteDefaults` (object): per-scene default sprite placement like `{ "hero": { "pos":"center", "scale":1 } }`
+- `steps` (array): sequence of typed steps (see Mapping). Core authoring notes:
+  - Dialogue: `{ type:'dialogue', char?: string, text?: string, textId?: string }`
+    - Exactly one of `text` or `textId` is required. Use `textId` for i18n; the template maps it via a locale table.
+  - Choice: `{ type:'choice', options:[ { label?: string, textId?: string, goto?: string } ] }`
+    - Exactly one of `label` or `textId` is required per option.
 
 ## Navigation
 - `goto` should reference another scene `id`.
 - `end`: a special `goto` value may signal the VN end or return to menu.
 
 ## Schema & Lint
-- JSON Schema: `docs/scene-schema.json` (matches strict loader, includes `yPct`/`moveTo`/`moves`).
-- Lint: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>` (strict validation + cross-scene goto/choice checks).
+- JSON Schema: `docs/scene-schema.json`
+  - Dialogue supports `text` or `textId` (one required)
+  - Choice options support `label` or `textId` (one required)
+  - Scenes can include `spriteDefaults`
+- Lint:
+  - Template packs: `npm run build && node scripts/lint-all-packs.js`
+  - Single file: `npm run build && node scripts/scene-lint.js --file <path/to/scene.json>`
 
 ## Transitions
 - `type: 'transition'`

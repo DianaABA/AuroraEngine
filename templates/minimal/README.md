@@ -17,6 +17,12 @@ Now includes:
 - Codex pins/favorites with filters and badges
 - In-browser “Load Custom Scenes” (paste JSON, strict-validated)
 - Locale/theme: en/es/ar (RTL) with string table support for `textId`; Theme toggle (Night/Sand) via CSS vars.
+- Dialogue & Choices (best practice)
+	- Dialogue steps can provide either `text` or `textId` (for i18n); one is required.
+	- Choice options can provide either `label` or `textId`; one is required.
+	- Scenes can define `spriteDefaults` to set default `pos/x/yPct/z/scale` per sprite id.
+	- The strict validator and JSON Schema enforce these rules.
+
 - Lightweight Scene Editor: add/edit/reorder steps, strict validation/link checks, branch map with SVG nodes/edges (broken link badge), local save/load, JSON import/export, and a lint button for custom scenes.
 
 ## Example Packs
@@ -78,6 +84,7 @@ Then open http://localhost:5173
  - i18n: switch language in Settings (English/Spanish) affecting key controls
 - Sprite positioning: per-step `pos` (left/center/right) or custom `x` `%` and `scale`; optional `z` ordering
 - Scene defaults: per-scene `spriteDefaults` provide default `pos/x/scale/z` for sprite IDs
+ - i18n authoring: prefer `textId` in scenes and maintain translations in the template’s locale table (Arabic demonstrates RTL rendering).
 - Auto/Auto-Choose control engine flow at runtime; Skip FX hides transition visuals (faster testing)
 - Music strip uses `Jukebox` and engine `music:*` events for status
 
