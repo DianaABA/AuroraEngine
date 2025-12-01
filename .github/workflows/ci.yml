@@ -59,6 +59,10 @@ jobs:
           npm run build
           node scripts/lint-all-packs.js
 
+      - name: Validate packs manifest
+        run: |
+          node scripts/validate-packs-manifest.js
+
   packs:
     name: Packs Tests & Artifacts
     runs-on: ${{ matrix.os }}
@@ -91,6 +95,9 @@ jobs:
 
       - name: Lint all template packs (strict)
         run: node scripts/lint-all-packs.js
+
+      - name: Validate packs manifest
+        run: node scripts/validate-packs-manifest.js
 
       - name: Upload scenes JSON as artifact
         uses: actions/upload-artifact@v4

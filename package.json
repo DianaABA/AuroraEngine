@@ -38,7 +38,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "release:notes": "node scripts/gen-release-notes.js",
     "scenes:lint": "node scripts/scene-lint.js",
-    "release:check": "node scripts/release-check.js"
+    "release:check": "node scripts/release-check.js",
+    "validate:packs": "node scripts/validate-packs-manifest.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",

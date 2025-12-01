@@ -25,6 +25,12 @@ Now includes:
 - Extra packs: RTL/TextId demo (switch language to Arabic to see RTL) and BYOK demo (walks you through BYOK AI mode).
 - Use these to see features without editing JSON.
 
+### Pack Manifest
+- The template reads `public/packs.json` to populate the dropdown and to load scenes.
+- Each pack entry points to a single `scenesUrl` JSON file and can declare `meta.start` (start scene id).
+- If `packs.json` is missing or invalid, the template falls back to a built-in list.
+- CI validates `packs.json` via `node scripts/validate-packs-manifest.js`.
+
 ## Scene Editor walkthrough
 - Open the “Lightweight Scene Editor” panel.
 - Enter `scene id`, optional `bg`/`music`, and add steps. Edit/reorder/delete inline.

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "intro",
+    "bg": "room.svg",
+    "music": "calm.mp3",
+    "roles": { "hero": "spr_hero" },
+    "steps": [
+      { "type": "dialogue", "char": "Hero", "text": "This pack demonstrates assetsBaseUrl usage." },
+      { "type": "dialogue", "text": "Backgrounds, sprites, and music can be organized under a base." },
+      { "type": "choice", "options": [
+        { "label": "Show sprite", "goto": "show" },
+        { "label": "End", "goto": "done" }
+      ]}
+    ]
+  },
+  {
+    "id": "show",
+    "steps": [
+      { "type": "spriteShow", "id": "spr_hero", "src": "hero_neutral.svg", "pos": "center" },
+      { "type": "dialogue", "char": "Hero", "text": "Sprites can be shown with a relative path." },
+      { "type": "transition", "kind": "flash", "duration": 200 },
+      { "type": "choice", "options": [ { "label": "Finish", "goto": "done" } ] }
+    ]
+  },
+  { "id": "done", "steps": [ { "type": "dialogue", "text": "Thanks for trying the assets demo." } ] }
+]

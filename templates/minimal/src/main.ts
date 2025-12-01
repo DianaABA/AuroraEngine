@@ -1545,15 +1545,16 @@ async function initPacksFromManifest(){
         opt.textContent = p.description ? `${p.name} — ${p.description}` : p.name
         packSelect.appendChild(opt)
       }
-      // Set description initially
-      if(packDesc){
-        const first = _packRegistry.list()[0]
-        packDesc.textContent = first?.description || ''
-      }
+      // Default-select 'example' if present, else first
+      const list = _packRegistry.list()
+      const preferred = list.find(p=> p.id === 'example') || list[0]
+      if(preferred){ packSelect.value = preferred.id }
+      if(packDesc){ packDesc.textContent = preferred?.description || '' }
     }
   }catch(e){
     // Leave existing hardcoded options intact as fallback
     console.warn('packs.json not available or invalid; using fallback', e)
+    if(packDesc){ packDesc.textContent = 'Using built-in packs (packs.json not found)' }
   }
 }
 initPacksFromManifest()

@@ -8,6 +8,14 @@
       "meta": { "start": "intro" }
     },
     {
+      "id": "assets",
+      "name": "Assets Demo",
+      "description": "assetsBaseUrl demo",
+      "scenesUrl": "/scenes/assets-demo.json",
+      "assetsBaseUrl": "/",
+      "meta": { "start": "intro" }
+    },
+    {
       "id": "expressions",
       "name": "Expressions",
       "description": "Sprites + CG unlock",
