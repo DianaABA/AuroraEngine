@@ -15,7 +15,7 @@ Focus: stability, DX polish, and packs baseline.
    - Document the minimal template start/preview/build flows in README. DONE
 - P1: Packs system (foundation)
    - Define pack manifest shape + loader API. TODO
-   - Tests for basic pack resolution and switching (`tests/packs.spec.ts`). IN PROGRESS
+   - Tests for basic pack resolution and switching (`tests/packs.spec.ts`, `tests/packs.switch.spec.ts`). DONE
    - Template UI toggle for a couple of example packs. TODO
 - P1: Docs & onboarding
    - “Play & Explore” quickstart for non-coders. DONE (`docs/play-and-explore.md`)
