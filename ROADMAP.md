@@ -12,7 +12,7 @@ Focus: stability, DX polish, and packs baseline.
    - Cross-platform release notes generation (Windows/macOS/Linux). DONE
 - P0: Minimal template hardening
    - Verify fresh-clone flow: `npm install` → `npm run build` → `cd templates/minimal && npm install && npm start`. DONE
-   - Document the minimal template start/preview/build flows in README. TODO
+   - Document the minimal template start/preview/build flows in README. DONE
 - P1: Packs system (foundation)
    - Define pack manifest shape + loader API. TODO
    - Tests for basic pack resolution and switching (`tests/packs.spec.ts`). IN PROGRESS
