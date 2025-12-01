@@ -168,6 +168,7 @@ const startSplash = document.getElementById('startSplash') as HTMLDivElement | n
 const startStoryBtn = document.getElementById('startStoryBtn') as HTMLButtonElement | null
 const startStoryPacks = document.getElementById('startStoryPacks') as HTMLButtonElement | null
 const startDevBtn = document.getElementById('startDevBtn') as HTMLButtonElement | null
+const openStartSplashBtn = document.getElementById('openStartSplash') as HTMLButtonElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -1551,6 +1552,16 @@ function initStart(){
   }
   // First visit: show the split start overlay
   showStartSplash()
+  // Fail-safe: if splash remains visible too long, default to Story
+  setTimeout(()=>{
+    try{
+      if(startSplash && startSplash.style.display !== 'none'){
+        setStartMode('story')
+        hideStartSplash()
+        boot('/scenes/example.json','intro')
+      }
+    }catch{}
+  }, 6000)
 }
 
 if(startStoryBtn){
@@ -1573,6 +1584,23 @@ if(startDevBtn){
     }catch{}
   }
 }
+
+// Manual control to reopen splash
+if(openStartSplashBtn){
+  openStartSplashBtn.onclick = ()=>{
+    setStartMode('')
+    showStartSplash()
+  }
+}
+
+// Keyboard escape: close splash and start Story
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && startSplash && startSplash.style.display !== 'none'){
+    setStartMode('story')
+    hideStartSplash()
+    boot('/scenes/example.json','intro')
+  }
+})
 
 // Initialize app (replaces eager boot)
 initStart()
