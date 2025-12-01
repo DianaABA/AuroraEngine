@@ -54,7 +54,7 @@ jobs:
           test -f dist/state/modules/Gallery.js || (echo "Missing Gallery module" && exit 1)
           test -f dist/index.js || (echo "Missing dist/index.js" && exit 1)
 
-      - name: Lint scenes (strict)
+      - name: Lint all template packs (strict)
         run: |
           npm run build
-          node scripts/scene-lint.js --file templates/minimal/public/scenes/example.json
+          node scripts/lint-all-packs.js
