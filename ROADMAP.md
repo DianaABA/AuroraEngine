@@ -7,11 +7,11 @@ This roadmap outlines phased goals to evolve AuroraEngine from a minimal VN engi
 Focus: stability, DX polish, and packs baseline.
 
 - P0: Dev UX stability
-   - Fix `npm run build:ui` pipeline (tsconfig/tsup alignment, exports). TODO
-   - Ensure `templates/minimal` `npm start` is reliable after root build. TODO
+   - Fix `npm run build:ui` pipeline (tsconfig/tsup alignment, exports). DONE
+   - Ensure `templates/minimal` `npm start` is reliable after root build. DONE
    - Cross-platform release notes generation (Windows/macOS/Linux). DONE
 - P0: Minimal template hardening
-   - Verify fresh-clone flow: `npm install` → `npm run build` → `cd templates/minimal && npm install && npm start`. TODO
+   - Verify fresh-clone flow: `npm install` → `npm run build` → `cd templates/minimal && npm install && npm start`. DONE
    - Document the minimal template start/preview/build flows in README. TODO
 - P1: Packs system (foundation)
    - Define pack manifest shape + loader API. TODO
