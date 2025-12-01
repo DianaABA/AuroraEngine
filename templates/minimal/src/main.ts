@@ -164,6 +164,10 @@ let errorOverlayOpen = false
 const onbStepLoad = document.getElementById('onbStepLoad') as HTMLLIElement | null
 const onbStepEdit = document.getElementById('onbStepEdit') as HTMLLIElement | null
 const onbStepRun = document.getElementById('onbStepRun') as HTMLLIElement | null
+const startSplash = document.getElementById('startSplash') as HTMLDivElement | null
+const startStoryBtn = document.getElementById('startStoryBtn') as HTMLButtonElement | null
+const startStoryPacks = document.getElementById('startStoryPacks') as HTMLButtonElement | null
+const startDevBtn = document.getElementById('startDevBtn') as HTMLButtonElement | null
 
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
@@ -1520,8 +1524,58 @@ function refreshSlotThumb(n: number){
   try{ const url = localStorage.getItem(key); img.src = url || '' }catch{ img.src = '' }
 }
 
-// Initial boot with example scenes
-boot('/scenes/example.json', 'intro')
+// Start Splash logic
+const START_MODE_KEY = 'aurora:minimal:startMode'
+type StartMode = 'story'|'dev'|''
+function getStartMode(): StartMode { try{ return (localStorage.getItem(START_MODE_KEY) as StartMode) || '' }catch{ return '' } }
+function setStartMode(mode: StartMode){ try{ if(mode) localStorage.setItem(START_MODE_KEY, mode); else localStorage.removeItem(START_MODE_KEY) }catch{} }
+
+function showStartSplash(){ if(startSplash){ startSplash.style.display = 'flex' } }
+function hideStartSplash(){ if(startSplash){ startSplash.style.display = 'none' } }
+
+function initStart(){
+  const mode = getStartMode()
+  if(mode === 'story'){
+    boot('/scenes/example.json', 'intro')
+    return
+  }
+  if(mode === 'dev'){
+    // Load a scene but focus developer tools right away
+    boot('/scenes/example.json', 'intro')
+    try{
+      if(advancedPanel){ advancedPanel.style.display = 'block' }
+      if(toggleAdvancedBtn){ toggleAdvancedBtn.textContent = 'Advanced ▾'; toggleAdvancedBtn.setAttribute('aria-expanded','true') }
+      document.getElementById('sceneEditor')?.scrollIntoView({ behavior:'smooth', block:'start' })
+    }catch{}
+    return
+  }
+  // First visit: show the split start overlay
+  showStartSplash()
+}
+
+if(startStoryBtn){
+  startStoryBtn.onclick = () => { setStartMode('story'); hideStartSplash(); markOnboardingStep('load'); boot('/scenes/example.json','intro') }
+}
+if(startStoryPacks){
+  startStoryPacks.onclick = () => {
+    setStartMode('story'); hideStartSplash();
+    // Focus the pack selector and let users load themselves
+    try{ packSelect?.focus(); packSelect?.scrollIntoView({ behavior:'smooth', block:'center' }) }catch{}
+  }
+}
+if(startDevBtn){
+  startDevBtn.onclick = () => {
+    setStartMode('dev'); hideStartSplash(); boot('/scenes/example.json','intro')
+    try{
+      if(advancedPanel){ advancedPanel.style.display = 'block' }
+      if(toggleAdvancedBtn){ toggleAdvancedBtn.textContent = 'Advanced ▾'; toggleAdvancedBtn.setAttribute('aria-expanded','true') }
+      document.getElementById('sceneEditor')?.scrollIntoView({ behavior:'smooth', block:'start' })
+    }catch{}
+  }
+}
+
+// Initialize app (replaces eager boot)
+initStart()
 
 // Allow switching demos on demand
 startExampleBtn.onclick = () => { markOnboardingStep('load'); boot('/scenes/example.json', 'intro') }
