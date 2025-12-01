@@ -19,14 +19,33 @@ Focus: stability, DX polish, and packs baseline.
    - Tests for basic pack resolution and switching (`tests/packs.spec.ts`, `tests/packs.switch.spec.ts`, `tests/packs.manifest.spec.ts`). DONE
    - CI: packs manifest validator (`scripts/validate-packs-manifest.js`). DONE
 - P1: Docs & onboarding
-   - “Play & Explore” quickstart for non-coders. DONE (`docs/play-and-explore.md`)
-   - Document packs.json usage + CI validation. DONE (`docs/packs.md`, template README)
+   - “Play & Explore” quickstart for non-coders. DONE (template README: non-coder path)
+   - Document packs.json usage + CI validation. DONE (template README; CI validator script)
    - Add short video/gif loop showing Start → Save → Gallery. TODO
 - P2: Observability
    - Light event inspector overlay (subscribe to `eventBus`, filter by prefix). TODO
    - Hook basic counters to `metrics` for choices/steps/music changes. TODO
 
 Deliverable: v0.0.5 tag, changelog entry, green CI, template verified end-to-end.
+
+## Status — v0.0.5 (2025-12-01)
+
+- Engine
+   - Strict scene loader supports `dialogue.textId` and choice `textId`; JSON Schema updated and exported.
+   - Packs linter made Windows-safe; cross-platform import via file URL.
+   - Packs manifest validator added to CI; scenes lint strictly via schema + link checks.
+   - Tests expanded and green (26 files / 58 tests locally).
+- Template (minimal)
+   - Split welcome (Storytellers vs Developers) with Mode reopen and fail-safes.
+   - Lightweight scene editor slice (inline edit, reorder, strict lint, branch map) available in template.
+   - Deterministic installs (template lockfile) and esbuild mismatch resolved in CI.
+- CI/Release
+   - Release upsert (avoid duplicate tag failures); Windows-safe build/lint steps.
+   - Template build validated in CI; artifacts verified.
+- Docs
+   - `docs/scene-format.md` updated (text vs textId; spriteDefaults).
+   - Template README expanded (packs manifest, editor walkthrough, deploy buttons).
+   - Pending: short video/gif for Start → Save → Gallery.
 
 ## Milestone — v0.1.0 (Q1 2026)
 
@@ -259,23 +278,19 @@ Phase 5: Packaging & Export (v1.5+)
    - Keep `release:check` in CI; add AI adapter mock tests.
    - Quick pre-release run: textId/RTL/theme toggle sanity, AI generate to editor with mock adapter.
 
-## Next Up (now)
-1) Block-based editor thin slice
-   - Drag to reorder steps; inline lint-as-you-type; keep schema/link checks.
-2) Reference starters
-   - Publish full Expo/Electron starter repos and link from docs; add deploy buttons where possible.
+## Next Up (December 2025)
+1) Split welcome polish
+   - Hover states/animations; optional background imagery; add Docs link on Developer side.
+2) Editor usability
+   - Micro-polish for inline validation messages, tooltips, and reorder affordances; quick “lint & run” button.
 3) AI UX hardening
-   - Rate-limit/error badges; download/progress indicator for local models; tidy cancel UX.
-4) Demo story spotlight
-   - Add “How it was built” blurb + link to chakrahearts.netlify.app in docs/template.
+   - Rate-limit/error badges; local model download/progress indicator; cancel UX.
+4) Reference starters
+   - Publish full Expo/Electron starter repos and link from docs; add deploy buttons where possible.
 5) Release guardrails
-   - CI dry-run for npm publish token presence; versioning rule notes in release checklist.
-6) Player-first simplification
-   - Add a “Play & Explore” doc (non-tech quickstart: launch demo, switch packs, controls, save/load).
-   - Relabel UI for plain language (“Start Scene” vs Build, “Story File” vs JSON); hide dev-only controls behind an “Advanced” toggle/accordion.
-   - Keep only core packs in default view; move experimental/debug packs to Advanced.
-   - Default debug HUD/toasts off; error overlay uses action text (“Fix”/“Load new”).
-   - Prune legacy/outdated docs/scripts that reference old scene formats.
+   - CI dry-run for npm publish token presence; versioning rules in release checklist.
+6) Docs & media
+   - Add short Start → Save → Gallery gif in template README; ensure non-coder quickstart is prominent.
 
 ## Long-Term — Aurora Assistant (built-in AI helper)
 - Phase 0: Prep — add OPENAI_API_KEY to .env, create `/assistant` folder with `api/`, `components/`, `prompts/`, `config/`.
