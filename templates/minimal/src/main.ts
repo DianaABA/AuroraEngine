@@ -1,4 +1,4 @@
-﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox } from 'aurora-engine'
+﻿import { createEngine, on, loadScenesFromUrl, loadScenesFromJsonStrict, validateSceneLinksStrict, remapRoles, buildPreloadManifest, preloadAssets, Gallery, Achievements, Jukebox, createPackRegistry } from 'aurora-engine'
 // Use built adapters from root dist to avoid export map issues during template build
 import { getAIAdapters } from '../../../dist/utils/aiModes'
 import { computeBranchEdges } from './editorHelpers'
@@ -168,6 +168,9 @@ const onbStepRun = document.getElementById('onbStepRun') as HTMLLIElement | null
 const engine = createEngine({ autoEmit: true })
 const gallery = new Gallery('aurora:minimal:gallery')
 const achievements = new Achievements('aurora:minimal:ach')
+// Pack manifest/registry (filled from /packs.json if present)
+let _packManifest: { packs: Array<{ id: string; name: string; description?: string; scenesUrl: string; meta?: Record<string, any> }> } | null = null
+let _packRegistry: { list: ()=>any[]; get: (id:string)=>any|undefined } | null = null
 let isPlaying = false
 let skipFx = false
 let backlog: { char?: string; text: string }[] = []
@@ -1524,44 +1527,87 @@ boot('/scenes/example.json', 'intro')
 startExampleBtn.onclick = () => { markOnboardingStep('load'); boot('/scenes/example.json', 'intro') }
 startExpressionsBtn.onclick = () => boot('/scenes/expressions.json', 'intro')
 startAchBtn && (startAchBtn.onclick = () => boot('/scenes/achievements.json', 'ach_intro'))
-if(packLoadBtn && packSelect){
-  packLoadBtn.onclick = () => {
-    const opt = packSelect.value
-    const map: Record<string, { path: string; start: string }> = {
-        example: { path: '/scenes/example.json', start: 'intro' },
-        expressions: { path: '/scenes/expressions.json', start: 'intro' },
-        achievements: { path: '/scenes/achievements.json', start: 'ach_intro' },
-        rtl: { path: '/scenes/rtl.json', start: 'intro' },
-        byok: { path: '/scenes/byok.json', start: 'byok_intro' }
+
+// Packs manifest wiring (with fallback to hardcoded map when manifest not available)
+async function initPacksFromManifest(){
+  try{
+    const res = await fetch('/packs.json')
+    if(!res.ok) throw new Error(`HTTP ${res.status}`)
+    const manifest = await res.json()
+    if(!manifest || !Array.isArray(manifest.packs)) throw new Error('Invalid manifest')
+    _packManifest = manifest
+    _packRegistry = createPackRegistry(manifest as any)
+    if(packSelect){
+      packSelect.innerHTML = ''
+      for(const p of _packRegistry.list()){
+        const opt = document.createElement('option')
+        opt.value = p.id
+        opt.textContent = p.description ? `${p.name} — ${p.description}` : p.name
+        packSelect.appendChild(opt)
+      }
+      // Set description initially
+      if(packDesc){
+        const first = _packRegistry.list()[0]
+        packDesc.textContent = first?.description || ''
+      }
     }
-    const cfg = map[opt] || map.example
+  }catch(e){
+    // Leave existing hardcoded options intact as fallback
+    console.warn('packs.json not available or invalid; using fallback', e)
+  }
+}
+initPacksFromManifest()
+
+function getPackConfigFallback(id: string){
+  const map: Record<string, { path: string; start: string; desc: string }> = {
+    example: { path: '/scenes/example.json', start: 'intro', desc: 'Example — branching basics' },
+    expressions: { path: '/scenes/expressions.json', start: 'intro', desc: 'Expressions — sprites + CG unlock' },
+    achievements: { path: '/scenes/achievements.json', start: 'ach_intro', desc: 'Achievements — badge unlock path' },
+    rtl: { path: '/scenes/rtl.json', start: 'intro', desc: 'RTL/TextId — Arabic + textId table' },
+    byok: { path: '/scenes/byok.json', start: 'byok_intro', desc: 'BYOK — API key demo' }
+  }
+  return map[id] || map.example
+}
+
+if(packSelect && packLoadBtn){
+  packLoadBtn.onclick = () => {
+    const id = packSelect.value
+    if(_packRegistry){
+      const entry = _packRegistry.get(id) || _packRegistry.get('example')
+      if(entry){
+        const start = (entry.meta && (entry.meta as any).start) || 'intro'
+        boot(entry.scenesUrl, start)
+        return
+      }
+    }
+    // Fallback
+    const cfg = getPackConfigFallback(id)
     boot(cfg.path, cfg.start)
   }
 }
 if(packSelect && packDesc){
-  const desc: Record<string,string> = {
-    example: 'Example — branching basics',
-    expressions: 'Expressions — sprites + CG unlock',
-    achievements: 'Achievements — badge unlock path',
-    rtl: 'RTL/TextId — Arabic + textId table',
-    byok: 'BYOK — API key demo'
-  }
   packSelect.addEventListener('change', ()=>{
-    packDesc.textContent = desc[packSelect.value] || ''
+    if(_packRegistry){
+      const entry = _packRegistry.get(packSelect.value)
+      packDesc.textContent = entry?.description || ''
+    } else {
+      packDesc.textContent = getPackConfigFallback(packSelect.value).desc
+    }
   })
 }
 if(viewPackJsonBtn && packSelect){
   viewPackJsonBtn.onclick = async ()=>{
-    const opt = packSelect.value
-    const map: Record<string,string> = {
-      example: '/scenes/example.json',
-      expressions: '/scenes/expressions.json',
-      achievements: '/scenes/achievements.json',
-      rtl: '/scenes/rtl.json',
-      byok: '/scenes/byok.json'
-    }
-    const url = map[opt] || map.example
     try{
+      if(_packRegistry){
+        const entry = _packRegistry.get(packSelect.value)
+        const url = entry?.scenesUrl
+        if(!url) throw new Error('Unknown pack or URL')
+        const res = await fetch(url)
+        const txt = await res.text()
+        showErrorOverlay('Pack JSON (read-only)', txt)
+        return
+      }
+      const url = getPackConfigFallback(packSelect.value).path
       const res = await fetch(url)
       const txt = await res.text()
       showErrorOverlay('Pack JSON (read-only)', txt)

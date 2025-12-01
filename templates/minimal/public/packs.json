@@ -1,0 +1,39 @@
+{
+  "packs": [
+    {
+      "id": "example",
+      "name": "Example",
+      "description": "Branching basics",
+      "scenesUrl": "/scenes/example.json",
+      "meta": { "start": "intro" }
+    },
+    {
+      "id": "expressions",
+      "name": "Expressions",
+      "description": "Sprites + CG unlock",
+      "scenesUrl": "/scenes/expressions.json",
+      "meta": { "start": "intro" }
+    },
+    {
+      "id": "achievements",
+      "name": "Achievements",
+      "description": "Badge unlock path",
+      "scenesUrl": "/scenes/achievements.json",
+      "meta": { "start": "ach_intro" }
+    },
+    {
+      "id": "rtl",
+      "name": "RTL/TextId",
+      "description": "Arabic + textId table",
+      "scenesUrl": "/scenes/rtl.json",
+      "meta": { "start": "rtl_intro" }
+    },
+    {
+      "id": "byok",
+      "name": "BYOK",
+      "description": "API key demo",
+      "scenesUrl": "/scenes/byok.json",
+      "meta": { "start": "byok_intro" }
+    }
+  ]
+}
