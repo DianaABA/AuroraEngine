@@ -107,6 +107,36 @@ Your first visual novel is live.
 📱 React Native (Expo) Quick Start
 
 ```bash
+## Minimal Template Usage (Windows PowerShell)
+
+Root build (engine + types):
+
+```powershell
+cd AuroraEngine
+npm install
+npm run build
+```
+
+Run the minimal template (dev server):
+
+```powershell
+cd templates\minimal
+npm install
+npm start
+```
+
+Production build + preview:
+
+```powershell
+cd templates\minimal
+npm run build
+npm run preview
+```
+
+Notes:
+- `npm start` runs Vite and will pick a free port if the default is in use.
+- If you change engine code, re-run `npm run build` at the repo root before restarting the template.
+
 npx create-expo-app my-vn
 npm install aurora-engine
 ```
