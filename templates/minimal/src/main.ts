@@ -126,6 +126,8 @@ const aiCancelBtn = document.getElementById('aiCancel') as HTMLButtonElement | n
 const aiStatus = document.getElementById('aiStatus') as HTMLSpanElement | null
 const aiError = document.getElementById('aiError') as HTMLSpanElement | null
 const aiRateHint = document.getElementById('aiRateHint') as HTMLSpanElement | null
+const aiProgress = document.getElementById('aiProgress') as HTMLDivElement | null
+const aiProgressBar = document.getElementById('aiProgressBar') as HTMLDivElement | null
 const customErrors = document.getElementById('customErrors') as HTMLDivElement | null
 const customStartIdInput = document.getElementById('customStartId') as HTMLInputElement | null
 const editorSceneId = document.getElementById('editorSceneId') as HTMLInputElement | null
@@ -2437,37 +2439,73 @@ if(customLoadBtn && customJsonInput){
 }
 
 // AI helpers (generation + grammar) with validation before load
+function show(el: HTMLElement|null, visible: boolean){ if(!el) return; el.style.display = visible ? 'inline-flex' : 'none' }
 function setInlineAIStatus(msg: string){
-  if(aiStatus) aiStatus.textContent = msg
+  if(!aiStatus) return
+  aiStatus.textContent = msg
+  show(aiStatus, !!msg)
 }
 function setInlineAIError(msg: string){
-  if(aiError) aiError.textContent = msg
+  if(aiError){ aiError.textContent = msg; show(aiError, !!msg) }
   if(aiRateHint){
     if(/429|rate limit|too many/i.test(msg)){
-      aiRateHint.textContent = 'Possible rate limit. Retry or switch to Local mode.'
-    } else if(/overloaded|quota/i.test(msg)){
+      aiRateHint.textContent = 'Rate limited. Retry or switch to Local mode.'
+      show(aiRateHint, true)
+    } else if(/overloaded|quota|busy/i.test(msg)){
       aiRateHint.textContent = 'Provider busy. Try later or use Local.'
+      show(aiRateHint, true)
     } else {
       aiRateHint.textContent = ''
+      show(aiRateHint, false)
     }
   }
 }
-function setInlineAIProgress(msg: string){
-  setInlineAIStatus(msg)
+let aiIndeterminateTimer: number|undefined
+function aiProgressStart(){
+  if(!aiProgress || !aiProgressBar) return
+  aiProgress.style.display = 'block'
+  aiProgressBar.style.width = '0%'
+  clearInterval(aiIndeterminateTimer as any)
+  let w = 0
+  aiIndeterminateTimer = window.setInterval(()=>{
+    w = (w + Math.random()*12 + 5)
+    if(w > 92) w = 92
+    aiProgressBar!.style.width = `${w}%`
+  }, 250)
 }
+function aiProgressFinish(){
+  if(!aiProgress || !aiProgressBar) return
+  clearInterval(aiIndeterminateTimer as any)
+  aiProgressBar.style.width = '100%'
+  setTimeout(()=>{ if(aiProgress) aiProgress.style.display = 'none'; if(aiProgressBar) aiProgressBar.style.width = '0%' }, 400)
+}
+function setInlineAIProgress(msg: string){ setInlineAIStatus(msg) }
 
 const aiCancelToken = { cancelled: false }
 function resetAICancel(){
   aiCancelToken.cancelled = false
   setInlineAIError('')
+  toggleAIControlsBusy(true)
+  aiProgressStart()
 }
 function markAICancel(){
   aiCancelToken.cancelled = true
   setInlineAIStatus('AI request cancelled')
   setInlineAIError('')
+  toggleAIControlsBusy(false)
+  aiProgressFinish()
 }
 function throwIfCancelled(){
   if(aiCancelToken.cancelled) throw new Error('AI cancelled')
+}
+function toggleAIControlsBusy(busy: boolean){
+  const btns = [
+    document.getElementById('aiGenerateBtn') as HTMLButtonElement | null,
+    document.getElementById('aiGenerateToEditorBtn') as HTMLButtonElement | null,
+    document.getElementById('aiFixBtn') as HTMLButtonElement | null,
+    document.getElementById('aiCancel') as HTMLButtonElement | null
+  ]
+  btns.forEach((b, i)=>{ if(!b) return; if(i===3){ b.disabled = !busy; } else { b.disabled = busy } })
 }
 
 function applyScenesToEditor(scenes: any[]){
@@ -2548,7 +2586,7 @@ async function aiGenerate(toEditor: boolean){
   const prompt = aiPromptInput.value.trim()
   if(!prompt){ setInlineAIStatus('Enter a prompt first.'); return }
   resetAICancel()
-  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Contacting AI…')
+  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (≈40–80MB). Click Cancel to abort.' : 'Contacting AI…')
   setInlineAIError('')
   if(aiRateHint) aiRateHint.textContent = ''
   try{
@@ -2588,6 +2626,7 @@ async function aiGenerate(toEditor: boolean){
       if(toEditor){
         applyScenesToEditor(res.scenes as any)
       }
+      toggleAIControlsBusy(false); aiProgressFinish()
     } else {
       const trimmed = text.trim()
       const attempt = incrementalValidate(trimmed)
@@ -2596,17 +2635,19 @@ async function aiGenerate(toEditor: boolean){
         customErrors!.textContent = msg
         showErrorOverlay('AI generation (fixed)', msg)
         if(toEditor) applyScenesToEditor(attempt.scenes as any)
-        return
+        toggleAIControlsBusy(false); aiProgressFinish(); return
       }
       const actions = 'Click Lint JSON to revalidate, or adjust the prompt.'
       setInlineAIError(res.message)
       showErrorOverlay('AI generation errors', `${res.message}\n${actions}`)
+      toggleAIControlsBusy(false); aiProgressFinish()
     }
   }catch(e:any){
     const msg = e?.message || String(e)
     setInlineAIStatus('Error: '+msg)
     setInlineAIError(msg)
     showErrorOverlay('AI generation failed', msg)
+    toggleAIControlsBusy(false); aiProgressFinish()
   }
 }
 
@@ -2615,7 +2656,7 @@ async function aiFixGrammarInline(){
   const text = customJsonInput.value.trim() || aiPromptInput.value.trim()
   if(!text){ setInlineAIStatus('Paste text to fix.'); return }
   resetAICancel()
-  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (may download ~40MB). Click Cancel to abort.' : 'Fixing grammar…')
+  setInlineAIStatus(prefs.aiMode === 'local' ? 'Loading local model (≈40–80MB). Click Cancel to abort.' : 'Fixing grammar…')
   setInlineAIError('')
   if(aiRateHint) aiRateHint.textContent = ''
   try{
@@ -2638,11 +2679,13 @@ async function aiFixGrammarInline(){
     }
     customJsonInput.value = fixed
     setInlineAIStatus('Grammar fixed.')
+    toggleAIControlsBusy(false); aiProgressFinish()
   }catch(e:any){
     const msg = e?.message || String(e)
     setInlineAIStatus('Error: '+msg)
     setInlineAIError(msg)
     showErrorOverlay('AI grammar fix failed', msg)
+    toggleAIControlsBusy(false); aiProgressFinish()
   }
 }
 

@@ -93,6 +93,13 @@
       .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0b1020;border:1px solid #27304a;color:#a8b0ff;font-size:12px}
       .muted{opacity:.85}
       @media (max-width: 820px){ .start-wrap{grid-template-columns:1fr} }
+
+      /* Badges + spinner for AI UX */
+      .badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;border:1px solid #27304a;background:#0b1020;font-size:11px;color:#a8b0ff}
+      .badge.warn{border-color:#eab308;color:#fde68a;background:#3a2f0a}
+      .badge.error{border-color:#f87171;color:#fecaca;background:#3b0a0a}
+      .spinner{width:12px;height:12px;border:2px solid rgba(160,231,255,.25);border-top-color:#a0e7ff;border-radius:50%;animation:spin 0.9s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
     </style>
   </head>
   <body>
@@ -316,10 +323,13 @@
                 <button id="aiCancel" class="secondary" title="Cancel current AI request">Cancel AI</button>
                 <button id="aiPresetBranch" class="secondary" title="Adds branching choices to the current scene">Preset: Branch</button>
                 <button id="aiPresetCoach" class="secondary" title="Story coach: pacing & beat suggestions">Preset: Coach</button>
-                <span id="aiStatus" style="font-size:12px; color:#a8b0ff;"></span>
-                <span id="aiError" style="font-size:12px; color:#fca5a5;"></span>
-                <span id="aiRateHint" style="font-size:12px; color:#fca5a5;"></span>
+                <span id="aiStatus" class="badge" style="display:none"></span>
+                <span id="aiError" class="badge error" style="display:none"></span>
+                <span id="aiRateHint" class="badge warn" style="display:none"></span>
               </div>
+            <div id="aiProgress" style="display:none; width:100%; height:4px; background:#1e293b; border-radius:4px; overflow:hidden;">
+              <div id="aiProgressBar" style="width:0%; height:100%; background:#3e59ff; transition:width 250ms ease"></div>
+            </div>
             <textarea id="customJson" style="margin-top:6px; width:100%; min-height:140px; background:#0b1020; color:#a8b0ff; border:1px solid #27304a; border-radius:8px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
             <div id="customErrors" style="margin-top:6px; color:#a0e7ff; font-size:12px; white-space:pre-wrap"></div>
           </div>
