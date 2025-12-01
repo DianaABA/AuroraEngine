@@ -168,6 +168,8 @@ const startSplash = document.getElementById('startSplash') as HTMLDivElement | n
 const startStoryBtn = document.getElementById('startStoryBtn') as HTMLButtonElement | null
 const startStoryPacks = document.getElementById('startStoryPacks') as HTMLButtonElement | null
 const startDevBtn = document.getElementById('startDevBtn') as HTMLButtonElement | null
+const splitLeftBtn = document.getElementById('splitLeft') as HTMLButtonElement | null
+const splitRightBtn = document.getElementById('splitRight') as HTMLButtonElement | null
 const openStartSplashBtn = document.getElementById('openStartSplash') as HTMLButtonElement | null
 
 const engine = createEngine({ autoEmit: true })
@@ -1576,6 +1578,23 @@ if(startStoryPacks){
 }
 if(startDevBtn){
   startDevBtn.onclick = () => {
+    setStartMode('dev'); hideStartSplash(); boot('/scenes/example.json','intro')
+    try{
+      if(advancedPanel){ advancedPanel.style.display = 'block' }
+      if(toggleAdvancedBtn){ toggleAdvancedBtn.textContent = 'Advanced ▾'; toggleAdvancedBtn.setAttribute('aria-expanded','true') }
+      document.getElementById('sceneEditor')?.scrollIntoView({ behavior:'smooth', block:'start' })
+    }catch{}
+  }
+}
+
+// Split hero big targets
+if(splitLeftBtn){
+  splitLeftBtn.onclick = () => {
+    setStartMode('story'); hideStartSplash(); markOnboardingStep('load'); boot('/scenes/example.json','intro')
+  }
+}
+if(splitRightBtn){
+  splitRightBtn.onclick = () => {
     setStartMode('dev'); hideStartSplash(); boot('/scenes/example.json','intro')
     try{
       if(advancedPanel){ advancedPanel.style.display = 'block' }
