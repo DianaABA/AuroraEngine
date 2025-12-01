@@ -3,8 +3,9 @@
  * Lint all template packs: strict validation + link checks for each JSON file
  * under templates/minimal/public/scenes.
  */
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 async function validateFile(filepath, loader, schemaValidator) {
   const text = readFileSync(filepath, 'utf8')
@@ -35,7 +36,9 @@ async function main() {
 
   let loader
   try {
-    loader = await import(resolve(root, 'dist/vn/sceneLoader.js'))
+    const loaderPath = resolve(root, 'dist/vn/sceneLoader.js')
+    if (!existsSync(loaderPath)) throw new Error('missing')
+    loader = await import(pathToFileURL(loaderPath).href)
   } catch (e) {
     console.error('Failed to load dist/vn/sceneLoader.js. Run "npm run build" first.')
     process.exit(1)

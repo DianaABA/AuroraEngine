@@ -50,9 +50,7 @@ jobs:
 
       - name: Guard dist modules exist
         run: |
-          test -f dist/state/modules/Achievements.js || (echo "Missing Achievements module" && exit 1)
-          test -f dist/state/modules/Gallery.js || (echo "Missing Gallery module" && exit 1)
-          test -f dist/index.js || (echo "Missing dist/index.js" && exit 1)
+          node -e "const fs=require('fs');const req=['dist/state/modules/Achievements.js','dist/state/modules/Gallery.js','dist/index.js'];let ok=true;for(const f of req){if(!fs.existsSync(f)){console.error('Missing '+f);ok=false;}}if(!ok)process.exit(1)"
 
       - name: Lint all template packs (strict)
         run: |
