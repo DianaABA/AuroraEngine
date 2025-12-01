@@ -25,6 +25,22 @@ Now includes:
 
 - Lightweight Scene Editor: add/edit/reorder steps, strict validation/link checks, branch map with SVG nodes/edges (broken link badge), local save/load, JSON import/export, and a lint button for custom scenes.
 
+## Demo
+![Aurora Minimal Demo](public/media/demo.gif)
+
+How to create/update the demo GIF on Windows:
+- Option 1 (ScreenToGif):
+	- Install ScreenToGif, record Start → Quick Save → Gallery → Close Gallery.
+	- Export as GIF ~6–10s, 640px width, ~12 fps.
+- Option 2 (ffmpeg):
+	- Record a short MP4 (Win+G or OBS).
+	- Convert to GIF:
+		```powershell
+		# Requires ffmpeg in PATH
+		ffmpeg -y -i input.mp4 -vf "fps=12,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=stats_mode=full[p];[s1][p]paletteuse=new=1:dither=bayer:bayer_scale=5" -loop 0 public/media/demo.gif
+		```
+	- Keep under ~5–10 MB for repo friendliness.
+
 ## Example Packs
 - Start buttons: Example (branching), Expressions (sprite expressions + CG unlock), Achievements (achievement + CG unlock path).
 - Or pick a pack in the dropdown and press Load Pack.
