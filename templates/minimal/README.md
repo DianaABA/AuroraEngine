@@ -47,7 +47,10 @@ npm run build
 # Then inside the template
 cd templates/minimal
 npm install
+# Either dev or start (both run Vite)
 npm run dev
+# or
+npm start
 ```
 Then open http://localhost:5173
 

@@ -40,11 +40,14 @@ jobs:
 
       - name: Generate release notes
         id: notes
+        shell: bash
         run: |
           TARGET_VERSION="${{ github.ref_type == 'tag' && github.ref_name || '' }}" npm run release:notes > /tmp/notes.md
-          echo "notes<<'EOF'" >> $GITHUB_OUTPUT
-          cat /tmp/notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "notes<<EOF"
+            cat /tmp/notes.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Push canary tag
         if: github.ref_type == 'branch' && github.ref_name == 'main'
