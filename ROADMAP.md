@@ -14,11 +14,13 @@ Focus: stability, DX polish, and packs baseline.
    - Verify fresh-clone flow: `npm install` → `npm run build` → `cd templates/minimal && npm install && npm start`. DONE
    - Document the minimal template start/preview/build flows in README. DONE
 - P1: Packs system (foundation)
-   - Define pack manifest shape + loader API. TODO
-   - Tests for basic pack resolution and switching (`tests/packs.spec.ts`, `tests/packs.switch.spec.ts`). DONE
-   - Template UI toggle for a couple of example packs. TODO
+   - Define pack manifest shape + loader API. DONE
+   - Add packs.json to template + registry wiring (selector, load/view). DONE
+   - Tests for basic pack resolution and switching (`tests/packs.spec.ts`, `tests/packs.switch.spec.ts`, `tests/packs.manifest.spec.ts`). DONE
+   - CI: packs manifest validator (`scripts/validate-packs-manifest.js`). DONE
 - P1: Docs & onboarding
    - “Play & Explore” quickstart for non-coders. DONE (`docs/play-and-explore.md`)
+   - Document packs.json usage + CI validation. DONE (`docs/packs.md`, template README)
    - Add short video/gif loop showing Start → Save → Gallery. TODO
 - P2: Observability
    - Light event inspector overlay (subscribe to `eventBus`, filter by prefix). TODO
@@ -248,6 +250,7 @@ Phase 5: Packaging & Export (v1.5+)
    - Docs: provider options, streaming behavior, model size/cache notes.
 3) Content Examples
    - DONE: RTL/textId example pack + dropdown option.
+   - DONE: Assets demo pack (shows assetsBaseUrl usage).
    - TODO: Add BYOK demo scene with placeholders and guardrails.
 4) Packaging & Starter
    - DONE (stubs): Expo starter (`starters/expo/App.js`), Electron starter (`starters/electron/main.js`) linked in docs.
