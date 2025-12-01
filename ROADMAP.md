@@ -2,6 +2,47 @@
 
 This roadmap outlines phased goals to evolve AuroraEngine from a minimal VN engine into a creator-friendly platform.
 
+## Next Release — v0.0.5 (December 2025)
+
+Focus: stability, DX polish, and packs baseline.
+
+- P0: Dev UX stability
+   - Fix `npm run build:ui` pipeline (tsconfig/tsup alignment, exports). TODO
+   - Ensure `templates/minimal` `npm start` is reliable after root build. TODO
+   - Cross-platform release notes generation (Windows/macOS/Linux). DONE
+- P0: Minimal template hardening
+   - Verify fresh-clone flow: `npm install` → `npm run build` → `cd templates/minimal && npm install && npm start`. TODO
+   - Document the minimal template start/preview/build flows in README. TODO
+- P1: Packs system (foundation)
+   - Define pack manifest shape + loader API. TODO
+   - Tests for basic pack resolution and switching (`tests/packs.spec.ts`). IN PROGRESS
+   - Template UI toggle for a couple of example packs. TODO
+- P1: Docs & onboarding
+   - “Play & Explore” quickstart for non-coders. DONE (`docs/play-and-explore.md`)
+   - Add short video/gif loop showing Start → Save → Gallery. TODO
+- P2: Observability
+   - Light event inspector overlay (subscribe to `eventBus`, filter by prefix). TODO
+   - Hook basic counters to `metrics` for choices/steps/music changes. TODO
+
+Deliverable: v0.0.5 tag, changelog entry, green CI, template verified end-to-end.
+
+## Milestone — v0.1.0 (Q1 2026)
+
+Focus: creator-first workflow and ecosystem starters.
+
+- Scene editor thin slice
+   - Reorder steps, inline edit, schema+link checks, simple errors. TODO
+- Starters
+   - Publish Expo/Electron starter repos with deploy buttons + CI. TODO
+   - Optional CLI to scaffold a new VN from template (name, id). TODO
+- Internationalization
+   - String table pipeline guidance; RTL sanity checks in template. TODO
+- Observability & quality
+   - Event/metrics viewer page for debugging author flows. TODO
+   - Release guardrails: `release:check` gating, canary notes. TODO
+
+Success criteria: template + editor + packs provide a smooth “create → play → share” loop.
+
 ## Status â€” v0.0.4 (2025-11-19)
 
 - Engine:
