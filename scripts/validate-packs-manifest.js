@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const root = path.resolve(__dirname, '..')
 const pub = path.join(root, 'templates', 'minimal', 'public')
 const packsPath = path.join(pub, 'packs.json')
 
