@@ -12,6 +12,7 @@
         "bg": { "type": "string" },
         "music": { "type": "string" },
         "roles": { "type": "object", "additionalProperties": true },
+        "spriteDefaults": { "type": "object", "additionalProperties": true },
         "steps": {
           "type": "array",
           "items": { "$ref": "#/definitions/Step" }
@@ -36,24 +37,33 @@
     },
     "DialogueStep": {
       "type": "object",
-      "required": ["type", "text"],
+      "required": ["type"],
       "properties": {
         "type": { "const": "dialogue" },
         "char": { "type": "string" },
-        "text": { "type": "string" }
+        "text": { "type": "string" },
+        "textId": { "type": "string" }
       },
+      "oneOf": [
+        { "required": ["text"] },
+        { "required": ["textId"] }
+      ],
       "additionalProperties": false
     },
     "ChoiceOption": {
       "type": "object",
-      "required": ["label"],
       "properties": {
         "label": { "type": "string" },
+        "textId": { "type": "string" },
         "goto": { "type": "string" },
         "setFlag": { "type": "string" },
         "condition": { "type": "string" },
         "weight": { "type": "number" }
       },
+      "oneOf": [
+        { "required": ["label"] },
+        { "required": ["textId"] }
+      ],
       "additionalProperties": false
     },
     "ChoiceStep": {

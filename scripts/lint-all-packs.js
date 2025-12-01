@@ -7,48 +7,30 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-function classifyFile(filename){
-  const base = filename.toLowerCase()
-  if(base.includes('rtl')) return { mode:'loose', schema:false }
-  return { mode:'strict', schema:true }
-}
-
 async function validateFile(filepath, loader, schemaValidator) {
   const text = readFileSync(filepath, 'utf8')
-  const { loadScenesFromJson, loadScenesFromJsonStrict, validateSceneLinksStrict } = loader
-  const { mode, schema } = classifyFile(filepath)
+  const { loadScenesFromJsonStrict, validateSceneLinksStrict } = loader
+  const res = loadScenesFromJsonStrict(text)
+  const scenes = res.scenes
+  const errs = res.errors
+  const linkIssues = validateSceneLinksStrict(scenes)
+  const allErrors = [...errs, ...linkIssues]
 
-  let scenes = []
-  let errors = []
-  if(mode === 'strict'){
-    const res = loadScenesFromJsonStrict(text)
-    scenes = res.scenes; errors = res.errors
-  } else {
-    const res = loadScenesFromJson(text)
-    scenes = res.scenes; errors = [] // ignore non-strict parse errors in loose mode
-  }
-
-  const linkIssues = mode === 'strict' ? validateSceneLinksStrict(scenes) : []
-  const allErrors = [...errors, ...linkIssues]
-
-  // Optional JSON Schema validation (warnings only)
-  if (schema && schemaValidator) {
+  // Optional JSON Schema validation (errors count)
+  if (schemaValidator) {
     let parsed = null
     try { parsed = JSON.parse(text) } catch {}
     if (parsed) {
       const valid = schemaValidator(parsed)
       if (!valid) {
         for (const err of schemaValidator.errors || []) {
-          // Mark schema as warning (won't fail CI)
-          allErrors.push({ code:'schema:warn', path: err.instancePath || '/', message: err.message || 'schema warning' })
+          allErrors.push({ code:'schema', path: err.instancePath || '/', message: err.message || 'schema error' })
         }
       }
     }
   }
 
-  // Count only non-schema issues as errors
-  const hardErrors = allErrors.filter(e => String(e.code||'').indexOf('schema') !== 0)
-  return { scenesCount: (JSON.parse(text) || []).length || 0, errors: hardErrors, all: allErrors }
+  return { scenesCount: (JSON.parse(text) || []).length || 0, errors: allErrors }
 }
 
 async function main() {
@@ -85,15 +67,13 @@ async function main() {
   let totalErrors = 0
   for (const f of files) {
     const fp = join(scenesDir, f)
-    const { scenesCount, errors, all } = await validateFile(fp, loader, schemaValidator)
+    const { scenesCount, errors } = await validateFile(fp, loader, schemaValidator)
     if (errors.length === 0) {
       console.log(`✓ ${f} is valid (${scenesCount} scene${scenesCount === 1 ? '' : 's'})`)
     } else {
       console.error(`Found ${errors.length} issue(s) in ${f}:`)
-      for (const err of all) {
-        const isWarn = String(err.code||'').startsWith('schema:warn')
-        const out = `- [${err.code}] ${err.path} :: ${err.message}`
-        if(isWarn) console.warn(out); else console.error(out)
+      for (const err of errors) {
+        console.error(`- [${err.code}] ${err.path} :: ${err.message}`)
       }
       totalErrors += errors.length
     }

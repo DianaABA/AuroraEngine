@@ -45,7 +45,7 @@ jobs:
       - name: Build template (templates/minimal)
         run: |
           cd templates/minimal
-          npm install --no-audit --no-fund
+          npm ci
           npm run build
 
       - name: Guard dist modules exist
