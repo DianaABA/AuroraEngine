@@ -28,6 +28,12 @@ build/
 coverage/
 .nyc_output/
 
+# Prevent compiled artifacts inside source tree
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
+tsconfig.tsbuildinfo
+
 # Env and local
 .env
 .env.*
