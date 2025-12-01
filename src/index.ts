@@ -24,6 +24,8 @@ export * from './utils/metrics'
 export * from './utils/corruptionRecovery'
 export { Jukebox } from './utils/jukebox'
 export * from './utils/expressions'
+export * from './packs/manifest'
+export * from './packs/loader'
 
 // Optional UI kit export (guarded to avoid failing when dist is absent)
 try {

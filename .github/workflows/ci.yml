@@ -58,3 +58,42 @@ jobs:
         run: |
           npm run build
           node scripts/lint-all-packs.js
+
+  packs:
+    name: Packs Tests & Artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            templates/minimal/package-lock.json
+
+      - name: Install (root)
+        run: npm ci
+
+      - name: Build (root)
+        run: npm run build
+
+      - name: Run packs tests only
+        run: npx vitest run tests/packs*.spec.ts
+
+      - name: Lint all template packs (strict)
+        run: node scripts/lint-all-packs.js
+
+      - name: Upload scenes JSON as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenes-json-${{ runner.os }}
+          path: templates/minimal/public/scenes
