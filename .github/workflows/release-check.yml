@@ -1,0 +1,44 @@
+name: Release Check
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Scenes Lint
+        run: npm run scenes:lint
+
+      - name: Validate Packs Manifest
+        run: npm run validate:packs
+
+      - name: Release Check
+        run: npm run release:check
+
+      - name: Publish Dry Run (if token)
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+            npm publish --dry-run || exit 1
+          else
+            echo "NPM_TOKEN not set; skipping publish dry run"
+          fi
