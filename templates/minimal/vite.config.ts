@@ -2,7 +2,15 @@ import { defineConfig } from 'vite'
 
 // Keep bundle sizes healthy for the demo template; split heavy deps.
 export default defineConfig({
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8787',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 1024,
