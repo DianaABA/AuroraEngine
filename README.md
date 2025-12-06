@@ -286,6 +286,7 @@ Also available:
 - `engine.loadScenes()`
 - `engine.saveSnapshotLS()`
 - `engine.loadSnapshotLS()`
+- See `docs/persistence.md` for the quick-save panel, slot metadata, autosave, and manual restore workflows behind those helpers.
 - Event system (`vn:step`, `vn:scene_end`, …)
 
 ---

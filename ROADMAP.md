@@ -117,9 +117,42 @@ Success criteria: Assistant usable end-to-end with clear guardrails; starters in
    - Update quickstart paths (non-coder vs dev), Assistant guide, BYOK/local setup.
    - Record demo and add `templates/minimal/public/media/demo.gif`.
 - Creator tooling & persistence
-   - Ship the `aurora convert` / script loader CLI (and template wiring) so the README script workflow is viable, with tests + docs picker.
-   - Expand the remote AI adapter/UI to expose the advertised behavior modeling and story structure coaching helpers (new prompts, schema guidance, UI controls for those flows).
-   - Finish the save/load persistence path (engine snapshot ↔ localStorage UI buttons/docs) so snapshots advertised in the feature list can be created, listed, and restored end-to-end.
+   - DONE: Ship the `aurora convert` / script loader CLI (and template wiring) so the README script workflow is viable, with tests + docs picker.
+   - TODO: Expand the remote AI adapter/UI to expose the advertised behavior modeling and story structure coaching helpers (new prompts, schema guidance, UI controls for those flows).
+   - TODO: Finish the save/load persistence path (engine snapshot ↔ localStorage UI buttons/docs) so snapshots advertised in the feature list can be created, listed, and restored end-to-end.
+
+## Next Iteration — Observability, AI, and Distribution (Jan-Feb 2026)
+
+Focus: Hardening instrumentation, shipping the assistant experience end-to-end, and releasing the starter ecosystem.
+
+- Observability
+   - Build the event inspector overlay (subscribe to `eventBus`, prefix filters, pause/resume, quick export) and hook it to the metrics counters page (choices/steps/autos/time in scene).
+   - Surface the metrics dashboard in the template and expose simple export/share controls so creators can debug flows and report telemetry.
+   - Bake observability guardrails (`release:check`, automated lint/scenario validation) into CI so we can ship with confidence.
+
+- AI Assistant
+   - Harden the BYOK proxy (rate-limit banners, retries, allowlist) and finish the editor integration (Ask Aurora pane with JSON validation, auto-apply/auto-run toggles, behavior modeling prompts).
+   - Polish the local AI mode UX (model download progress, size warnings, cancel, cache controls) while keeping keyless inference.
+   - Expand documentation/prompts to cover behavior modeling, story structure coaching, and response validation against `docs/scene-schema.json`.
+
+- Persistence & Saves
+   - Complete the save/load UX: snapshot list UI, quick-save/load slots, metadata display, and docs describing `engine.saveSnapshotLS()` / `engine.loadSnapshotLS()` plus manual restore flows.
+   - Ensure persistence integrates with Gallery/Achievements (unlock on save) and plays nicely with the new script converter tooling.
+
+- Distribution & Starters
+   - Publish Expo and Electron starter repos with CI and deploy buttons; update docs and README with install/run/deploy steps.
+   - Add (or finish) `aurora create` CLI for scaffolding new projects (copy template, install deps, set metadata).
+   - Push packaging/guides for Netlify/Vercel/GitHub Pages + optional template rename helper.
+
+- Docs & Media
+   - Record the demo GIF/MP4 showing Start → Save → Gallery and link it in the template README/docs.
+   - Refresh assistant guides (AI modes, BYOK/local instructions, troubleshooting) and highlight the new script workflow in the landing copy.
+
+### Success benchmarks
+1. Observability overlay + metrics dashboard ship with filtered export/hover details in the template.
+2. BYOK/local AI flows (behavior modeling, story coaching) operate with schema-validated JSON and user-friendly errors.
+3. Snapshot save/load UI works with Gallery/Achievements and is documented in the quick start.
+4. Expo/Electron starters published, CLI `aurora create` ready, and starter docs updated with deploy/run steps.
 
 ## Status — v0.0.4 (2025-11-19)
 
@@ -317,6 +350,11 @@ Phase 5: Packaging & Export (v1.5+)
 - Why: free path for beginners; zero infra cost; high-quality path for advanced users without storing keys server-side.
 
 ## New Roadmap (next iteration)
+\n+Dev Notes
+- Vitest: 4.x discovery fixed by explicit `test.include`/`exclude` in `vitest.config.ts`; suites pass locally.
+- Assistant Dev Server: default port `8787`. If busy, set a different port and start:
+   - Windows PowerShell: `setx PORT 8788; $env:PORT='8788'; npm run assistant:dev`
+   - Update `templates/minimal/vite.config.ts` proxy target to `http://localhost:8788` for local UI testing.
 1) AI UX & Safety
    - DONE: Provider/model selector (local model configurable; BYOK supports OpenAI-compatible, Anthropic/Groq/DeepSeek presets).
    - DONE: Streamed JSON incremental validation + “Try Fix” flow (partial salvage of partial JSON).
@@ -350,6 +388,10 @@ Phase 5: Packaging & Export (v1.5+)
 5) Release guardrails
    - DONE: Package size hygiene; Husky v9 hooks.
    - TODO: Add `publishConfig.registry` to `package.json` and CI check for `NPM_TOKEN` with `npm publish --dry-run`.
+
+8) Test Infrastructure
+- DONE: Vitest 4.x discovery fixed via explicit config (`vitest.config.ts` `test.include` + `exclude`).
+- Note: Kept Node environment and forks pool; all 32 files/83 tests passing locally.
 6) Docs & media
    - DONE: README wired for demo GIF; PowerShell `scripts/make-demo-gif.ps1` added; media folder scaffolded.
    - TODO: Record short MP4 and generate `templates/minimal/public/media/demo.gif`.
