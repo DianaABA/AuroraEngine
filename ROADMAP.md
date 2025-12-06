@@ -72,6 +72,51 @@ Focus: creator-first workflow and ecosystem starters.
 
 Success criteria: template + editor + packs provide a smooth “create → play → share” loop.
 
+## Milestone — v0.1.1 (Q2 2026)
+
+Focus: AI Assistant GA, observability, and starter distribution.
+
+- Aurora Assistant GA
+   - BYOK proxy hardened: retry/backoff, rate-limit banners, model allowlist stored in repo.
+   - Local model UX: download progress, size warnings, cache controls, fallback heuristics.
+   - Editor integration: “Ask Aurora” pane with JSON-auto-validate and auto-apply toggles.
+   - Safety: max tokens/stream guards; schema-guided generation modes; redaction of API headers in logs.
+- Observability v1
+   - Event inspector overlay with pause/play, filter (prefix), and quick-export.
+   - Metrics counters page (choices taken, scenes visited, autos triggered, time-in-scene).
+- Starters publish
+   - Publish Expo and Electron starters to separate repos with CI and deploy buttons.
+   - Add CLI `aurora create` to scaffold from template with name/id.
+- Docs & Media
+   - Short demo video (Start → Save → Gallery), assistant help flows, BYOK instructions.
+   - Troubleshooting: local model cache issues, provider errors.
+
+Success criteria: Assistant usable end-to-end with clear guardrails; starters install and run via documented commands.
+
+## Work Streams — 6–8 Weeks
+
+- AI UX polish: streaming resilience, cancel, error fallbacks; JSON salvage flow.
+- Editor improvements: branch map mini-graph, inline tooltips, reorder UX refinements.
+- Packs ecosystem: sample packs curation, manifest best practices, validator evolution.
+- Release hygiene: publishConfig.registry, `release:check` CI gate, dry-run with token.
+- Marketing: concise homepage section, README badges, GIF loops, tutorial index.
+
+## Implementation Checklist (Next Sprint)
+
+- Assistant
+   - Ship `/assistant/api` proxy (stateless), guards, unit tests.
+   - UI streaming component with cancel/retry, provider/model badges.
+   - JSON schema-driven generation modes, strict validation with friendly diffs.
+- Observability
+   - Event overlay (subscribe to `eventBus`), filter controls, pause/resume.
+   - Metrics counters wired to `metrics` module; simple export.
+- Starters
+   - Publish Expo/Electron repos; add deploy buttons; CI builds.
+   - CLI scaffolder in `scripts/` with name/id prompts.
+- Docs
+   - Update quickstart paths (non-coder vs dev), Assistant guide, BYOK/local setup.
+   - Record demo and add `templates/minimal/public/media/demo.gif`.
+
 ## Status — v0.0.4 (2025-11-19)
 
 - Engine:
