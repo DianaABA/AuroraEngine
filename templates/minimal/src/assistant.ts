@@ -76,6 +76,11 @@ const statusEl = $('assistantStatus') as HTMLSpanElement
 const modelEl = $('assistantModel') as HTMLSpanElement
 const tokensEl = $('assistantTokens') as HTMLSpanElement
 const providerEl = document.getElementById('assistantProvider') as HTMLSpanElement | null
+// Preset toolbar (created dynamically below)
+let presetsBar: HTMLDivElement | null = null
+const localProgress = document.getElementById('aiProgressBar') as HTMLDivElement | null
+const localCancelBtn = document.getElementById('aiCancel') as HTMLButtonElement | null
+import { LocalAIAdapter } from './localAi'
 
 let messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }]
 let inflight: AbortController | null = null
@@ -87,6 +92,29 @@ function setStatus(text: string | null){
 
 function render(){
   bodyEl.innerHTML = ''
+  // Ensure preset toolbar exists (once)
+  if(!presetsBar){
+    presetsBar = document.createElement('div')
+    presetsBar.id = 'assistantPresets'
+    presetsBar.style.display = 'flex'
+    presetsBar.style.flexWrap = 'wrap'
+    presetsBar.style.gap = '6px'
+    presetsBar.style.margin = '8px 0'
+    const mkBtn = (label: string, seed: string)=>{
+      const b = document.createElement('button')
+      b.className = 'secondary preset-btn'
+      b.textContent = label
+      b.onclick = ()=> openChatWithSeed(seed, true)
+      return b
+    }
+    presetsBar.appendChild(mkBtn('Behavior Model', 'Help model behaviors for characters and choices; produce an AuroraEngine scene JSON with realistic reactions and emotions.'))
+    presetsBar.appendChild(mkBtn('Story Coach', 'Coach the branching structure and pacing; return AuroraEngine scene JSON with well-labeled choices and balanced path lengths.'))
+    presetsBar.appendChild(mkBtn('Fix JSON', 'Repair and validate this AuroraEngine scene JSON; output JSON only, no prose.'))
+    presetsBar.appendChild(mkBtn('Add Choices', 'Analyze the current scene and add 2–3 meaningful branching choices with clear labels and balanced outcomes. Return valid AuroraEngine scene JSON only.'))
+    presetsBar.appendChild(mkBtn('Polish Dialogue', 'Polish the dialogue for tone, clarity, and pacing without changing plot. Keep character voices consistent. Return AuroraEngine scene JSON with updated dialogue only.'))
+    // Insert toolbar before the message list
+    bodyEl.parentElement?.insertBefore(presetsBar, bodyEl)
+  }
   for(const m of messages){
     if(m.role === 'system') continue
     const div = document.createElement('div')
@@ -231,12 +259,27 @@ async function send(){
   const provider = (prefs.aiProvider || 'openai').toLowerCase()
   const model = (prefs.aiModel || DEFAULT_MODEL)
   const key = (prefs.aiApiKey || '').trim()
-  if((prefs.aiMode || 'local') !== 'byok'){
-    // nudge user to BYOK if not enabled
-    const warn = { role: 'assistant', content: 'Switch AI Mode to BYOK and set your API key in Settings to chat.' } as ChatMessage
-    messages.push({ role:'user', content:text }, warn)
+  if((prefs.aiMode || 'local') === 'local'){
+    // Use local adapter
+    const adapter = new LocalAIAdapter()
+    let canceled = false
+    localCancelBtn && (localCancelBtn.onclick = ()=>{ adapter.cancel(); canceled = true })
+    messages.push({ role:'user', content:text })
+    render(); setStatus('Downloading local model…')
+    try{
+      const content = await adapter.generate(text, {
+        onStart: ()=>{ if(localProgress) localProgress.style.width = '0%' },
+        onProgress: (pct)=>{ if(localProgress) localProgress.style.width = pct + '%' },
+        onDone: ()=>{ setStatus('Generating…') }
+      })
+      messages.push({ role:'assistant', content })
+      render(); setStatus(null)
+      maybeAutoActOnLastAssistant()
+    } catch(err: any){
+      messages.push({ role:'assistant', content: canceled ? 'Canceled.' : `Error: ${String(err?.message || err)}` })
+      render(); setStatus(null)
+    }
     inputEl.value = ''
-    render()
     return
   }
   if(!key){
@@ -337,6 +380,19 @@ async function send(){
               showTokensHint(outTok)
               render()
             }
+            if(obj.error){
+              const code = String(obj.error)
+              const msg = String(obj.message || '')
+              if(code === 'rate_limited'){
+                setStatus('Rate limited. Retrying or wait…')
+                const hint = document.getElementById('aiRateHint') as HTMLSpanElement | null
+                if(hint){ hint.style.display = 'inline'; hint.textContent = 'Rate limit hit. Try again shortly.' }
+              } else if(code === 'timeout'){
+                setStatus('Timeout. Try again')
+              } else {
+                setStatus(msg || 'Error')
+              }
+            }
             if(obj.done){ setStatus(null) }
           }catch{}
         }
@@ -347,7 +403,13 @@ async function send(){
     } else {
       const json = await res.json().catch(()=> null) as { ok?: boolean; content?: string; error?: string } | null
       if(!json || json.ok === false){
-        messages.push({ role:'assistant', content: json?.error || 'Request failed' })
+        const err = String(json?.error || 'Request failed')
+        if(err === 'rate_limited'){
+          setStatus('Rate limited. Please wait…')
+          const hint = document.getElementById('aiRateHint') as HTMLSpanElement | null
+          if(hint){ hint.style.display = 'inline'; hint.textContent = 'Provider rate limit exceeded. Try again shortly.' }
+        }
+        messages.push({ role:'assistant', content: err })
       } else {
         messages.push({ role:'assistant', content: json?.content || '' })
       }
