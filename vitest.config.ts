@@ -1,0 +1,20 @@
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      'aurora-engine': './src/index.ts',
+      'aurora-engine/': './src/',
+    },
+  },
+})
