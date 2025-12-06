@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Assistant Test</title>
+  <link rel="stylesheet" href="assistant.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #050814;
+      color: #f1f5f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #bfdbfe;
+      margin-bottom: 2rem;
+    }
+    .info {
+      background: rgba(11, 16, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .info h2 {
+      color: #22d3ee;
+      margin-top: 0;
+      font-size: 1.25rem;
+    }
+    .info p {
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    .info code {
+      background: rgba(139, 92, 246, 0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      color: #a78bfa;
+    }
+    button {
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      color: #ffffff;
+      border: 0;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      min-height: 44px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+    }
+    button:focus-visible {
+      outline: 3px solid #22d3ee;
+      outline-offset: 2px;
+    }
+    .status {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .status.success {
+      border-color: #4ade80;
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .status.error {
+      border-color: #f87171;
+      background: rgba(239, 68, 68, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Aurora Assistant Test</h1>
+
+    <div class="info">
+      <h2>Development Server</h2>
+      <p>The assistant development server should be running on <code>http://localhost:8787</code></p>
+      <p>Click the button below to open the assistant chat interface.</p>
+    </div>
+
+    <button id="openAssistant">Open Aurora Assistant</button>
+
+    <div id="status" class="status" style="display: none;"></div>
+  </div>
+
+  <!-- Assistant Overlay -->
+  <div class="aurora-asst-overlay" id="assistantOverlay" style="display: none;">
+    <div class="aurora-asst-panel">
+      <div class="aurora-asst-header">
+        <div class="aurora-asst-title">Aurora Assistant</div>
+        <button class="aurora-asst-close" id="closeAssistant" aria-label="Close">&times;</button>
+      </div>
+      <div class="aurora-asst-body" id="assistantBody">
+        <div class="aurora-asst-msg is-bot">
+          Hello! I'm Aurora Assistant. I can help you with scene authoring, packs, and general questions about Aurora Engine. What would you like to know?
+        </div>
+      </div>
+      <div class="aurora-asst-input">
+        <input
+          type="text"
+          id="assistantInput"
+          placeholder="Ask about scenes, packs, errors..."
+          aria-label="Chat input"
+        />
+        <button class="aurora-asst-send" id="assistantSend">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('assistantOverlay');
+    const body = document.getElementById('assistantBody');
+    const input = document.getElementById('assistantInput');
+    const status = document.getElementById('status');
+
+    // Open assistant
+    document.getElementById('openAssistant').addEventListener('click', () => {
+      overlay.style.display = 'flex';
+      input.focus();
+    });
+
+    // Close assistant
+    document.getElementById('closeAssistant').addEventListener('click', () => {
+      overlay.style.display = 'none';
+    });
+
+    // Send message
+    async function sendMessage() {
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Add user message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'aurora-asst-msg is-user';
+      userMsg.textContent = message;
+      body.appendChild(userMsg);
+
+      input.value = '';
+      body.scrollTop = body.scrollHeight;
+
+      try {
+        const response = await fetch('http://localhost:8787/api/assistant/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: message }],
+            mode: 'local'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          const botMsg = document.createElement('div');
+          botMsg.className = 'aurora-asst-msg is-bot';
+          botMsg.textContent = data.reply;
+          body.appendChild(botMsg);
+
+          status.style.display = 'block';
+          status.className = 'status success';
+          status.textContent = '✓ Response received';
+          setTimeout(() => status.style.display = 'none', 3000);
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (error) {
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'aurora-asst-error';
+        errorMsg.textContent = `Error: ${error.message}`;
+        body.appendChild(errorMsg);
+
+        status.style.display = 'block';
+        status.className = 'status error';
+        status.textContent = '✗ Error: ' + error.message;
+      }
+
+      body.scrollTop = body.scrollHeight;
+    }
+
+    document.getElementById('assistantSend').addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Test server connection on load
+    fetch('http://localhost:8787/api/assistant/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [], mode: 'local' })
+    })
+    .then(() => {
+      status.style.display = 'block';
+      status.className = 'status success';
+      status.textContent = '✓ Connected to development server on port 8787';
+      setTimeout(() => status.style.display = 'none', 5000);
+    })
+    .catch(() => {
+      status.style.display = 'block';
+      status.className = 'status error';
+      status.textContent = '✗ Cannot connect to server. Make sure to run: npm run assistant:dev';
+    });
+  </script>
+</body>
+</html>

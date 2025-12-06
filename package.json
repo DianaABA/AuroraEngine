@@ -11,6 +11,9 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
+  "bin": {
+    "aurora": "./dist/cli/aurora.js"
+  },
   "files": [
     "dist",
     "README.md",
@@ -24,6 +27,7 @@
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./utils/*": "./dist/utils/*.js",
     "./scene-schema.json": "./docs/scene-schema.json"
   },
   "scripts": {
@@ -38,7 +42,7 @@
     "test": "vitest run",
     "preview": "npm run build; node dist/examples/preview.js",
     "template:minimal:dev": "npm run build && cd templates/minimal && npm install && npm run dev",
-    "assistant:dev": "node --loader ts-node/esm assistant/dev-server.ts",
+    "assistant:dev": "tsx watch assistant/dev-server.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "release:notes": "node scripts/gen-release-notes.js",
     "scenes:lint": "node scripts/scene-lint.js",
@@ -51,9 +55,10 @@
     "execa": "^8.0.1",
     "husky": "^9.1.7",
     "rimraf": "^5.0.5",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.14"
   },
   "dependencies": {
