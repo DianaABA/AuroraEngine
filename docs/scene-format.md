@@ -114,3 +114,15 @@ loadScenesFromUrl(url: string): Promise<{ scenes: SceneDef[]; errors: string[] }
 
 ---
 For questions or proposals, open an issue with examples and desired behavior.
+
+## Script Writing Mode (No JSON Needed)
+
+The CLI `aurora convert` ships with the package once you run `npm run build`. Use the same plain-text syntax described in the README (scene header, BG/music metadata, dialogue, `?` prompts, `-` options) and run:
+
+```bash
+npx aurora convert script.txt --output scenes/intro.json
+```
+
+By default the converter prints formatted JSON to stdout, but `-o`/`--output` writes to a file and `-` reads from stdin, which makes it easy to pipe from other tools or scripts.
+
+If you need to reuse the parser programmatically, import `convertScriptToScenes` from `aurora-engine/utils/scriptConverter` (the same code the CLI uses) so your tooling stays in sync.

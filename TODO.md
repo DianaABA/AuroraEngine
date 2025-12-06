@@ -16,7 +16,6 @@ This is a suggested roadmap for contributors and students:
 ## Backlog (rolling)
 
 - [ ] Implement core engine logic in `/packages/engine`
-- [ ] Add a basic VN script loader
 - [ ] Add save/load system
 - [ ] Add UI components (menus, text box, choices)
 - [ ] Add audio support (music, sfx)

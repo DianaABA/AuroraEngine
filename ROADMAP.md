@@ -116,6 +116,10 @@ Success criteria: Assistant usable end-to-end with clear guardrails; starters in
 - Docs
    - Update quickstart paths (non-coder vs dev), Assistant guide, BYOK/local setup.
    - Record demo and add `templates/minimal/public/media/demo.gif`.
+- Creator tooling & persistence
+   - Ship the `aurora convert` / script loader CLI (and template wiring) so the README script workflow is viable, with tests + docs picker.
+   - Expand the remote AI adapter/UI to expose the advertised behavior modeling and story structure coaching helpers (new prompts, schema guidance, UI controls for those flows).
+   - Finish the save/load persistence path (engine snapshot ↔ localStorage UI buttons/docs) so snapshots advertised in the feature list can be created, listed, and restored end-to-end.
 
 ## Status — v0.0.4 (2025-11-19)
 

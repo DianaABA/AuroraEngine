@@ -24,5 +24,6 @@ export * from './utils/metrics';
 export * from './utils/corruptionRecovery';
 export { Jukebox } from './utils/jukebox';
 export * from './utils/expressions';
+export * from './utils/scriptConverter';
 export * from './packs/manifest';
 export * from './packs/loader';

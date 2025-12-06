@@ -229,11 +229,13 @@ Mia: It’s beautiful today.
 - Stay cautious → caution
 ```
 
-Aurora converts it automatically into valid scene JSON via:
+Aurora converts it automatically into valid scene JSON via the built-in CLI:
 
 ```bash
-npx aurora convert script.txt
+npx aurora convert script.txt --output scenes/intro.json
 ```
+
+The command prints JSON to stdout by default, accepts `-` to read from stdin, and honors `--output`/`-o` for writing directly to a file.
 
 With AI Mode, you can also use natural language:
 

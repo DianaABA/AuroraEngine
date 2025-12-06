@@ -1,9 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)",
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(ui): implement AAA-class responsive design system\n\nMajor CSS overhaul with comprehensive accessibility and responsive improvements:\n\nDesign System Features:\n- AAA WCAG contrast compliance (7:1 ratio for all text)\n- Fluid typography with clamp() for responsive scaling\n- Consistent 8-point spacing grid system\n- Comprehensive design tokens (colors, shadows, borders, transitions)\n- Modern CSS custom properties throughout\n\nAccessibility Enhancements:\n- Minimum 44x44px touch targets for all interactive elements\n- Visible 3px focus indicators with high contrast (#22d3ee)\n- Reduced motion support via prefers-reduced-motion\n- High contrast mode support with enhanced borders\n- Improved keyboard navigation and screen reader compatibility\n\nResponsive Improvements:\n- 5-tier breakpoint system (mobile → large desktop)\n- Mobile-first approach with progressive enhancement\n- Small mobile (0-480px): Full-width layouts\n- Mobile (481-768px): Flexible components\n- Tablet (769-1024px): Centered content\n- Desktop (1025px+): Optimal reading width (1200px max)\n- Large desktop (1440px+): Enhanced spacing (1400px max)\n\nUI Component Updates:\n- Enhanced button system with proper hover/active/disabled states\n- Improved form elements with clear focus indicators\n- Glass-morphism effects with backdrop-filter blur\n- Smoother transitions and micro-interactions\n- Better color contrast across all components\n\nAssistant Panel:\n- Matched design system throughout\n- Custom scrollbar styling\n- Enhanced message bubbles with gradients\n- Improved mobile responsiveness\n\nDocumentation:\n- Added comprehensive DESIGN_SYSTEM.md guide\n- Design tokens reference\n- Usage guidelines and best practices\n- Testing checklist for accessibility compliance\n\nCleanup:\n- Removed stale compiled eventBus files from src\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git push:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
